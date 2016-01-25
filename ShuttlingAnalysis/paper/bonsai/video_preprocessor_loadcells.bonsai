@@ -1,0 +1,486 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<WorkflowBuilder Version="1.0.516.0">
+  <Workflow xmlns:q1="clr-namespace:Bonsai.BehaviorAnalysis;assembly=Bonsai.BehaviorAnalysis" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:q3="clr-namespace:Bonsai.Scripting;assembly=Bonsai.Scripting" xmlns:q2="clr-namespace:Bonsai.Vision;assembly=Bonsai.Vision" xmlns="https://horizongir.org/bonsai">
+    <Nodes>
+      <Expression xsi:type="Source">
+        <Source xsi:type="q1:VideoEventPlayer">
+          <q1:PlaybackMode>Video</q1:PlaybackMode>
+          <q1:FileName>..\front_video.avi</q1:FileName>
+          <q1:PlaybackRate>400</q1:PlaybackRate>
+          <q1:Playing>true</q1:Playing>
+          <q1:ActionMapping />
+          <q1:EventCategories>
+            <q1:EventDescriptorCategory>crossings.csv</q1:EventDescriptorCategory>
+          </q1:EventCategories>
+          <q1:EventOffset>-PT1.5S</q1:EventOffset>
+        </Source>
+      </Expression>
+      <Expression xsi:type="Zip" />
+      <Expression xsi:type="Merge" />
+      <Expression xsi:type="RemoveTimestamp" />
+      <Expression xsi:type="Select">
+        <Transform xsi:type="q1:TimestampImageFileMatch">
+          <q1:BackgroundFolder>../Background</q1:BackgroundFolder>
+          <q1:MatchMethod>Closest</q1:MatchMethod>
+        </Transform>
+      </Expression>
+      <Expression xsi:type="Select">
+        <Transform xsi:type="q2:Subtract" />
+      </Expression>
+      <Expression xsi:type="Select">
+        <Transform xsi:type="q1:NoseTracking">
+          <q1:WindowSize>0</q1:WindowSize>
+          <q1:Threshold>3</q1:Threshold>
+          <q1:MinAreaEnter>3000</q1:MinAreaEnter>
+          <q1:DrawSegmentation>false</q1:DrawSegmentation>
+          <q1:DrawAxis>false</q1:DrawAxis>
+          <q1:DrawTracking>false</q1:DrawTracking>
+          <q1:MinAreaExit>1000</q1:MinAreaExit>
+        </Transform>
+      </Expression>
+      <Expression xsi:type="Select">
+        <Transform xsi:type="q2:Smooth">
+          <q2:SmoothType>Blur</q2:SmoothType>
+          <q2:Size1>10</q2:Size1>
+          <q2:Size2>10</q2:Size2>
+          <q2:Sigma1>0</q2:Sigma1>
+          <q2:Sigma2>0</q2:Sigma2>
+        </Transform>
+      </Expression>
+      <Expression xsi:type="MemberSelector">
+        <Selector>Item2</Selector>
+      </Expression>
+      <Expression xsi:type="Select">
+        <Transform xsi:type="q2:Crop">
+          <q2:RegionOfInterest>
+            <q2:X>21</q2:X>
+            <q2:Y>467</q2:Y>
+            <q2:Width>1259</q2:Width>
+            <q2:Height>213</q2:Height>
+          </q2:RegionOfInterest>
+        </Transform>
+      </Expression>
+      <Expression xsi:type="Do">
+        <Sink xsi:type="q3:PythonTextWriter">
+          <q3:Script>def process(input):
+    for x in input:
+        print '%0.0f' % x.Activity.Val0,
+    print</q3:Script>
+          <q3:FileName>step_activity.csv</q3:FileName>
+          <q3:Append>false</q3:Append>
+          <q3:Suffix>None</q3:Suffix>
+        </Sink>
+      </Expression>
+      <Expression xsi:type="Do">
+        <Sink xsi:type="q3:PythonTextWriter">
+          <q3:Script>def process(input):
+    for x in input:
+        print '%0.0f' % x.Activity.Val0,
+    print</q3:Script>
+          <q3:FileName>slip_activity.csv</q3:FileName>
+          <q3:Append>false</q3:Append>
+          <q3:Suffix>None</q3:Suffix>
+        </Sink>
+      </Expression>
+      <Expression xsi:type="Do">
+        <Sink xsi:type="q3:PythonTextWriter">
+          <q3:Script>def process(input):
+    print '%0.0f %0.0f %0.0f %0.0f' % (input.Item2.X,input.Item2.Y,input.Item1.X,input.Item1.Y)</q3:Script>
+          <q3:FileName>trajectories.csv</q3:FileName>
+          <q3:Append>false</q3:Append>
+          <q3:Suffix>None</q3:Suffix>
+        </Sink>
+      </Expression>
+      <Expression xsi:type="Select">
+        <Transform xsi:type="q2:RoiActivity">
+          <q2:Regions>
+            <q2:ArrayOfCvPoint>
+              <q2:CvPoint>
+                <q2:X>80</q2:X>
+                <q2:Y>607</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>183</q2:X>
+                <q2:Y>607</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>183</q2:X>
+                <q2:Y>652</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>80</q2:X>
+                <q2:Y>652</q2:Y>
+              </q2:CvPoint>
+            </q2:ArrayOfCvPoint>
+            <q2:ArrayOfCvPoint>
+              <q2:CvPoint>
+                <q2:X>240</q2:X>
+                <q2:Y>607</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>356</q2:X>
+                <q2:Y>607</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>356</q2:X>
+                <q2:Y>651</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>240</q2:X>
+                <q2:Y>651</q2:Y>
+              </q2:CvPoint>
+            </q2:ArrayOfCvPoint>
+            <q2:ArrayOfCvPoint>
+              <q2:CvPoint>
+                <q2:X>415</q2:X>
+                <q2:Y>606</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>529</q2:X>
+                <q2:Y>606</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>529</q2:X>
+                <q2:Y>650</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>415</q2:X>
+                <q2:Y>650</q2:Y>
+              </q2:CvPoint>
+            </q2:ArrayOfCvPoint>
+            <q2:ArrayOfCvPoint>
+              <q2:CvPoint>
+                <q2:X>590</q2:X>
+                <q2:Y>606</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>709</q2:X>
+                <q2:Y>606</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>709</q2:X>
+                <q2:Y>649</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>590</q2:X>
+                <q2:Y>649</q2:Y>
+              </q2:CvPoint>
+            </q2:ArrayOfCvPoint>
+            <q2:ArrayOfCvPoint>
+              <q2:CvPoint>
+                <q2:X>768</q2:X>
+                <q2:Y>604</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>886</q2:X>
+                <q2:Y>604</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>886</q2:X>
+                <q2:Y>650</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>768</q2:X>
+                <q2:Y>650</q2:Y>
+              </q2:CvPoint>
+            </q2:ArrayOfCvPoint>
+            <q2:ArrayOfCvPoint>
+              <q2:CvPoint>
+                <q2:X>945</q2:X>
+                <q2:Y>603</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>1055</q2:X>
+                <q2:Y>603</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>1055</q2:X>
+                <q2:Y>649</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>945</q2:X>
+                <q2:Y>649</q2:Y>
+              </q2:CvPoint>
+            </q2:ArrayOfCvPoint>
+            <q2:ArrayOfCvPoint>
+              <q2:CvPoint>
+                <q2:X>1113</q2:X>
+                <q2:Y>604</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>1218</q2:X>
+                <q2:Y>604</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>1218</q2:X>
+                <q2:Y>649</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>1113</q2:X>
+                <q2:Y>649</q2:Y>
+              </q2:CvPoint>
+            </q2:ArrayOfCvPoint>
+          </q2:Regions>
+        </Transform>
+      </Expression>
+      <Expression xsi:type="Select">
+        <Transform xsi:type="q2:RoiActivity">
+          <q2:Regions>
+            <q2:ArrayOfCvPoint>
+              <q2:CvPoint>
+                <q2:X>8</q2:X>
+                <q2:Y>101</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>51</q2:X>
+                <q2:Y>96</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>132</q2:X>
+                <q2:Y>92</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>132</q2:X>
+                <q2:Y>99</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>58</q2:X>
+                <q2:Y>107</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>7</q2:X>
+                <q2:Y>108</q2:Y>
+              </q2:CvPoint>
+            </q2:ArrayOfCvPoint>
+            <q2:ArrayOfCvPoint>
+              <q2:CvPoint>
+                <q2:X>223</q2:X>
+                <q2:Y>95</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>276</q2:X>
+                <q2:Y>95</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>249</q2:X>
+                <q2:Y>102</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>218</q2:X>
+                <q2:Y>109</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>166</q2:X>
+                <q2:Y>109</q2:Y>
+              </q2:CvPoint>
+            </q2:ArrayOfCvPoint>
+            <q2:ArrayOfCvPoint>
+              <q2:CvPoint>
+                <q2:X>381</q2:X>
+                <q2:Y>96</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>429</q2:X>
+                <q2:Y>96</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>396</q2:X>
+                <q2:Y>110</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>340</q2:X>
+                <q2:Y>110</q2:Y>
+              </q2:CvPoint>
+            </q2:ArrayOfCvPoint>
+            <q2:ArrayOfCvPoint>
+              <q2:CvPoint>
+                <q2:X>533</q2:X>
+                <q2:Y>95</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>576</q2:X>
+                <q2:Y>95</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>567</q2:X>
+                <q2:Y>108</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>511</q2:X>
+                <q2:Y>108</q2:Y>
+              </q2:CvPoint>
+            </q2:ArrayOfCvPoint>
+            <q2:ArrayOfCvPoint>
+              <q2:CvPoint>
+                <q2:X>677</q2:X>
+                <q2:Y>95</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>720</q2:X>
+                <q2:Y>94</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>747</q2:X>
+                <q2:Y>106</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>689</q2:X>
+                <q2:Y>107</q2:Y>
+              </q2:CvPoint>
+            </q2:ArrayOfCvPoint>
+            <q2:ArrayOfCvPoint>
+              <q2:CvPoint>
+                <q2:X>832</q2:X>
+                <q2:Y>94</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>877</q2:X>
+                <q2:Y>93</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>921</q2:X>
+                <q2:Y>104</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>868</q2:X>
+                <q2:Y>105</q2:Y>
+              </q2:CvPoint>
+            </q2:ArrayOfCvPoint>
+            <q2:ArrayOfCvPoint>
+              <q2:CvPoint>
+                <q2:X>981</q2:X>
+                <q2:Y>89</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>1027</q2:X>
+                <q2:Y>89</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>1088</q2:X>
+                <q2:Y>102</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>1035</q2:X>
+                <q2:Y>102</q2:Y>
+              </q2:CvPoint>
+            </q2:ArrayOfCvPoint>
+            <q2:ArrayOfCvPoint>
+              <q2:CvPoint>
+                <q2:X>1119</q2:X>
+                <q2:Y>90</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>1119</q2:X>
+                <q2:Y>82</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>1157</q2:X>
+                <q2:Y>82</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>1240</q2:X>
+                <q2:Y>88</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>1240</q2:X>
+                <q2:Y>97</q2:Y>
+              </q2:CvPoint>
+              <q2:CvPoint>
+                <q2:X>1191</q2:X>
+                <q2:Y>98</q2:Y>
+              </q2:CvPoint>
+            </q2:ArrayOfCvPoint>
+          </q2:Regions>
+        </Transform>
+      </Expression>
+    </Nodes>
+    <Edges>
+      <Edge>
+        <From>0</From>
+        <To>2</To>
+        <Label>Source</Label>
+      </Edge>
+      <Edge>
+        <From>1</From>
+        <To>5</To>
+        <Label>Source</Label>
+      </Edge>
+      <Edge>
+        <From>2</From>
+        <To>3</To>
+        <Label>Source</Label>
+      </Edge>
+      <Edge>
+        <From>2</From>
+        <To>4</To>
+        <Label>Source</Label>
+      </Edge>
+      <Edge>
+        <From>3</From>
+        <To>1</To>
+        <Label>Source</Label>
+      </Edge>
+      <Edge>
+        <From>4</From>
+        <To>1</To>
+        <Label>Other</Label>
+      </Edge>
+      <Edge>
+        <From>5</From>
+        <To>7</To>
+        <Label>Source</Label>
+      </Edge>
+      <Edge>
+        <From>6</From>
+        <To>8</To>
+        <Label>Source</Label>
+      </Edge>
+      <Edge>
+        <From>7</From>
+        <To>6</To>
+        <Label>Source</Label>
+      </Edge>
+      <Edge>
+        <From>7</From>
+        <To>9</To>
+        <Label>Source</Label>
+      </Edge>
+      <Edge>
+        <From>7</From>
+        <To>13</To>
+        <Label>Source</Label>
+      </Edge>
+      <Edge>
+        <From>8</From>
+        <To>12</To>
+        <Label>Source</Label>
+      </Edge>
+      <Edge>
+        <From>9</From>
+        <To>14</To>
+        <Label>Source</Label>
+      </Edge>
+      <Edge>
+        <From>13</From>
+        <To>11</To>
+        <Label>Source</Label>
+      </Edge>
+      <Edge>
+        <From>14</From>
+        <To>10</To>
+        <Label>Source</Label>
+      </Edge>
+    </Edges>
+  </Workflow>
+  <ExtensionTypes>
+    <Type>Bonsai.BehaviorAnalysis.VideoEventPlayer, Bonsai.BehaviorAnalysis, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Expressions.RemoveTimestampBuilder, Bonsai, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.BehaviorAnalysis.TimestampImageFileMatch, Bonsai.BehaviorAnalysis, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.Subtract, Bonsai.Vision, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.BehaviorAnalysis.NoseTracking, Bonsai.BehaviorAnalysis, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.Smooth, Bonsai.Vision, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.Crop, Bonsai.Vision, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Scripting.PythonTextWriter, Bonsai.Scripting, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.RoiActivity, Bonsai.Vision, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</Type>
+  </ExtensionTypes>
+</WorkflowBuilder>

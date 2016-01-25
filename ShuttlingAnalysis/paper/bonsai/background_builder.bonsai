@@ -1,0 +1,107 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<WorkflowBuilder Version="1.0.516.0">
+  <Workflow xmlns:q1="clr-namespace:Bonsai.BehaviorAnalysis;assembly=Bonsai.BehaviorAnalysis" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:q2="clr-namespace:Bonsai.Vision;assembly=Bonsai.Vision" xmlns="https://horizongir.org/bonsai">
+    <Nodes>
+      <Expression xsi:type="Source">
+        <Source xsi:type="q1:VideoEventPlayer">
+          <q1:PlaybackMode>Events</q1:PlaybackMode>
+          <q1:FileName>.\front_video.avi</q1:FileName>
+          <q1:PlaybackRate>120</q1:PlaybackRate>
+          <q1:Playing>true</q1:Playing>
+          <q1:ActionMapping />
+          <q1:EventCategories>
+            <q1:EventDescriptorCategory>.\left_rewards.csv</q1:EventDescriptorCategory>
+            <q1:EventDescriptorCategory>.\right_rewards.csv</q1:EventDescriptorCategory>
+          </q1:EventCategories>
+          <q1:EventOffset>-PT0.2S</q1:EventOffset>
+          <q1:DefaultDuration>PT0.1S</q1:DefaultDuration>
+        </Source>
+      </Expression>
+      <Expression xsi:type="SelectMany">
+        <Workflow>
+          <Nodes>
+            <Expression xsi:type="WorkflowInput" />
+            <Expression xsi:type="RemoveTimestamp" />
+            <Expression xsi:type="MemberSelector">
+              <Selector>Timestamp</Selector>
+            </Expression>
+            <Expression xsi:type="Select">
+              <Transform xsi:type="q2:Grayscale" />
+            </Expression>
+            <Expression xsi:type="Zip" />
+            <Expression xsi:type="CombineTimestamp" />
+            <Expression xsi:type="TakeLast">
+              <Count>1</Count>
+            </Expression>
+            <Expression xsi:type="Do">
+              <Sink xsi:type="q1:SaveTimestampedImage">
+                <q1:FileName>Background\background.bmp</q1:FileName>
+              </Sink>
+            </Expression>
+            <Expression xsi:type="WorkflowOutput" />
+          </Nodes>
+          <Edges>
+            <Edge>
+              <From>0</From>
+              <To>1</To>
+              <Label>Source</Label>
+            </Edge>
+            <Edge>
+              <From>0</From>
+              <To>2</To>
+              <Label>Source</Label>
+            </Edge>
+            <Edge>
+              <From>1</From>
+              <To>3</To>
+              <Label>Source</Label>
+            </Edge>
+            <Edge>
+              <From>2</From>
+              <To>4</To>
+              <Label>Other</Label>
+            </Edge>
+            <Edge>
+              <From>3</From>
+              <To>4</To>
+              <Label>Source</Label>
+            </Edge>
+            <Edge>
+              <From>4</From>
+              <To>5</To>
+              <Label>Source</Label>
+            </Edge>
+            <Edge>
+              <From>5</From>
+              <To>6</To>
+              <Label>Source</Label>
+            </Edge>
+            <Edge>
+              <From>6</From>
+              <To>7</To>
+              <Label>Source</Label>
+            </Edge>
+            <Edge>
+              <From>7</From>
+              <To>8</To>
+              <Label>Source</Label>
+            </Edge>
+          </Edges>
+        </Workflow>
+      </Expression>
+    </Nodes>
+    <Edges>
+      <Edge>
+        <From>0</From>
+        <To>1</To>
+        <Label>Source</Label>
+      </Edge>
+    </Edges>
+  </Workflow>
+  <ExtensionTypes>
+    <Type>Bonsai.BehaviorAnalysis.VideoEventPlayer, Bonsai.BehaviorAnalysis, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Expressions.RemoveTimestampBuilder, Bonsai, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.Grayscale, Bonsai.Vision, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.BehaviorAnalysis.SaveTimestampedImage, Bonsai.BehaviorAnalysis, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</Type>
+  </ExtensionTypes>
+</WorkflowBuilder>

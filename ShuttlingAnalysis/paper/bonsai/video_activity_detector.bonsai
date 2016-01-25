@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<WorkflowBuilder Version="1.0.487.0">
+  <Workflow xmlns:q1="clr-namespace:Bonsai.BehaviorAnalysis;assembly=Bonsai.BehaviorAnalysis" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:q3="clr-namespace:Bonsai.IO;assembly=Bonsai.IO" xmlns:q2="clr-namespace:Bonsai.Vision;assembly=Bonsai.Vision" xmlns="https://horizongir.org/bonsai">
+    <Nodes>
+      <Expression xsi:type="Source">
+        <Source xsi:type="q2:FileCapture">
+          <q2:FileName>..\front_video.avi</q2:FileName>
+          <q2:PlaybackRate>500</q2:PlaybackRate>
+          <q2:Loop>false</q2:Loop>
+          <q2:Playing>true</q2:Playing>
+        </Source>
+      </Expression>
+      <Expression xsi:type="Select">
+        <Transform xsi:type="q2:Grayscale" />
+      </Expression>
+      <Expression xsi:type="Select">
+        <Transform xsi:type="q2:BackgroundSubtraction">
+          <q2:BackgroundFrames>1</q2:BackgroundFrames>
+          <q2:AdaptationRate>1</q2:AdaptationRate>
+          <q2:ThresholdValue>9</q2:ThresholdValue>
+          <q2:ThresholdType>Binary</q2:ThresholdType>
+          <q2:SubtractionMethod>Absolute</q2:SubtractionMethod>
+        </Transform>
+      </Expression>
+      <Expression xsi:type="Select">
+        <Transform xsi:type="q2:Sum" />
+      </Expression>
+      <Expression xsi:type="Do">
+        <Sink xsi:type="q3:CsvWriter">
+          <q3:FileName>..\front_activity.csv</q3:FileName>
+          <q3:Append>false</q3:Append>
+          <q3:Suffix>None</q3:Suffix>
+          <q3:IncludeHeader>false</q3:IncludeHeader>
+          <q3:Selector>Val0</q3:Selector>
+        </Sink>
+      </Expression>
+    </Nodes>
+    <Edges>
+      <Edge>
+        <From>0</From>
+        <To>1</To>
+        <Label>Source</Label>
+      </Edge>
+      <Edge>
+        <From>1</From>
+        <To>2</To>
+        <Label>Source</Label>
+      </Edge>
+      <Edge>
+        <From>2</From>
+        <To>3</To>
+        <Label>Source</Label>
+      </Edge>
+      <Edge>
+        <From>3</From>
+        <To>4</To>
+        <Label>Source</Label>
+      </Edge>
+    </Edges>
+  </Workflow>
+  <ExtensionTypes>
+    <Type>Bonsai.Vision.FileCapture, Bonsai.Vision, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.Grayscale, Bonsai.Vision, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.BackgroundSubtraction, Bonsai.Vision, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.Sum, Bonsai.Vision, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.IO.CsvWriter, Bonsai.IO, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</Type>
+  </ExtensionTypes>
+</WorkflowBuilder>
