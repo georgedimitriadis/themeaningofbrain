@@ -62,13 +62,21 @@ def create_spike_triggered_events(data_raw_spikes, threshold, inter_spike_time_d
     diff_spikes_times = np.diff(spike_crossings)
     spike_crossings = np.array([x for i, x in enumerate(spike_crossings[:-2]) if (diff_spikes_times[i] > inter_spike_distance)])
     spike_times = np.zeros(np.shape(spike_crossings))
+    spike_peaks = np.zeros(np.shape(spike_crossings))
     for i in range(len(spike_crossings)):
         if threshold > 0:
-            offset = np.argmax(data_raw_spikes[spike_crossings[i]-(1e-3*sampling_freq):spike_crossings[i]+(1e-3*sampling_freq)])
+            offset = np.argmax(data_raw_spikes[int(spike_crossings[i]-(1e-3*sampling_freq)):
+                                               int(spike_crossings[i]+(1e-3*sampling_freq))])
+            peak = np.max(data_in_V[int(spike_crossings[i]-(1e-3*sampling_freq)):
+                                          int(spike_crossings[i]+(1e-3*sampling_freq))])
         if threshold < 0:
-            offset = np.argmin(data_raw_spikes[spike_crossings[i]-(1e-3*sampling_freq):spike_crossings[i]+(1e-3*sampling_freq)])
+            offset = np.argmin(data_raw_spikes[int(spike_crossings[i]-(1e-3*sampling_freq)):
+                                               int(spike_crossings[i]+(1e-3*sampling_freq))])
+            peak = np.min(data_in_V[int(spike_crossings[i]-(1e-3*sampling_freq)):
+                                          int(spike_crossings[i]+(1e-3*sampling_freq))])
         spike_times[i] = spike_crossings[i] + offset - (1e-3*sampling_freq)
-    return spike_times, data_in_V
+        spike_peaks[i] = peak
+    return spike_times, spike_peaks, data_in_V
 
 
 

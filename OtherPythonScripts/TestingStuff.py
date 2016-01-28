@@ -6,6 +6,7 @@ import matplotlib.gridspec as gridspec
 import IO.ephys as ephys
 import os
 import Layouts.Grids.grids as grids
+import numpy as np
 
 
 layout = grids.grid_layout_128channels_cr_cl_rr_rl()
@@ -30,133 +31,6 @@ for i in range(x*y):
 
 plt.show()
 
-
-
-
-
-
-
-
-
-import itertools
-import six
-import numpy as np
-from scipy import linalg
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-from matplotlib import colors
-from sklearn import mixture
-import random
-
-
-
-X = np.transpose(t_tsne)
-
-
-
-n_components = 20
-covariance_type = 'full'
-n_iter = 10000
-n_init=10
-
-# Fit a mixture of Gaussians with EM using five components
-gmm = mixture.GMM(n_components=n_components, covariance_type=covariance_type, n_iter=n_iter, n_init=n_init)
-gmm.fit(X)
-
-# Fit a Dirichlet process mixture of Gaussians using five components
-dpgmm = mixture.DPGMM(n_components=5, covariance_type=covariance_type, n_iter=n_iter)
-dpgmm.fit(X)
-
-colors_ = list(six.iteritems(colors.cnames))
-colours = []
-for i in range(n_components):
-    colours.append(random.choice(colors_))
-
-
-
-
-color_iter = itertools.cycle(['r', 'g', 'b', 'c', 'm', 'y', 'k', 'w'])
-
-
-for i, (clf, title) in enumerate([(gmm, 'GMM'),
-                                  (dpgmm, 'Dirichlet Process GMM')]):
-    splot = plt.subplot(2, 1, 1 + i)
-    Y_ = clf.predict(X)
-    for i, (mean, covar) in enumerate(zip(
-            clf.means_, clf._get_covars())):
-        v, w = linalg.eigh(covar)
-        u = w[0] / linalg.norm(w[0])
-        # as the DP will not use every component it has access to
-        # unless it needs it, we shouldn't plot the redundant
-        # components.
-        if not np.any(Y_ == i):
-            continue
-        plt.scatter(X[Y_ == i, 0], X[Y_ == i, 1], .8, color=colours[i][0])
-
-        # Plot an ellipse to show the Gaussian component
-        #angle = np.arctan(u[1] / u[0])
-        #angle = 180 * angle / np.pi  # convert to degrees
-        #ell = mpl.patches.Ellipse(mean, v[0], v[1], 180 + angle, color=color)
-        #ell.set_clip_box(splot.bbox)
-        #ell.set_alpha(0.5)
-        #splot.add_artist(ell)
-
-    plt.xlim(-6, 6)
-    plt.ylim(-6, 6)
-    plt.xticks(())
-    plt.yticks(())
-    plt.title(title)
-
-plt.show()
-
-
-
-
-from sklearn.cluster import DBSCAN
-from sklearn import metrics
-from sklearn.datasets.samples_generator import make_blobs
-from sklearn.preprocessing import StandardScaler
-
-X = np.transpose(t_tsne)
-
-db = DBSCAN(eps=0.53, min_samples=800).fit(X)
-core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
-core_samples_mask[db.core_sample_indices_] = True
-labels = db.labels_
-
-# Number of clusters in labels, ignoring noise if present.
-n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-
-print('Estimated number of clusters: %d' % n_clusters_)
-print("Silhouette Coefficient: %0.3f"
-      % metrics.silhouette_score(X, labels, sample_size=5000))
-
-##############################################################################
-# Plot result
-import matplotlib.pyplot as plt
-
-# Black removed and is used for noise instead.
-unique_labels = set(labels)
-colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
-for k, col in zip(unique_labels, colors):
-    if k == -1:
-        # Black used for noise.
-        col = 'k'
-
-    class_member_mask = (labels == k)
-
-    xy = X[class_member_mask & core_samples_mask]
-    plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
-             markeredgecolor='k', markersize=14)
-
-    xy = X[class_member_mask & ~core_samples_mask]
-    plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
-             markeredgecolor='k', markersize=6)
-
-plt.plot(X[juxta_cluster_indices, 0], X[juxta_cluster_indices, 1], '*', markerfacecolor='b')
-
-plt.title('Estimated number of clusters: %d' % n_clusters_)
-plt.show()
 
 
 
@@ -222,3 +96,12 @@ def create_spike_triggered_events(data_raw_spikes, threshold, inter_spike_time_d
         spike_times[i] = data_raw_spikes[spike_crossings[i]] + \
                         np.argmax(data_raw_spikes[spike_crossings[i]:spike_crossings[i]+(1e-3*sampling_freq)])
     return spike_times, data_in_V
+
+
+
+
+from sklearn.cluster import KMeans
+kmeans_est_35 = KMeans(n_clusters=35)
+kmeans_est_35.fit(X)
+
+plt.scatter(X[:, 0], X[:, 1], c=labels.astype(np.float))

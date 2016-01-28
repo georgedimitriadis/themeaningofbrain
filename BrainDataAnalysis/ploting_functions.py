@@ -85,10 +85,14 @@ def recalculate_ylims(data):
     return min_offset, max_offset
 
 
-def scan_through_2nd_dim(data, freq=32556, timeToPlot=1, startTime=0, remove_channels=None, figure_id=0, picker=None,
-                         labels=False):
+def scan_through_2nd_dim(data, freq=32556, timeToPlot=1, startTime=0, plot_around_time_points=None,
+                         remove_channels=None, figure_id=0, picker=None, labels=False):
 
-    samplesToPlot = [startTime*freq, (startTime+timeToPlot)*freq]
+    if plot_around_time_points is None:
+        samplesToPlot = [startTime*freq, (startTime+timeToPlot)*freq]
+    else:
+        startTime = (plot_around_time_points[0] - timeToPlot / 2)
+        samplesToPlot = [startTime * freq, (plot_around_time_points[0] + timeToPlot / 2) * freq]
 
     time_axis = np.arange(samplesToPlot[0]/freq, samplesToPlot[1]/freq, 1.0/freq)
 
@@ -103,7 +107,7 @@ def scan_through_2nd_dim(data, freq=32556, timeToPlot=1, startTime=0, remove_cha
         fig.canvas.callbacks.connect('pick_event', on_pick)
 
     if np.size(np.shape(data)) > 1:
-        data_to_plot =  np.transpose(data[:, samplesToPlot[0]:samplesToPlot[1]])
+        data_to_plot =  np.transpose(data[:, int(samplesToPlot[0]):int(samplesToPlot[1])])
         number_of_channels = np.size(data, 0)
         number_of_time_points = np.size(data, 1)
         if remove_channels is not None:
@@ -136,42 +140,53 @@ def scan_through_2nd_dim(data, freq=32556, timeToPlot=1, startTime=0, remove_cha
         ind = 0
 
         def nextone(self, event):
-            if (self.ind*timeToPlot+startTime)*freq < number_of_time_points:
+            [start_point, end_point] = self.get_start_end_time_points()
+            if start_point < number_of_time_points:
                 self.ind += 1
+                [start_point, end_point] = self.get_start_end_time_points()
                 for i in np.arange(0, number_of_channels):
                     if remove_channels is None or (remove_channels is not None and i not in remove_channels):
                         if number_of_channels is 1:
-                            new_data = data[(self.ind*timeToPlot+startTime)*freq:((self.ind+1)*timeToPlot+startTime)*freq]
+                            new_data = data[start_point:end_point]
                         else:
-                            new_data = data[i, (self.ind*timeToPlot+startTime)*freq:((self.ind+1)*timeToPlot+startTime)*freq]
+                            new_data = data[i, start_point:end_point]
                         lines[i].set_ydata(new_data)
-                    samplesToPlot = [(self.ind*timeToPlot+startTime)*freq, ((self.ind+1)*timeToPlot+startTime)*freq]
-                    time_axis = np.arange(samplesToPlot[0]/freq, samplesToPlot[1]/freq, 1.0/freq)
+                    time_axis = np.arange(start_point/freq, end_point/freq, 1.0/freq)[:(end_point - start_point)]
                     lines[i].set_xdata(time_axis)
                 ax_multidim_data.set_xlim([time_axis[0], time_axis[-1]])
                 min_offset, max_offset = recalculate_ylims(new_data)
                 ax_multidim_data.set_ylim([min_offset, max_offset])
-                trial_text.set_text("Time: "+str(self.ind*timeToPlot+startTime)+" s")
+                trial_text.set_text("Time: "+str(start_point/freq)+" s")
                 plt.draw()
 
         def prev(self, event):
-            if (self.ind*timeToPlot+startTime)*freq > 0:
+            [start_point, end_point] = self.get_start_end_time_points()
+            if start_point > 0:
                 self.ind -= 1
+                [start_point, end_point] = self.get_start_end_time_points()
                 for i in np.arange(0, number_of_channels):
                     if remove_channels is None or (remove_channels is not None and i not in remove_channels):
                         if number_of_channels is 1:
-                            new_data = data[(self.ind*timeToPlot+startTime)*freq:((self.ind+1)*timeToPlot+startTime)*freq]
+                            new_data = data[start_point:end_point]
                         else:
-                            new_data = data[i, (self.ind*timeToPlot+startTime)*freq:((self.ind+1)*timeToPlot+startTime)*freq]
+                            new_data = data[i, start_point:end_point]
                         lines[i].set_ydata(new_data)
-                    samplesToPlot = [(self.ind*timeToPlot+startTime)*freq, ((self.ind+1)*timeToPlot+startTime)*freq]
-                    time_axis = np.arange(samplesToPlot[0]/freq, samplesToPlot[1]/freq, 1.0/freq)
+                    time_axis = np.arange(start_point/freq, end_point/freq, 1.0/freq)[:(end_point - start_point)]
                     lines[i].set_xdata(time_axis)
                 ax_multidim_data.set_xlim([time_axis[0], time_axis[-1]])
                 min_offset, max_offset = recalculate_ylims(new_data)
                 ax_multidim_data.set_ylim([min_offset, max_offset])
-                trial_text.set_text("Time: "+str(self.ind*timeToPlot+startTime)+" s")
+                trial_text.set_text("Time: "+str(start_point/freq)+" s")
                 plt.draw()
+
+        def get_start_end_time_points(self):
+            if plot_around_time_points is None:
+                start_point = (self.ind*timeToPlot+startTime)*freq
+                end_point = ((self.ind+1)*timeToPlot+startTime)*freq
+            else:
+                start_point = (plot_around_time_points[self.ind] - timeToPlot / 2) * freq
+                end_point = (plot_around_time_points[self.ind] + timeToPlot / 2) * freq
+            return [int(start_point), int(end_point)]
 
     callback = Index()
     axprev = plt.axes([0.7, 0.05, 0.1, 0.075])
@@ -339,8 +354,104 @@ def spread_data(data, electrode_structure, col_spacing=3, row_spacing=0.5):
 
 
 
+def plot_topoplot(channel_positions, data, show=True, **kwargs):
+    if not kwargs.get('hpos'):
+        hpos = 0
+    else:
+        hpos = kwargs['hpos']
+    if not kwargs.get('vpos'):
+        vpos = 0
+    else:
+        vpos = kwargs['vpos']   
+    if not kwargs.get('width'):
+        width = None
+    else:
+        width = kwargs['width']    
+    if not kwargs.get('height'):
+        height = None
+    else:
+        height = kwargs['height']
+    if not kwargs.get('gridscale'):
+        gridscale = 10
+    else:
+        gridscale = kwargs['gridscale']
+    if not kwargs.get('interpolation_method'):
+        interpolation_method = "bicubic"  # ‘none’, ‘nearest’, ‘bilinear’, ‘bicubic’, ‘spline16’, ‘spline36’, ‘hanning’, ‘hamming’, ‘hermite’, ‘kaiser’, ‘quadric’, ‘catrom’, ‘gaussian’, ‘bessel’, ‘mitchell’, ‘sinc’, ‘lanczos’
+    else:
+        interpolation_method = kwargs['interpolation_method']
+    if not kwargs.get('zlimits'):
+        zlimits = None
+    else:
+        zlimits = kwargs['zlimits']
+    if not kwargs.get('outline'):
+        outline = None
+    else:
+        outline = kwargs['outline']   
+    
+    if np.isnan(data).any():
+        warnings.warn('The data passed to plot_topoplot contain NaN values. These will create unexpected results in the interpolation. Deal with them.')
+
+    channel_positions = channel_positions.sort_index(by='Numbers', ascending=True)
+    channel_positions = np.array([xy for num_idx, str_idx, xy in channel_positions.values])
+    allCoordinates = channel_positions
+    if outline:
+        allCoordinates = [channel_positions, outline]
+    
+    naturalWidth = np.max(allCoordinates[:, 0]) - np.min(allCoordinates[:, 0])
+    naturalHeight = np.max(allCoordinates[:, 1]) - np.min(allCoordinates[:, 1])
+
+    if not width and not height:
+        xScaling = 1
+        yScaling = 1
+    elif not width and height:
+        yScaling = height/naturalHeight
+        xScaling = yScaling
+    elif width and not height:
+        xScaling = width/naturalWidth
+        yScaling = xScaling
+    elif width and height:
+        xScaling = width/naturalWidth
+        yScaling = height/naturalHeight
+
+    chanX = channel_positions[:, 0] * xScaling + hpos
+    chanY = channel_positions[:, 1] * yScaling + vpos
+
+    hlim = [np.min(chanX), np.max(chanX)]
+    vlim = [np.min(chanY), np.max(chanY)]
+
+    if interpolation_method is not 'none':
+        xi, yi = np.mgrid[hlim[0]:hlim[1]:complex(0, gridscale)*(hlim[1]-hlim[0]), vlim[0]:vlim[1]:complex(0, gridscale)*(vlim[1]-vlim[0])]
+    else:
+        xi, yi = np.mgrid[hlim[0]:hlim[1]+1, vlim[0]:vlim[1]+1] #for no interpolation show one pixel per data point
 
 
+    Zi = interpolate.griddata((chanX, chanY), data,  (xi, yi))
+
+    if not zlimits:
+        vmin = Zi.min()
+        vmax = Zi.max()
+    else:
+        vmin = zlimits[0]
+        vmax = zlimits[1]
+
+    if not outline:
+        expansion = 0.05*np.max([hlim, vlim])
+        outline = pd.DataFrame(np.array([[hlim[0]-expansion, vlim[0]-expansion], [hlim[1]+expansion, vlim[0]-expansion],\
+                                         [hlim[1]+expansion, vlim[1]+expansion], [hlim[0]-expansion, vlim[1]+expansion],\
+                                         [hlim[0]-expansion, vlim[0]-expansion]]))
+
+    ml = MultipleLocator(1)
+    cmap = plt.get_cmap("seismic")
+    image = plt.imshow(Zi.T, cmap=cmap, aspect='equal', origin='upper',  extent=[hlim[0], hlim[1], vlim[1], vlim[0]], vmin=vmin, vmax=vmax, interpolation=interpolation_method)
+    plt.axes().yaxis.set_minor_locator(ml)
+    plt.axes().xaxis.set_minor_locator(ml)
+
+    scat = plt.scatter(chanX, chanY)
+    if show:
+        plt.colorbar(image)
+        plt.show()
+
+    return image, scat
 
 
 
