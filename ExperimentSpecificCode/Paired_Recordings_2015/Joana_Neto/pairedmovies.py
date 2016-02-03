@@ -2,6 +2,7 @@
 import numpy as np
 import scipy.interpolate as interpolate
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import sca
 from matplotlib.ticker import MultipleLocator
 import pandas as pd
 import itertools
@@ -9,9 +10,13 @@ import warnings
 # import Utilities as ut
 import matplotlib.animation as animation
 from matplotlib.widgets import Button
+import mne.filter as filters
+
+
 plt.rcParams['animation.ffmpeg_path'] ="C:\\Users\\KAMPFF-LAB_ANALYSIS4\\Downloads\\ffmpeg-20160116-git-d7c75a5-win64-static\\ffmpeg-20160116-git-d7c75a5-win64-static\\bin\\ffmpeg.exe"
 
-#####movies 322channls
+# Movies 32channels
+
 def polytrode_channels(bad_channels=[]):
     '''
     This function produces a grid with the electrodes positions
@@ -274,17 +279,20 @@ def plot_video_topoplot_with_juxta(data, juxtaData, time_axis, channel_positions
                  extra_args=['h264'])
     plt.show()
 
+
 rootDir=r'E:\Data\2014-03-20'
 videoFilename = "2015_03_20_Pair3.avi"
-alignamplifier=all_cells_ivm_filtered_data['3']
 
-juxtaData = all_cells_patch_data['3']
-
-juxtaData = np.average(juxtaData,axis=-1) *1000
-data = np.mean(alignamplifier,axis=2)
-time_axis = np.arange(-(np.shape(data)[1]/30000.0)/2, (np.shape(data)[1]/30000.0)/2,1/30000.0 )
 #voltage_step_size = 0.195e-6
-#data = data* 1000000*voltage_step_size
+#scale_uV = 1000000
+scale_mV = 1000
+
+alignamplifier=all_cells_ivm_filtered_data['3']
+juxtaData = all_cells_patch_data['3']
+juxtaData = np.average(juxtaData,axis=-1) * scale_mV
+data = np.mean(alignamplifier,axis=2)
+# data = data * scale_uV * voltage_step_size
+time_axis = np.arange(-(np.shape(data)[1]/30000.0)/2, (np.shape(data)[1]/30000.0)/2,1/30000.0 )
 
 plot_video_topoplot_with_juxta(data,juxtaData, time_axis, polytrode_channels(),
                                times_to_plot=[-0.001, 0.001], zlimits=[np.min(data), np.max(data) * 1.1],
@@ -293,9 +301,7 @@ plot_video_topoplot_with_juxta(data,juxtaData, time_axis, polytrode_channels(),
 
 
 
-###############################################################################################128ch movies
-
-
+# Movies 128channels
 
 def polytrode_channels128(bad_channels=[]):
     '''
@@ -332,11 +338,7 @@ def polytrode_channels128(bad_channels=[]):
                                 electrode_amplifier_name_on_grid]
     channel_positions = pd.Series(electrode_coordinate_grid,
                                   channel_position_indices)
-    #no_channels = [-1]
-    #bad_channels = no_channels + bad_channels
-    #a = np.arange(0, 66)
-    #b = np.delete(a, bad_channels)
-    #channel_positions = channel_positions[b]
+
     return channel_positions
 
 
@@ -539,129 +541,27 @@ def plot_video_topoplot_with_juxta128(data, juxtaData, time_axis, channel_positi
                  extra_args=['h264'])
     plt.show()
 
-rootDir=r'D:\Protocols\PairedRecordings\Neuroseeker128\Data\2015-09-03\Movies'
-videoFilename = "2015_09_03_Pair6.1.avi"
-alignamplifier=all_cells_ivm_filtered_data['6_1']
 
-juxtaData = all_cells_patch_data['6_1']
+rootDir=r'D:\Protocols\PairedRecordings\Neuroseeker128\Data\2015-08-21\Movies'
+videoFilename = "2015_08_21_Pair3.3.avi"
 
-juxtaData = np.average(juxtaData,axis=-1) *1000
-juxtaData= filters.low_pass_filter(juxtaData, sampling_freq,low_pass_freq,method='iir',iir_params=iir_params)
-data = np.mean(alignamplifier,axis=2)
-time_axis = np.arange(-(np.shape(data)[1]/30000.0)/2, (np.shape(data)[1]/30000.0)/2,1/30000.0 )
 voltage_step_size = 0.195e-6
-data = data* 1000000*voltage_step_size
+scale_uV = 1000000
+scale_mV = 1000
+#sampling_freq = 30000
+#low_pass_freq = 5000
 
-# fig = plt.figure()
-# ax1=fig.add_subplot(1,2,1)
-# ax2=fig.add_subplot(1,2,2)
-# plot_topoplot(ax1,polytrode_channels(),data[:,500])
-# plot_topoplot(ax2,polytrode_channels(),data[:,500])
+alignamplifier=all_cells_ivm_filtered_data['3']
+juxtaData = all_cells_patch_data['3']
+juxtaData = np.average(juxtaData,axis=-1) * scale_mV
+#iir_params = {'order': 3, 'ftype': 'butter', 'padlen': 0}
+#juxtaData = filters.low_pass_filter(juxtaData, sampling_freq, low_pass_freq, method='iir', iir_params=iir_params)
+data = np.mean(alignamplifier,axis=2)
+data = data * scale_uV * voltage_step_size
+time_axis = np.arange(-(np.shape(data)[1]/30000.0)/2, (np.shape(data)[1]/30000.0)/2,1/30000.0 )
 
-
-###### 128 probe  ####
 plot_video_topoplot_with_juxta128(data,juxtaData, time_axis, polytrode_channels128(),
                                times_to_plot=[-0.001, 0.001], zlimits=[np.min(data), np.max(data) * 1.1],
                                filename= os.path.join(rootDir,videoFilename))
 
 
-
-######################
-
-###########
-#LOAD DATA
-
-
-data= np.load(r'G:\BACKUPS\2015_01_26_Data_openlab\Data juxta_extra\data_25_11_110um\paper\alignamplifier.npy')
-
-data = np.mean(data,axis=2)
-time_axis=np.arange(-(np.shape(data)[1]/30000)/2, (np.shape(data)[1]/30000)/2,1/30000 )
-
-amplitudes = np.zeros(32)
-for j in np.arange(32):
-        amplitudes[j] = abs(np.min(data[j,:])) + abs(np.max(data[j,:]))
-
-
-
-
-
-#amplitudes = np.load(r'E:\Data\2014-03-20\Analysis\Pictures\100\fig3\amplitude.npy')
-
-amplitudes = np.load(r'D:\Protocols\PairedRecordings\Neuroseeker128\Data\2015-08-21\Analysis\p2p_EXTRA_cell3_1.npy')
-error = np.load(r'E:\Data\2014-11-25\Analysis\_EXTRA_cell2.npy')
-
-fig = plt.figure()
-ax1=fig.add_subplot(1,2,1)
-plot_topoplot(ax1,polytrode_channels(),amplitudes)
-
-min_ampl= amplitudes.min()
-max_ampl= amplitudes.max()
-channel = amplitudes.argmax()
-print(min_ampl)
-print(max_ampl)
-print(channel)
-
-
-distances =  np.load(r'E:\Data\2014-11-13\Analysis\fig3\dist.npy')
-
-min_dis= distances.min()
-max_dis= distances.max()
-channel = distances.argmin()
-print(min_dis)
-print(max_dis)
-print(channel)
-
-
-ax2=fig.add_subplot(1,2,2)
-plot_topoplot(ax1,polytrode_channels(),data[:,500])
-plot_topoplot(ax2,polytrode_channels(),data[:,500])
-def polytrode_channels128(bad_channels=[]):
-    '''
-    This function produces a grid with the electrodes positions
-
-    Inputs:
-    bad_channels is a list or numpy array with channels you may want to
-    disregard.
-
-    Outputs:
-    channel_positions is a Pandas Series with the electrodes positions (in
-    two dimensions)
-    '''
-    electrode_coordinate_grid = list(itertools.product(np.arange(0, 32),
-                                                       np.arange(0, 4)))
-
-
-    #ALL_ELECTRODES
-    r1 = np.array([103,	101, 99,	97,	95,	93,	91,	89,	87,	70,	66,	84,	82,	80,	108,	110,	47,	45,	43,	41,	1, 61,	57,
-                    36,	34,	32,	30,	28,	26,	24,	22,	20])
-    r2 = np.array([106, 104, 115, 117, 119, 121, 123, 125, 127, 71, 67, 74, 76, 78, 114, 112,
-                   49, 51, 53, 55, 2, 62, 58, 4, 6, 8, 10, 12, 14, 21, 19, 16])
-    r3 = np.array([102, 100, 98, 96, 94, 92, 90, 88, 86, 72, 68, 65, 85, 83, 81, 111, 46, 44, 42, 40, 38, 63, 59,
-                   39, 37, 35, 33, 31, 29, 27, 25, 23])
-    r4 = np.array([109, 107, 105, 116, 118, 120, 122, 124, 126, 73, 69, 64, 75, 77, 79, 113,
-                   48, 50, 52, 54, 56, 0, 60, 3, 5, 7, 9, 11, 13, 15, 18,-1])
-
-    all_electrodes_concat = np.concatenate((r1, r2, r3, r4))
-    all_electrodes = all_electrodes_concat.reshape((4, 32))
-    all_electrodes = np.flipud(all_electrodes.T)
-    electrode_amplifier_index_on_grid =    all_electrodes
-    #print electrode_coordinate_grid
-
-    electrode_amplifier_index_on_grid = np.arange(128).reshape((32,4))
-    electrode_amplifier_index_on_grid = np.array([electrode_amplifier_index_on_grid[-i] for i in range(1,33)])
-    electrode_amplifier_index_on_grid = electrode_amplifier_index_on_grid.reshape(128)
-
-    #print "Error1"
-    electrode_amplifier_name_on_grid = np.array(["Int"+str(x) for x in electrode_amplifier_index_on_grid])
-    channel_position_indices = [electrode_amplifier_index_on_grid,
-                                electrode_amplifier_name_on_grid]
-    channel_positions = pd.Series(electrode_coordinate_grid,
-                                  channel_position_indices)
-    #print "Error2"
-    no_channels = []
-    bad_channels = no_channels + bad_channels
-    a = np.arange(0, 128)
-    b = np.delete(a, bad_channels)
-    channel_positions = channel_positions[b]
-    #print "Error3"
-    return channel_positions
