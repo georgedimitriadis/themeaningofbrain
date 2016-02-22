@@ -454,8 +454,8 @@ def plot_topoplot(channel_positions, data, show=True, **kwargs):
     return image, scat
 
 
-
-def plot_video_topoplot(data, time_axis, channel_positions, times_to_plot=[-0.1, 0.2], time_window = 0.002, time_step = 0.002, sampling_freq = 1000, zlimits = None,filename=None):
+def plot_video_topoplot(data, time_axis, channel_positions, times_to_plot=[-0.1, 0.2], time_window=0.002,
+                        time_step=0.002, sampling_freq=1000, zlimits=None, filename=None):
     fig = plt.figure()
     sample_step = int(time_step * sampling_freq)
     sub_time_indices = np.arange(ut.find_closest(time_axis, times_to_plot[0]), ut.find_closest(time_axis, times_to_plot[1]))
@@ -481,4 +481,82 @@ def plot_video_topoplot(data, time_axis, channel_positions, times_to_plot=[-0.1,
     plt.show()
 
 
+def plot_tsne(tsne, labels_dict=None, cm=None, subtitle=None, label_name='Label', label_array=None, axes=None):
+    if axes is None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+    else:
+        ax = axes
+    labeled_scatters = []
+    s = 10
+    ax.scatter(tsne[0], tsne[1], s=3)
 
+    if subtitle is None:
+            fig.suptitle('T-SNE')
+    else:
+            fig.suptitle(subtitle)
+
+    if labels_dict is not None:
+        number_of_labels = labels_dict.__len__()
+        color_indices = plt.Normalize(0, number_of_labels)
+        if cm is None:
+            cm = plt.cm.Dark2
+        for g in range(0, number_of_labels):
+            labeled_scatters.append(ax.scatter(tsne[0][labels_dict[g]],
+                                               tsne[1][labels_dict[g]],
+                                               s=s, color=cm(color_indices(g))))
+
+        if label_array is None:
+            label_array = np.array(range(number_of_labels))
+        if label_array.dtype==int:
+            threshold_legend = np.char.mod('{} %i'.format(label_name), label_array)
+        else:
+            threshold_legend = np.char.mod('{} %f'.format(label_name), label_array)
+        plt.legend(labeled_scatters, threshold_legend)
+    plt.tight_layout(rect=[0,0,1,1])
+
+    return fig, ax
+
+
+
+def show_clustered_tsne(dbscan_result, X, juxta_cluster_indices_grouped=None, threshold_legend=None):
+    core_samples_mask = np.zeros_like(dbscan_result.labels_, dtype=bool)
+    core_samples_mask[dbscan_result.core_sample_indices_] = True
+    labels = dbscan_result.labels_
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    unique_labels = set(labels)
+    colors = plt.cm.nipy_spectral(np.linspace(0, 1, len(unique_labels)))
+    for k, col in zip(unique_labels, colors):
+        ms = 4
+        if k == -1:
+            # Black used for noise.
+            col = 'k'
+            ms = 2
+
+        class_member_mask = (labels == k)
+
+        xy = X[class_member_mask & core_samples_mask]
+        ax.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
+                markeredgecolor='k', markersize=6)
+
+        xy = X[class_member_mask & ~core_samples_mask]
+        ax.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
+                markeredgecolor='k', markersize=ms)
+
+    if juxta_cluster_indices_grouped is not None:
+        c = ['r', 'g', 'c', 'm', 'y', 'k', 'w', 'b']
+        juxta_scatters = []
+        for g in range(1, len(juxta_cluster_indices_grouped)+1):
+            line, = ax.plot(X[juxta_cluster_indices_grouped[g], 0], X[juxta_cluster_indices_grouped[g], 1], '*',
+                            markersize=4.5, markerfacecolor=c[g-1], markeredgecolor=c[g-1])
+            juxta_scatters.append(line)
+        if threshold_legend is not None:
+            ax.legend(juxta_scatters, threshold_legend)
+
+    plt.tight_layout(rect=[0,0,1,1])
+
+    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+    plt.title('DBSCAN clustering of T-sne with {} estimated number of clusters'.format(n_clusters_))
+    plt.show()

@@ -1,15 +1,15 @@
-
-
-
+__author__ = 'George Dimitriadis'
 
 import os
 import numpy as np
 import numpy.core.defchararray as np_char
 import BrainDataAnalysis.timelocked_analysis_functions as tf
+import BrainDataAnalysis.ploting_functions as pf
 import IO.ephys as ephys
 import mne.filter as filters
 from sklearn.manifold import TSNE as tsne
-import bhtsne_cuda
+import t_sne_bhcuda.bhtsne_cuda as tsne_bhcuda
+import t_sne_bhcuda.t_sne_spikes as tsne_spikes
 import matplotlib.pyplot as plt
 import Layouts.Probes.probes_imec as pr_imec
 import h5py as h5
@@ -65,7 +65,7 @@ print(num_of_spikes)
 
 
 # Seperate the juxta spikes into a number of groups according to their size
-num_of_spike_groups = 4
+num_of_spike_groups = 12
 spike_thresholds_groups = np.arange(np.min(spike_peaks), np.max(spike_peaks),
                                     (np.max(spike_peaks) - np.min(spike_peaks)) / num_of_spike_groups)
 spike_thresholds_groups = np.append(spike_thresholds_groups, np.max(spike_peaks))
@@ -342,7 +342,7 @@ if not use_features:
     start = int((num_of_points_in_spike_trig_ivm - number_of_time_points) / 2)
     end = start + number_of_time_points
 else:
-    data_to_use = pca_features[:up_to_extra_spike, :].T
+    data_to_use = masked_pca_features[:up_to_extra_spike, :].T
     data_to_use = data_to_use.reshape((1, data_to_use.shape[0], data_to_use.shape[1]))
     num_of_spikes = data_to_use.shape[2]
     number_of_time_points = data_to_use.shape[1]
@@ -363,12 +363,18 @@ del t, X
 #indices_of_data_for_tsne = [(i, k)[0] for i, k in enumerate(X) if random.random() > 0] #For random choice
 indices_of_data_for_tsne = range(up_to_extra_spike) #For the first n spikes
 data_for_tsne = X_np[indices_of_data_for_tsne]
+
 juxta_cluster_indices_grouped = {}
-for g in range(1, num_of_spike_groups+1):
-    juxta_cluster_indices_temp = np.intersect1d(indices_of_data_for_tsne, indices_of_common_spikes_in_klusta_grouped[g])
+for g in range(0, num_of_spike_groups):
+    juxta_cluster_indices_temp = np.intersect1d(indices_of_data_for_tsne, indices_of_common_spikes_in_klusta_grouped[g+1])
     juxta_cluster_indices_grouped[g] = [i for i in np.arange(0, len(indices_of_data_for_tsne)) if
                              len(np.where(juxta_cluster_indices_temp == indices_of_data_for_tsne[i])[0])]
     print(len(juxta_cluster_indices_grouped[g]))
+
+
+
+
+
 
 
 
@@ -397,9 +403,29 @@ pickle.dump((ivm_data_filtered, t_tsne, juxta_cluster_indices_grouped, perplexit
 file.close()
 
 
-bhtsne_cuda.save_data_for_tsne(data_for_tsne, r'E:\George\SourceCode\Repos\t_sne_gpu\t_sne_gpu\windows', 'data.dat',
-                               theta=0.6, perplexity=50, eta=200, no_dims=2, iterations=1000, gpu_mem=0.8, randseed=-1)
-t_tsne = np.transpose(bhtsne_cuda.load_tsne_result(r'E:\George\SourceCode\Repos\t_sne_gpu\t_sne_gpu\windows', 'result.dat'))
+tsne_bhcuda.save_data_for_tsne(data_for_tsne, r'E:\George\SourceCode\Repos\t_sne_bhcuda\bin\windows', 'data.dat',
+                               theta=0.6, perplexity=50, eta=200, no_dims=2, iterations=1000, seed=0, gpu_mem=0.8,
+                               randseed=-1)
+t_tsne = np.transpose(tsne_bhcuda.load_tsne_result(
+            r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\klustakwik\threshold_6_5std',
+            'result_final_allspikes.dat'))
+
+
+
+# T-sne with my conda package
+kwx_file_path = r'''D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\klustakwik\threshold_6_5std\threshold_6_5std.kwx'''
+indices_of_data_for_tsne = range(10000)
+perplexity = 50.0
+theta = 0.6
+learning_rate = 200.0
+iterations = 3000
+gpu_mem = 0.8
+t_tsne2 = tsne_spikes.t_sne_spikes(kwx_file_path=kwx_file_path, hdf5_dir_to_pca=r'channel_groups/0/features_masks',
+                                  mask_data=True, path_to_save_tmp_data=None,
+                                  indices_of_spikes_to_tsne=indices_of_data_for_tsne, use_scikit=True,
+                                  perplexity=perplexity, theta=theta, eta=learning_rate,
+                                  iterations=iterations, gpu_mem=gpu_mem)
+
 
 # C++ wrapper t-sne using CPU
 t0 = time.time()
@@ -408,10 +434,10 @@ theta = 0.2
 learning_rate = 200.0
 iterations = 5000
 gpu_mem = 0
-t_tsne = bhtsne_cuda.bh_tsne(data_for_tsne,
-                             tmp_dir_path=r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\tsne_results',
-                             no_dims=2, perplexity=perplexity, eta=learning_rate, theta=theta,
-                             iterations=iterations, gpu_mem=gpu_mem, randseed=-1, verbose=3)
+t_tsne = tsne_bhcuda.t_sne(data_for_tsne,
+                           files_dir=r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\tsne_results',
+                           no_dims=2, perplexity=perplexity, eta=learning_rate, theta=theta,
+                           iterations=iterations, gpu_mem=gpu_mem, randseed=-1, verbose=3)
 t_tsne = np.transpose(t_tsne)
 t1 = time.time()
 print("C++ t-sne took {} seconds, ({} minutes), for {} spikes".format(t1-t0, (t1-t0)/60, up_to_extra_spike))
@@ -424,31 +450,22 @@ theta = 0.2
 learning_rate = 200.0
 iterations = 5000
 gpu_mem = 0.8
-t_tsne = bhtsne_cuda.bh_tsne(data_for_tsne,
-                        tmp_dir_path=r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\tsne_results',
-                        no_dims=2, perplexity=perplexity, eta=learning_rate, theta=theta,
-                        iterations=iterations, gpu_mem=gpu_mem, randseed=-1, verbose=3)
+t_tsne = tsne_bhcuda.t_sne(data_for_tsne,
+                           files_dir=r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\tsne_results',
+                           no_dims=2, perplexity=perplexity, eta=learning_rate, theta=theta,
+                           iterations=iterations, gpu_mem=gpu_mem, randseed=-1, verbose=3)
 t_tsne = np.transpose(t_tsne)
 t1 = time.time()
 print("CUDA t-sne took {} seconds, ({} minutes), for {} spikes".format(t1-t0, (t1-t0)/60, up_to_extra_spike))
 
 
 #  2D plot
-fig = plt.figure()
-ax = fig.add_subplot(111)
-juxta_scatters = []
-s = 10
-ax.scatter(t_tsne[0], t_tsne[1], s=3)
-c = ['r', 'g', 'c', 'm', 'y', 'k', 'w', 'b']
-for g in range(1, num_of_spike_groups+1):
-    juxta_scatters.append(ax.scatter(t_tsne[0][juxta_cluster_indices_grouped[g]],
-                                     t_tsne[1][juxta_cluster_indices_grouped[g]],
-                                     s=s, color=c[g-1]))
-fig.suptitle('T-SNE on Thres={} with Per={}, l_rate={}, extra spikes={}'.format(5.5, perplexity, learning_rate,
-                                                                       len(indices_of_data_for_tsne)))
-threshold_legend = np_char.add(np.char.mod('%i', spike_thresholds_groups * 1e6), ' uV')
-plt.legend(juxta_scatters, threshold_legend)
-plt.tight_layout(rect=[0,0,1,1])
+pf.plot_tsne(t_tsne2, juxta_cluster_indices_grouped, subtitle='T-sne', label_name='Peak size in uV',
+             label_array=(spike_thresholds_groups*1e6).astype(int))
+pf.plot_tsne(t_tsne, subtitle='T-sne of 129000 spikes from Juxta Paired recordings, not labeled',
+             label_name=None,
+             label_array=None)
+
 
 
 #  3D plot
@@ -477,8 +494,10 @@ file.close()
 # Load the c++ bhtsne results
 tmp_dir_path = r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\tsne_results'
 results_filename = 'result_0to50kexsp_40timpoints_per500_ee100_lr3k_theta07.dat'
-t_tsne = bhtsne_cuda.load_tsne_result(tmp_dir_path, results_filename)
+t_tsne = tsne_bhcuda.load_tsne_result(tmp_dir_path, results_filename)
 t_tsne = np.transpose(t_tsne)
+#or
+t_tsne = np.load(r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\klustakwik\threshold_6_5std\t_sne_results_final_allspikes.npy')
 
 
 # Clustering
@@ -497,7 +516,7 @@ def fit_dbscan(data, eps, min_samples, show=True, juxta_cluster_indices_grouped=
     print("Silhouette Coefficient: {}".format(score))
 
     if show:
-        show_clustered_tsne(db, X, juxta_cluster_indices_grouped, threshold_legend)
+        pf.show_clustered_tsne(db, X, juxta_cluster_indices_grouped, threshold_legend)
 
     return db, n_clusters_, labels, core_samples_mask, score
 
@@ -506,49 +525,8 @@ from sklearn.cluster import KMeans
 kmeans_est_35 = KMeans(n_clusters=35)
 kmeans_est_35.fit(X)
 
-
-def show_clustered_tsne(dbscan_result, X, juxta_cluster_indices_grouped=None, threshold_legend=None):
-    core_samples_mask = np.zeros_like(dbscan_result.labels_, dtype=bool)
-    core_samples_mask[dbscan_result.core_sample_indices_] = True
-    labels = dbscan_result.labels_
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    unique_labels = set(labels)
-    colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
-    for k, col in zip(unique_labels, colors):
-        ms = 4
-        if k == -1:
-            # Black used for noise.
-            col = 'k'
-            ms = 2
-
-        class_member_mask = (labels == k)
-
-        xy = X[class_member_mask & core_samples_mask]
-        ax.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
-                markeredgecolor='k', markersize=6)
-
-        xy = X[class_member_mask & ~core_samples_mask]
-        ax.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
-                markeredgecolor='k', markersize=ms)
-
-    if juxta_cluster_indices_grouped is not None:
-        c = ['r', 'g', 'c', 'm', 'y', 'k', 'w', 'b']
-        juxta_scatters = []
-        for g in range(1, len(juxta_cluster_indices_grouped)+1):
-            line, = ax.plot(X[juxta_cluster_indices_grouped[g], 0], X[juxta_cluster_indices_grouped[g], 1], '*',
-                            markersize=4.5, markerfacecolor=c[g-1], markeredgecolor=c[g-1])
-            juxta_scatters.append(line)
-        if threshold_legend is not None:
-            ax.legend(juxta_scatters, threshold_legend)
-
-    plt.tight_layout(rect=[0,0,1,1])
-
-    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-    plt.title('DBSCAN clustering of T-sne with {} estimated number of clusters'.format(n_clusters_))
-    plt.show()
-
+db, n_clusters_, labels, core_samples_mask, score = fit_dbscan(t_tsne, 1, 20, show=True)
+pf.show_clustered_tsne(db, X, juxta_cluster_indices_grouped=None, threshold_legend=None)
 
 
 # Loop over values of eps and min_samples to find best fit for DBSCAN
@@ -568,7 +546,7 @@ clustering_scores = np.array(clustering_scores)
 # Define TP / FP / TN and FN
 X = np.transpose(t_tsne)
 juxta_cluster_indices = []
-for g in range(1, num_of_spike_groups+1):
+for g in range(0, num_of_spike_groups):
     juxta_cluster_indices.extend(juxta_cluster_indices_grouped[g])
 means_of_juxta = np.array([np.median(X[juxta_cluster_indices, 0]), np.median(X[juxta_cluster_indices, 1])])
 
@@ -582,11 +560,7 @@ for l in range(n_clusters_):
     dmeans[l] = np.linalg.norm((means_of_labels[l,:]-means_of_juxta))
 juxta_cluster_index = np.argmin(dmeans)
 
-# have a look where the averages are
-fig = plt.figure()
-ax = fig.add_subplot(111)
-ax.scatter(means_of_juxta[0], means_of_juxta[1])
-ax.scatter(means_of_labels[:, 0], means_of_labels[:, 1], color='r')
+
 
 # calculate prec, rec and f factor
 class_member_mask = (labels == juxta_cluster_index)
@@ -599,3 +573,9 @@ precision = tp / all_pos
 recall = tp / all_true
 f_factor = 2*(precision*recall)/(precision+recall)
 print('Precision = {}, Recall = {}, F1 factor = {}'.format(precision, recall, f_factor))
+
+# have a look where the averages are
+fig = plt.figure()
+ax = fig.add_subplot(111)
+ax.scatter(means_of_juxta[0], means_of_juxta[1])
+ax.scatter(means_of_labels[:, 0], means_of_labels[:, 1], color='r')
