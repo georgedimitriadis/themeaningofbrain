@@ -13,9 +13,12 @@ import scipy
 from sklearn.decomposition import FastICA
 from mpl_toolkits.mplot3d import Axes3D
 
-#ALL_ELECTRODES
-r1 = np.array([103,	101, 99,	97,	95,	93,	91,	89,	87,	70,	66,	84,	82,	80,	108,	110,	47,	45,	43,	41,	1, 61,	57,
-                   36,	34,	32,	30,	28,	26,	24,	22,	20])
+
+# Distance from 128channels
+
+# all_electrodes
+r1 = np.array([103,	101, 99,	97,	95,	93,	91,	89,	87,	70,	66,	84,	82,	80,	108, 110, 47, 45, 43, 41, 1, 61, 57,
+                   36, 34, 32, 30, 28, 26, 24, 22, 20])
 r2 = np.array([106, 104, 115, 117, 119, 121, 123, 125, 127, 71, 67, 74, 76, 78, 114, 112,
                    49, 51, 53, 55, 2, 62, 58, 4, 6, 8, 10, 12, 14, 21, 19, 16])
 r3 = np.array([102, 100, 98, 96, 94, 92, 90, 88, 86, 72, 68, 65, 85, 83, 81, 111, 46, 44, 42, 40, 38, 63, 59,
@@ -27,14 +30,11 @@ all_electrodes_concat = np.concatenate((r1, r2, r3, r4))
 all_electrodes = all_electrodes_concat.reshape((4, 32))
 all_electrodes = np.flipud(all_electrodes.T)
 
-
-
-#####ORDEREDSITES
+# orderedsites
 electrode_coordinate_grid = list(itertools.product(np.arange(1, 33), np.arange(1, 5)))
 orderedSites = electrode_coordinate_grid
 
-
-#####SITESPOSITION
+# sitespositions
 scaleX=25
 scaleY=25
 scale = np.array([scaleX,scaleY])
@@ -46,17 +46,6 @@ for i in range(32):
 probeConfiguration = np.flipud(probeConfiguration) # the (0,0) for Y,Z is the elect (31,0) left bottom
 probeConfiguration = probeConfiguration * scale
 sitesPosition = probeConfiguration
-
-
-
-###REFERENCE POINT EXTRACELLULAR
-
-referencecoordinates = (0, 37.5) #ref point bottom center (z,y)
-referencecoordinates = (-310, 37.5) #ref point Tip (z,y)
-
-
-
-
 
 def eval_dist(referencecoordinates, IVM, juxta):
     '''
@@ -124,30 +113,19 @@ def eval_dist(referencecoordinates, IVM, juxta):
 
     return spikesPositions, spikesDistances
 
-######################
-cellname = 'cell7_1'
+#How to get the distances values?
 
-
-
-cell7''(196.5;0;-4865)IVM(408.7;0;-5282.4)
-
-cell7(204;0;-4850)IVM(408.7;0;-5282.4)
-
-#cell5(331.5 0 -4594.8)IVM(494.5399 0 -4920.042)
+cellname = '2015_08_28_pair9.0'
 
 # extraPos and juxtaPos have to be numpy arrays
 # I had to add a decimal place in all axes
 # The Z axis has to be flipped
- IVM 493.1111 33.3 -4722.654 Patch 437.4 33.4 -4462.1
 
+extraPos = np.array([299.1, -119.4, -4588.2])*np.array([1, 1, -1])
+juxtaPos = np.array([347.4, -119.4, -4451.7])*np.array([1, 1, -1])
 
-
-
-extraPos = np.array([494.5399, 0, -4920.042])*np.array([1, 1, -1])
-juxtaPos = np.array([161.4, 47.2, -4415.2])*np.array([1, 1, -1])
-#referencecoordinates = (-310, 37.5) #ref point Tip (z,y)
-referencecoordinates = (0, 37.5) #ref point bottom center (z,y)
-
+#referencecoordinates = (-310, 37.5) #ref point in extra probe is the Tip (z,y)
+referencecoordinates = (0, 37.5) #ref point in extra probe is bottom center (z,y)
 refSite = referencecoordinates
 
 pos, dist = eval_dist(refSite, extraPos, juxtaPos)
@@ -160,8 +138,11 @@ print(min_dist)
 print(channel_min_dist)
 print(channel_intan)
 
-i=3
+# Save distances and positions for the cell
 
+analysis_folder ='D:\\Protocols\\PairedRecordings\\Neuroseeker128\\Data\\2015-09-03\\Analysis'
+
+i=2
 np.save(os.path.join(analysis_folder,'distances_Cell'+ good_cells[i] + '.npy'), dist)
 np.save(os.path.join(analysis_folder,'positions_Cell'+ good_cells[i] + '.npy'), pos)
 
@@ -199,40 +180,78 @@ ax.scatter(spikesPositions[:,0],spikesPositions[:,1],spikesPositions[:,2])
 ax.scatter(0,0,0,c='g')
 
 
-###average
-###first load data 3D and average
 
-def heatmapp_amplituide(all_cells_ivm_filtered_data, good_cells_number = 0, windowSize=60):
 
-    voltage_step_size = 0.195e-6
-    extra_average_V = np.average(all_cells_ivm_filtered_data[good_cells[good_cells_number]][:,:,:],axis=2) * voltage_step_size
-    extra_average_microVolts = extra_average_V * 1000000
-    orderedSites = all_electrodes.reshape(1,128)
-    NumSamples=extra_average_V.shape[1]
-    NumSites=np.size(extra_average_microVolts,axis = 0)
-    lowerBound=int(NumSamples/2.0-windowSize/2.0)
-    upperBound=int(NumSamples/2.0+windowSize/2.0)
-    amplitude = np.zeros(128)
-    for j in np.arange(128):
-        amplitude[j] =  np.max(extra_average_microVolts[orderedSites[0][j],lowerBound:upperBound])-np.min(extra_average_microVolts[orderedSites[0][j],lowerBound:upperBound])
-    return amplitude
 
-i = 0
-amplitude = heatmapp_amplituide(all_cells_ivm_filtered_data, good_cells_number = i)
+# Distances from 32channels
 
-np.save(os.path.join(analysis_folder,'amplitude_EXTRA_Cell'+ good_cells[i] + '.npy'), amplitude)
+orderedSites = np.genfromtxt('E:\Data\orderedSites.dat', delimiter=' ',dtype="i8")
 
-####scheme of heatmap
+def eval_dist(referenceSite, IVM, juxta, sitesPositionsFN='E:\Data\probeconfiguration.dat'):
+    '''
+    referenceSite = site to which the IVM coordinates refer to
+    IVM = coordinates of the reference site on the probe
+    juxta = juxta probe coordinates
+    sitesPositionsFN = path to sites positions file.
+    '''
 
-B = np.copy(amplitude)
+    sitesPositions = np.genfromtxt(sitesPositionsFN, delimiter=' ')
+    NumSites = sitesPositions.shape[0]
 
-orderedSites = all_electrodes.reshape(1,128)
-Bmod = np.reshape(B,(32,4))
+    referencePosition = np.zeros(2)
+    referencePosition[0] = sitesPositions[referenceSite][0]
+    referencePosition[1] = sitesPositions[referenceSite][1]
+
+    for i in range(NumSites):
+        for j in range(2):
+            sitesPositions[i, j] = sitesPositions[i, j] - referencePosition[j]
+
+    newPositions = np.zeros((NumSites, 3))
+    newPositions[:, 1] = np.copy(sitesPositions[:, 0])
+    newPositions[:, 2] = np.copy(sitesPositions[:, 1])
+
+    for i in range(NumSites):
+        newPositions[i, 0] = newPositions[i, 2] * np.cos(0.8412486985)  # 48.2º
+
+    for i in range(NumSites):
+        newPositions[i, 2] = newPositions[i, 2] * np.sin(0.8412486985)  # 48.2º
+
+    spikesPositions = np.zeros((NumSites, 3))
+    spikesDistances = np.zeros(NumSites)
+
+    spikesPositions = np.copy(newPositions)
+    for i in range(NumSites):
+        spikesPositions[i] = spikesPositions[i] - IVM + juxta
+
+    for j in range(NumSites):
+        spikesDistances[j] = np.sqrt(spikesPositions[j][0]**2 +
+                                     spikesPositions[j][1]**2 +
+                                     spikesPositions[j][2]**2)
+
+    return spikesPositions, spikesDistances
+
+######################
+cellname = '2014_11_25_pair3.0'
+# extraPos and juxtaPos have to be numpy arrays
+# I had to add a decimal place in all axes
+# The Z axis has to be flipped
+
+extraPos = np.array([-184.7221, -200.8656, -3312.021])*np.array([1, 1, -1])
+juxtaPos = np.array([-112.3, -200.9, -3310.6])*np.array([1, 1, -1])
+refSite = 17
+
+min_dist = dist.min()
+channel_min_dist = dist.argmin()
+print(min_dist)
+print(channel_min_dist)
+
+# Schematic of the relative positions of the juxtacellular probe and the
+# electrodes of the silicon probe ()
 fig, ax = plt.subplots()
-#ax.set_title('Distances Heatmap',fontsize=10, position=(0.8,1.02))
-plt.axis('off')
-im = ax.imshow(Bmod, cmap=plt.get_cmap('jet'),vmin = np.min(B),vmax= np.max(B))
-cb = fig.colorbar(im,ticks = [np.min(B), 0,np.max(B)])
-cb.ax.tick_params(labelsize = 20)
+ax.scatter(pos[:, 0], pos[:, 2], color='b')
+ax.scatter(0, 0, color='r')
+ax.set_title('XoZ plane\n'+cellname, fontsize=20)
+ax.set_aspect('equal')
+plt.draw()
 plt.show()
 
