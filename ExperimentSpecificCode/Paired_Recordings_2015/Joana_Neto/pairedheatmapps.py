@@ -526,7 +526,7 @@ def create_all_electrodes(filename=None, bad_channels=None):
     all_electrodes = np.flipud(all_electrodes.T)
 
     if filename is not None:
-        prb_gen.generate_prb_file(filename=filename, all_electrodes_array=all_electrodes)
+        prb_gen.generate_prb_file(filename=filename, all_electrodes_array=all_electrodes, channel_number=128)
 
     return all_electrodes
 

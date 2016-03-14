@@ -22,7 +22,7 @@ def create_128channels_imec_prb(filename=None, bad_channels=None):
 
 
     if filename is not None:
-        prb_gen.generate_prb_file(filename=filename, all_electrodes_array=all_electrodes)
+        prb_gen.generate_prb_file(filename=filename, all_electrodes_array=all_electrodes, channel_number=128)
 
 
     electrode_coordinate_grid = list(itertools.product(np.arange(1, 32), np.arange(1, 5)))

@@ -34,7 +34,7 @@ h5file = h5.File(kwik_file_path, mode='r')
 spike_times = np.array(list(h5file['channel_groups/1/spikes/time_samples']))
 h5file.close()
 
-spikes_used = 20000#len(spike_times)
+spikes_used = len(spike_times)
 
 # Get clusters
 mat_dict = sio.loadmat(spike_mat_file)
@@ -80,9 +80,9 @@ tsne = tsne_spikes.t_sne_spikes(kwx_file_path, hdf5_dir_to_pca=r'channel_groups/
 
 
 # Load t-sne results
-tsne = TSNE.load_tsne_result(results_dir, 'result_50.dat')
+tsne = TSNE.load_tsne_result(results_dir, 'result_tsne40K_com46k_p500_it1k_th05_eta200.dat')
 tsne = np.transpose(tsne)
-tsne = np.load(join(results_dir, 't_sne_result_p300_it5k_th02_eta200.npy'))
+tsne = np.load(join(results_dir, 't_sne_result_p800_it2k_th06_eta200.npy'))
 
 
 # 2D plot
@@ -114,7 +114,7 @@ def fit_dbscan(data, eps, min_samples, show=True, juxta_cluster_indices_grouped=
     return db, n_clusters_, db_labels, core_samples_mask, score
 
 
-db, n_clusters_, db_labels, core_samples_mask, score = fit_dbscan(tsne, 1, 20, show=True)
+db, n_clusters_, db_labels, core_samples_mask, score = fit_dbscan(tsne, 1.5, 25, show=True)
 
 
 # 2) Define TP / FP / TN and FN

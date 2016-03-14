@@ -669,7 +669,7 @@ raw_data_file_ivm = os.path.join(data_folder, 'amplifier'+date+'T'+cell_capture_
 raw_data_ivm = ephys.load_raw_data(raw_data_file_ivm, numchannels=num_ivm_channels, dtype=amp_dtype)
 file_dat = os.path.join(analysis_folder, r'klustakwik\raw_data_ivm_klusta.dat')
 
-klusta.make_dat_file(raw_data_ivm.dataMatrix, num_channels=num_ivm_channels, time_limits=time_limits, filename=file_dat)
+klusta.make_dat_file(raw_data_ivm.dataMatrix, filename=file_dat, num_channels=num_ivm_channels, time_limits=time_limits)
 
 file_prb = os.path.join(analysis_folder, r'klustakwik\128ch_passive_imec.prb')
 electrode_structure = pr_imec.create_128channels_imec_prb(file_prb)
@@ -1215,22 +1215,22 @@ cellname = 'cell4_0'
 
 
 
-cell7''(196.5;0;-4865)IVM(408.7;0;-5282.4)
+#cell7''(196.5;0;-4865)IVM(408.7;0;-5282.4)
 
-cell7(204;0;-4850)IVM(408.7;0;-5282.4)
+#cell7(204;0;-4850)IVM(408.7;0;-5282.4)
 
 #cell5(331.5 0 -4594.8)IVM(494.5399 0 -4920.042)
 
 # extraPos and juxtaPos have to be numpy arrays
 # I had to add a decimal place in all axes
 # The Z axis has to be flipped
-cell4(-185;y;-4094)IVM(313.3;y;-4640)
- IVM 468.9159 33.3 -4695.594 Patch 437.4 33.4 -4462.1
+#cell4(-185;y;-4094)IVM(313.3;y;-4640)
+#IVM 468.9159 33.3 -4695.594 Patch 437.4 33.4 -4462.1
 
- IVM 468.9159 33.3 -4695.594 Patch 437.4 33.4 -4462.1
+#IVM 468.9159 33.3 -4695.594 Patch 437.4 33.4 -4462.1
 
 
-494.5399 0 -4920.042	161.4 47.2 -4415.2
+#494.5399 0 -4920.042	161.4 47.2 -4415.2
 
 extraPos = np.array([494.5399, 0, -4920.042 ])*np.array([1, 1, -1])
 juxtaPos = np.array([161.4, 47.2, -4415.2 ])*np.array([1, 1, -1])

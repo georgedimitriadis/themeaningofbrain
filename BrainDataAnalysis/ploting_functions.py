@@ -481,19 +481,26 @@ def plot_video_topoplot(data, time_axis, channel_positions, times_to_plot=[-0.1,
     plt.show()
 
 
-def plot_tsne(tsne, labels_dict=None, cm=None, subtitle=None, label_name='Label', label_array=None, axes=None):
+def plot_tsne(tsne, labels_dict=None, cm=None, subtitle=None, label_name='Label', label_array=None, axes=None,
+              sizes=None, markers=None, color=None):
     if axes is None:
         fig = plt.figure()
         ax = fig.add_subplot(111)
     else:
         ax = axes
-    labeled_scatters = []
-    s = 10
-    ax.scatter(tsne[0], tsne[1], s=3)
 
-    if subtitle is None:
+    labeled_scatters = []
+    if sizes is None:
+        sizes = [3, 10]
+    if markers is None:
+        markers = ['.', 'o']
+    if color is None:
+        color = 'k'
+    ax.scatter(tsne[0], tsne[1], s=sizes[0], marker=markers[0], color=color)
+
+    if subtitle is None and ax is None:
             fig.suptitle('T-SNE')
-    else:
+    elif ax is None:
             fig.suptitle(subtitle)
 
     if labels_dict is not None:
@@ -504,18 +511,22 @@ def plot_tsne(tsne, labels_dict=None, cm=None, subtitle=None, label_name='Label'
         for g in range(0, number_of_labels):
             labeled_scatters.append(ax.scatter(tsne[0][labels_dict[g]],
                                                tsne[1][labels_dict[g]],
-                                               s=s, color=cm(color_indices(g))))
+                                               s=sizes[1], color=cm(color_indices(g)),
+                                               marker=markers[1]))
 
         if label_array is None:
             label_array = np.array(range(number_of_labels))
-        if label_array.dtype==int:
+        if label_array.dtype == int:
             threshold_legend = np.char.mod('{} %i'.format(label_name), label_array)
         else:
             threshold_legend = np.char.mod('{} %f'.format(label_name), label_array)
         plt.legend(labeled_scatters, threshold_legend)
-    plt.tight_layout(rect=[0,0,1,1])
+    plt.tight_layout(rect=[0, 0, 1, 1])
 
-    return fig, ax
+    if axes is None:
+        return fig, ax
+    else:
+        pass
 
 
 

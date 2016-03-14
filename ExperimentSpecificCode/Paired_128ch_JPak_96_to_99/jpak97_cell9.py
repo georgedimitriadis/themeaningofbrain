@@ -178,7 +178,7 @@ raw_data_file_ivm = os.path.join(data_folder, 'amplifier'+date+'T'+cell_capture_
 raw_data_ivm = ephys.load_raw_data(raw_data_file_ivm, numchannels=num_ivm_channels, dtype=amp_dtype)
 file_dat = os.path.join(analysis_folder, r'klustakwik\raw_data_ivm_klusta.dat')
 
-klusta.make_dat_file(raw_data_ivm.dataMatrix, num_channels=num_ivm_channels, time_limits=time_limits, filename=file_dat)
+klusta.make_dat_file(raw_data_ivm.dataMatrix, filename=file_dat, num_channels=num_ivm_channels, time_limits=time_limits)
 
 file_prb = os.path.join(analysis_folder, r'klustakwik\128ch_passive_imec.prb')
 electrode_structure = pr_imec.create_128channels_imec_prb(file_prb)
@@ -364,14 +364,21 @@ del t, X
 indices_of_data_for_tsne = range(up_to_extra_spike) #For the first n spikes
 data_for_tsne = X_np[indices_of_data_for_tsne]
 
+s = 128820
+indices_of_data_for_tsne = range(s)
 juxta_cluster_indices_grouped = {}
 for g in range(0, num_of_spike_groups):
     juxta_cluster_indices_temp = np.intersect1d(indices_of_data_for_tsne, indices_of_common_spikes_in_klusta_grouped[g+1])
     juxta_cluster_indices_grouped[g] = [i for i in np.arange(0, len(indices_of_data_for_tsne)) if
                              len(np.where(juxta_cluster_indices_temp == indices_of_data_for_tsne[i])[0])]
-    print(len(juxta_cluster_indices_grouped[g]))
+    #print(len(juxta_cluster_indices_grouped[g]))
 
+per = 100
+lr = 200
+it = 2000
 
+t_tsne = np.load(r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\klustakwik'+\
+                 r'\threshold_6_5std\t_sne_results_{}s_{}per_{}lr_{}it.npy'.format(s, per, lr, it))
 
 
 
@@ -413,18 +420,19 @@ t_tsne = np.transpose(tsne_bhcuda.load_tsne_result(
 
 
 # T-sne with my conda package
-kwx_file_path = r'''D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\klustakwik\threshold_6_5std\threshold_6_5std.kwx'''
-indices_of_data_for_tsne = range(10000)
-perplexity = 50.0
-theta = 0.6
+kwx_file_path = r'''D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\\klustakwik_128to32_probe\threshold_6_5std\threshold_6_5std.kwx'''
+indices_of_data_for_tsne = None#range(128820)
+seed = 0
+perplexity = 100.0
+theta = 0.2
 learning_rate = 200.0
-iterations = 3000
+iterations = 2000
 gpu_mem = 0.8
 t_tsne2 = tsne_spikes.t_sne_spikes(kwx_file_path=kwx_file_path, hdf5_dir_to_pca=r'channel_groups/0/features_masks',
                                   mask_data=True, path_to_save_tmp_data=None,
-                                  indices_of_spikes_to_tsne=indices_of_data_for_tsne, use_scikit=True,
+                                  indices_of_spikes_to_tsne=indices_of_data_for_tsne, use_scikit=False,
                                   perplexity=perplexity, theta=theta, eta=learning_rate,
-                                  iterations=iterations, gpu_mem=gpu_mem)
+                                  iterations=iterations, seed=seed, verbose=2, gpu_mem=gpu_mem)
 
 
 # C++ wrapper t-sne using CPU
@@ -445,10 +453,10 @@ print("C++ t-sne took {} seconds, ({} minutes), for {} spikes".format(t1-t0, (t1
 
 # C++ wrapper t-sne using GPU
 t0 = time.time()
-perplexity = 50.0
+perplexity = 1000.0
 theta = 0.2
 learning_rate = 200.0
-iterations = 5000
+iterations = 2000
 gpu_mem = 0.8
 t_tsne = tsne_bhcuda.t_sne(data_for_tsne,
                            files_dir=r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\tsne_results',
@@ -460,7 +468,7 @@ print("CUDA t-sne took {} seconds, ({} minutes), for {} spikes".format(t1-t0, (t
 
 
 #  2D plot
-pf.plot_tsne(t_tsne2, juxta_cluster_indices_grouped, subtitle='T-sne', label_name='Peak size in uV',
+pf.plot_tsne(t_tsne, juxta_cluster_indices_grouped, subtitle='T-sne', label_name='Peak size in uV',
              label_array=(spike_thresholds_groups*1e6).astype(int))
 pf.plot_tsne(t_tsne, subtitle='T-sne of 129000 spikes from Juxta Paired recordings, not labeled',
              label_name=None,
@@ -482,7 +490,7 @@ for g in np.arange(1, num_of_spike_groups+1):
 spike_number = 53497
 perplexity = 800.0
 early_exaggeration = 100.0
-learning_rate = 3000.0
+learning_rate = 200.0
 number_of_time_points = 20
 threshold = 11
 file_name = r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\t_tsne_ivm_data_{}sp_{}per_{}ee_{}lr_{}tp_{}thres.pkl'\
@@ -525,7 +533,7 @@ from sklearn.cluster import KMeans
 kmeans_est_35 = KMeans(n_clusters=35)
 kmeans_est_35.fit(X)
 
-db, n_clusters_, labels, core_samples_mask, score = fit_dbscan(t_tsne, 1, 20, show=True)
+db, n_clusters_, labels, core_samples_mask, score = fit_dbscan(t_tsne, 0.6, 20, show=True)
 pf.show_clustered_tsne(db, X, juxta_cluster_indices_grouped=None, threshold_legend=None)
 
 

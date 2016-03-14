@@ -9,12 +9,12 @@ import pylab as pl
 import numpy as np
 import pandas as pd
 import os
-import ploting_functions as pf
-import timelocked_analysis_functions as tf
-import filters as filters
+import BrainDataAnalysis.ploting_functions as pf
+import BrainDataAnalysis.timelocked_analysis_functions as tf
+import BrainDataAnalysis.filters as filters
 import scipy.signal as signal
 import scipy as sp
-import grids as grids
+import Layouts.Grids.grids as grids
 
 f_sampling = 32556
 f_hp_cutoff = 500
