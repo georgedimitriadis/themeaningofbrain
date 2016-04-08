@@ -1,11 +1,137 @@
 
 
 import numpy as np
+from os.path import dirname, exists, join
 import BrainDataAnalysis.ploting_functions as pf
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN
 from sklearn import metrics
+import BrainDataAnalysis.Utilities as ut
+import IO.ephys as ephys
+import BrainDataAnalysis.timelocked_analysis_functions as tf
+import h5py as h5
 
+
+def select_spikes_in_certain_channels(spike_threshold, raw_data_file, common_spikes, indices_of_common_spikes_in_extra,
+                                      good_channels, num_of_raw_data_channels):
+    """
+    Select spikes that appear only on the good_channels
+
+    Parameters
+    ----------
+    spike_threshold
+    raw_data_file
+    common_spikes
+    indices_of_common_spikes_in_extra
+    good_channels
+    num_of_raw_data_channels
+
+    Returns
+    -------
+
+    """
+    raw_data = ephys.load_raw_data(filename=raw_data_file, numchannels=num_of_raw_data_channels)
+    common_spikes = np.array(common_spikes)
+    indices_of_common_spikes_in_extra = np.array(indices_of_common_spikes_in_extra)
+    t = raw_data.dataMatrix[:, common_spikes]
+    if spike_threshold > 0:
+        spike_channels = np.argmin(t, axis=0)
+    if spike_threshold < 0:
+        spike_channels = np.argmax(t, axis=0)
+    good_spike_indices = [i for i, x in list(enumerate(spike_channels)) if np.in1d(x, good_channels)]
+    common_spikes = common_spikes[good_spike_indices]
+    indices_of_common_spikes_in_extra = indices_of_common_spikes_in_extra[good_spike_indices]
+    return common_spikes, indices_of_common_spikes_in_extra
+
+
+def create_juxta_label(kwik_file, spike_thresholds, num_of_spike_groups=1,
+                       adc_channel_used=0, adc_dtype=np.uint16, inter_spike_time_distance=0.002,
+                       amp_gain=100,
+                       num_of_raw_data_channels=None,
+                       spike_channels=None,
+                       verbose=True):
+    """
+    Find the juxta spikes in the extra spike train and label them according to size splitting them into
+    num_of_spike_groups groups
+
+    Parameters
+    ----------
+    kwik_file
+    spike_thresholds
+    num_of_spike_groups
+    adc_channel_used
+    adc_dtype
+    inter_spike_time_distance
+    amp_gain
+    num_of_raw_data_channels
+    spike_channels
+    verbose
+
+    Returns
+    -------
+
+    """
+
+    h5file = h5.File(kwik_file, mode='r')
+    extra_spike_times = np.array(list(h5file['channel_groups/0/spikes/time_samples']))
+    h5file.close()
+
+    spikes_used = len(extra_spike_times)
+    if verbose:
+        print("Total spikes in extra = " + str(len(extra_spike_times)))
+
+
+    # Get the juxta spikes and generate labels
+    # 1) Generate the juxta spike time triggers (and the adc traces in Volts)
+    raw_juxta_data_file = r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Data' + \
+                          r'\adc2015-09-03T21_18_47.bin'
+    raw_data_patch = ephys.load_raw_event_trace(raw_juxta_data_file, number_of_channels=8,
+                                                  channel_used=adc_channel_used, dtype=adc_dtype)
+    juxta_spike_triggers, juxta_spike_peaks, juxta_spike_data_in_V = tf.create_spike_triggered_events(raw_data_patch.dataMatrix,
+                                                                       threshold=spike_thresholds,
+                                                                       inter_spike_time_distance=inter_spike_time_distance,
+                                                                       amp_gain=amp_gain)
+    num_of_spikes = len(juxta_spike_triggers)
+    if verbose:
+        print('Total spikes in Juxta = ' + str(num_of_spikes))
+
+
+
+    # 2) Seperate the juxta spikes into a number of groups according to their size
+    juxta_spikes_grouped, juxta_spike_peaks_grouped, juxta_spike_triggers_grouped_withnans,\
+            juxta_spike_peaks_grouped_withnans, spike_thresholds_groups = \
+        split_juxta_spikes_into_groups_by_size(num_of_spike_groups=num_of_spike_groups,
+                                                   juxta_spike_peaks=juxta_spike_peaks,
+                                                   juxta_spike_triggers=juxta_spike_triggers)
+
+    # 3) Find the common spikes between the extra apikes and the juxta spikes for all the juxta spikes and for all the
+    # sub groups of juxta spikes and group the good spikes
+    common_spikes_grouped = {}
+    juxta_spikes_not_found_grouped = {}
+    indices_of_common_extra_spikes_grouped = {}
+    for g in range(1, num_of_spike_groups+1):
+        common_spikes_grouped[g], indices_of_common_extra_spikes_grouped[g], juxta_spikes_not_found_grouped[g] = \
+             ut.find_points_in_array_with_jitter(points_to_be_found=juxta_spikes_grouped[g],
+                                                 array_to_search=extra_spike_times[:spikes_used],
+                                                 jitter_around_each_point=7)
+    if spike_channels is not None and num_of_raw_data_channels is not None:
+        common_spikes_grouped[g], indices_of_common_extra_spikes_grouped[g] \
+            = select_spikes_in_certain_channels(spike_thresholds, common_spikes_grouped[g],
+                                                indices_of_common_extra_spikes_grouped[g],
+                                                spike_channels, num_of_raw_data_channels)
+
+
+    # 5) Get the t-sne indices of the grouped juxta spikes
+    indices_of_data_for_tsne = range(spikes_used)
+    juxta_cluster_indices_grouped = {}
+    for g in range(0, num_of_spike_groups):
+        juxta_cluster_indices_temp = np.intersect1d(indices_of_data_for_tsne, indices_of_common_extra_spikes_grouped[g+1])
+        juxta_cluster_indices_grouped[g] = [i for i in np.arange(0, len(indices_of_data_for_tsne)) if
+                                 len(np.where(juxta_cluster_indices_temp == indices_of_data_for_tsne[i])[0])]
+        if verbose and spike_channels is not None:
+                print('Labeled after cleaning = ' + str(len(juxta_cluster_indices_grouped[g])))
+
+    return juxta_cluster_indices_grouped, spike_thresholds_groups
 
 
 def split_juxta_spikes_into_groups_by_size(num_of_spike_groups, juxta_spike_peaks, juxta_spike_triggers):
@@ -39,8 +165,13 @@ def split_juxta_spikes_into_groups_by_size(num_of_spike_groups, juxta_spike_peak
         juxta_spike_triggers_grouped_withnans, juxta_spike_peaks_grouped_withnans, spike_thresholds_groups
 
 
-def fit_dbscan(data, eps, min_samples, show=True, juxta_cluster_indices_grouped=None, threshold_legend=None):
+def fit_dbscan(data, eps, min_samples, normalize=True,
+               show=True, juxta_cluster_indices_grouped=None, threshold_legend=None):
     X = np.transpose(data)
+
+    if normalize:
+        from sklearn.preprocessing import minmax_scale
+        minmax_scale(X, feature_range=(-1, 1), axis=0, copy=False)
 
     db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
@@ -149,4 +280,5 @@ def calculate_precision_recal_for_many_labels(tsne, labels, core_samples_mask, n
             ax.annotate(str(txt), (means_of_labels[i, 0], means_of_labels[i, 1]), verticalalignment='bottom')
 
     return precision, recall, f_factor
+
 

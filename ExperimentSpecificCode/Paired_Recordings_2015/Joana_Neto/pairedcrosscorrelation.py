@@ -38,7 +38,7 @@ def crosscorrelate(sua1, sua2, lag=None, n_pred=1, predictor=None,
     if predictor is 'shuffle':
         isi = np.diff(sua2)
         sua2_ = np.array([])
-        for ni in xrange(1,n_pred+1):
+        for ni in range(1, n_pred+1):
             idx = np.random.permutation(isi.size-1)
             sua2_ = np.append(sua2_, np.add(np.insert(
                 (np.cumsum(isi[idx])), 0, 0), sua2.min() + (

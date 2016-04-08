@@ -70,7 +70,7 @@ print(num_of_spikes)
 
 
 # 2) Seperate the juxta spikes into a number of groups according to their size
-num_of_spike_groups = 4
+num_of_spike_groups = 10
 juxta_spikes_grouped, juxta_spike_peaks_grouped, juxta_spike_triggers_grouped_withnans,\
         juxta_spike_peaks_grouped_withnans, spike_thresholds_groups = \
     taf.split_juxta_spikes_into_groups_by_size(num_of_spike_groups=num_of_spike_groups,
@@ -143,15 +143,16 @@ tsne = np.load(join(join(base_directory, r'Analysis\klustakwik_cell3\threshold_6
 indices_of_data_for_tsne = range(spikes_used)
 juxta_cluster_indices_grouped = {}
 for g in range(0, num_of_spike_groups):
-    juxta_cluster_indices_temp = np.intersect1d(indices_of_data_for_tsne, indices_of_common_extra_spikes_grouped_chan_selected[g+1])
+    juxta_cluster_indices_temp = np.intersect1d(indices_of_data_for_tsne, indices_of_common_extra_spikes_grouped[g+1])
     juxta_cluster_indices_grouped[g] = [i for i in np.arange(0, len(indices_of_data_for_tsne)) if
                              len(np.where(juxta_cluster_indices_temp == indices_of_data_for_tsne[i])[0])]
     print(len(juxta_cluster_indices_grouped[g]))
 
-pf.plot_tsne(tsne, juxta_cluster_indices_grouped, cm=plt.cm.brg,
+pf.plot_tsne(tsne, juxta_cluster_indices_grouped, cm=plt.cm.coolwarm,
              subtitle='T-sne of 74000 spikes from the 32 channel probe',
              label_name='Peak size in uV',
-             label_array=(spike_thresholds_groups*1e6).astype(int))
+             label_array=(spike_thresholds_groups*1e6).astype(int),
+             sizes=[2, 15])
 
 
 

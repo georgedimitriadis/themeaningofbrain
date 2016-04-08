@@ -2,7 +2,7 @@ __author__ = 'George Dimitriadis'
 
 import os
 import numpy as np
-import numpy.core.defchararray as np_char
+from IO import ephys as ioep
 import BrainDataAnalysis.timelocked_analysis_functions as tf
 import BrainDataAnalysis.ploting_functions as pf
 import IO.ephys as ephys
@@ -15,8 +15,6 @@ import Layouts.Probes.probes_imec as pr_imec
 import h5py as h5
 import IO.klustakwik as klusta
 import pickle
-from sklearn.cluster import DBSCAN
-from sklearn import metrics
 import time
 
 
@@ -360,6 +358,38 @@ X_np = np.array(X)
 del t, X
 
 
+
+# Throw away labeled extra spikes that are not in the lcuster of electrodes that show the juxta spikes
+def select_spikes_in_certain_channels(spike_thresholds, common_spikes, indices_of_common_spikes_in_extra,
+                                      good_channels, num_of_raw_data_channels):
+    raw_data = ioep.load_raw_data(filename=os.path.join(data_folder, 'amplifier'+date+'T'+cell_capture_times+'.bin'),
+                                  numchannels=num_of_raw_data_channels)
+    common_spikes = np.array(common_spikes)
+    indices_of_common_spikes_in_extra = np.array(indices_of_common_spikes_in_extra)
+    t = raw_data.dataMatrix[:, common_spikes]
+    if spike_thresholds > 0:
+        spike_channels = np.argmin(t, axis=0)
+    if spike_thresholds < 0:
+        spike_channels = np.argmax(t, axis=0)
+    good_spike_indices = [i for i,x in list(enumerate(spike_channels)) if np.in1d(x, good_channels)]
+    common_spikes = common_spikes[good_spike_indices]
+    indices_of_common_spikes_in_extra = indices_of_common_spikes_in_extra[good_spike_indices]
+    return common_spikes, indices_of_common_spikes_in_extra
+
+r1 = np.array([103, 101,  99,  97,  95,  93,  91,  89,  87, 70, 66, 84, 82, 80, 108, 110, 47, 45, 43, 41,  1, 61, 57, 36, 34, 32, 30, 28, 26, 24, 22, 20])
+r2 = np.array([106,	104, 115, 117, 119,	121, 123, 125, 127, 71,	67,	74,	76,	78,	114, 112, 49, 51, 53, 55,  2, 62, 58,  4,  6,  8, 10, 12, 14, 21, 19, 16])
+r3 = np.array([102,	100,  98,  96,  94,  92,  90,  88,  86, 72, 68, 65, 85, 83,  81, 111, 46, 44, 42, 40, 38, 63, 59, 39, 37, 35, 33, 31, 29, 27, 25, 23])
+r4 = np.array([109,	107, 105, 116, 118,	120, 122, 124, 126, 73,	69,	64,	75,	77,	 79, 113, 48, 50, 52, 54, 56,  0, 60,  3,  5,  7,  9, 11, 13, 15, 18, -1])
+
+spike_channels = np.concatenate((r1[:8], r2[:8], r3[:8]))
+
+common_spikes_grouped[g], indices_of_common_spikes_in_klusta_grouped[g] \
+    = select_spikes_in_certain_channels(spike_thresholds, common_spikes_grouped[g],
+                                        indices_of_common_spikes_in_klusta_grouped[g+1],
+                                        spike_channels, num_of_raw_data_channels=128)
+
+
+
 #indices_of_data_for_tsne = [(i, k)[0] for i, k in enumerate(X) if random.random() > 0] #For random choice
 indices_of_data_for_tsne = range(up_to_extra_spike) #For the first n spikes
 data_for_tsne = X_np[indices_of_data_for_tsne]
@@ -373,6 +403,13 @@ for g in range(0, num_of_spike_groups):
                              len(np.where(juxta_cluster_indices_temp == indices_of_data_for_tsne[i])[0])]
     #print(len(juxta_cluster_indices_grouped[g]))
 
+
+
+
+
+
+
+
 per = 100
 lr = 200
 it = 2000
@@ -380,7 +417,8 @@ it = 2000
 t_tsne = np.load(r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\klustakwik'+\
                  r'\threshold_6_5std\t_sne_results_{}s_{}per_{}lr_{}it.npy'.format(s, per, lr, it))
 
-
+t_tsne = np.load(r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\klustakwik'+\
+                 r'\threshold_6_5std\t_sne_results_final_allspikes.npy')
 
 
 
@@ -420,19 +458,21 @@ t_tsne = np.transpose(tsne_bhcuda.load_tsne_result(
 
 
 # T-sne with my conda package
-kwx_file_path = r'''D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\\klustakwik_128to32_probe\threshold_6_5std\threshold_6_5std.kwx'''
+path = r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\klustakwik\threshold_6_5std'
+kwx_file_path = os.path.join(path, r'threshold_6_5std.kwx')
+video = os.path.join(path, r'video')
 indices_of_data_for_tsne = None#range(128820)
 seed = 0
 perplexity = 100.0
 theta = 0.2
 learning_rate = 200.0
-iterations = 2000
+iterations = 10000
 gpu_mem = 0.8
-t_tsne2 = tsne_spikes.t_sne_spikes(kwx_file_path=kwx_file_path, hdf5_dir_to_pca=r'channel_groups/0/features_masks',
-                                  mask_data=True, path_to_save_tmp_data=None,
+tsne = tsne_spikes.t_sne_spikes(kwx_file_path=kwx_file_path, hdf5_dir_to_pca=r'channel_groups/0/features_masks',
+                                  mask_data=True, path_to_save_tmp_data=video,
                                   indices_of_spikes_to_tsne=indices_of_data_for_tsne, use_scikit=False,
                                   perplexity=perplexity, theta=theta, eta=learning_rate,
-                                  iterations=iterations, seed=seed, verbose=2, gpu_mem=gpu_mem)
+                                  iterations=iterations, seed=seed, verbose=3, gpu_mem=gpu_mem)
 
 
 # C++ wrapper t-sne using CPU
@@ -468,8 +508,8 @@ print("CUDA t-sne took {} seconds, ({} minutes), for {} spikes".format(t1-t0, (t
 
 
 #  2D plot
-pf.plot_tsne(t_tsne, juxta_cluster_indices_grouped, subtitle='T-sne', label_name='Peak size in uV',
-             label_array=(spike_thresholds_groups*1e6).astype(int))
+pf.plot_tsne(t_tsne, juxta_cluster_indices_grouped, subtitle='T-sne', cm=plt.cm.coolwarm, label_name='Peak size in uV',
+             label_array=(spike_thresholds_groups*1e6).astype(int), sizes=[2, 15])
 pf.plot_tsne(t_tsne, subtitle='T-sne of 129000 spikes from Juxta Paired recordings, not labeled',
              label_name=None,
              label_array=None)
@@ -509,9 +549,16 @@ t_tsne = np.load(r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-
 
 
 # Clustering
-def fit_dbscan(data, eps, min_samples, show=True, juxta_cluster_indices_grouped=None, threshold_legend=None):
+def fit_dbscan(data, eps, min_samples, normalize=True,
+               show=True, juxta_cluster_indices_grouped=None, threshold_legend=None):
     X = np.transpose(data)
 
+    if normalize:
+        from sklearn.preprocessing import minmax_scale
+        minmax_scale(X, feature_range=(-1, 1), axis=0, copy=False)
+
+    from sklearn.cluster import DBSCAN
+    from sklearn import metrics
     db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
     core_samples_mask[db.core_sample_indices_] = True
@@ -529,12 +576,14 @@ def fit_dbscan(data, eps, min_samples, show=True, juxta_cluster_indices_grouped=
     return db, n_clusters_, labels, core_samples_mask, score
 
 
-from sklearn.cluster import KMeans
-kmeans_est_35 = KMeans(n_clusters=35)
-kmeans_est_35.fit(X)
-
-db, n_clusters_, labels, core_samples_mask, score = fit_dbscan(t_tsne, 0.6, 20, show=True)
+db, n_clusters_, labels, core_samples_mask, score = fit_dbscan(t_tsne, eps=0.0155, min_samples=43, normalize=True,
+                                                               show=True)
 pf.show_clustered_tsne(db, X, juxta_cluster_indices_grouped=None, threshold_legend=None)
+
+
+
+from scipy import stats
+
 
 
 # Loop over values of eps and min_samples to find best fit for DBSCAN
@@ -587,3 +636,66 @@ fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.scatter(means_of_juxta[0], means_of_juxta[1])
 ax.scatter(means_of_labels[:, 0], means_of_labels[:, 1], color='r')
+
+
+# ---------------------------------------------------------------------
+# Manual Clustering using the GUI
+
+from os.path import join
+import numpy as np
+import IO.ephys as ephys
+from t_sne_bhcuda import tsne_cluster
+
+# Parameters for testing (128 channels)
+base_dir = r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03'
+tsne_dir = r'Analysis\klustakwik\threshold_6_5std'
+data_dir = r'Data'
+data_cube_dir = r'Analysis\TempCube'
+per = 100
+lr = 200
+it = 2000
+s = 128820
+
+tsne_filename = join(base_dir, tsne_dir, 't_sne_results_{}s_{}per_{}lr_{}it.npy'.format(s, per, lr, it))
+kwik_filename = join(base_dir, tsne_dir, 'threshold_6_5std.kwik')
+time_samples_h5_dir = r'channel_groups/0/spikes/time_samples'
+
+spike_indices_to_use = None#np.arange(20000)
+num_of_spikes = s
+if spike_indices_to_use is not None:
+    num_of_spikes = len(spike_indices_to_use)
+
+num_ivm_channels = 128
+amp_dtype = np.uint16
+cube_type = np.int32
+sampling_freq = 30000
+num_of_points_in_spike_trig = 64
+num_of_points_for_baseline = 10
+
+shape_of_cut_extracellular_data = (num_ivm_channels, num_of_points_in_spike_trig, num_of_spikes)
+
+raw_data_filename = join(base_dir, data_dir, 'amplifier2015-09-03T21_18_47.bin')
+raw_data_ivm = ephys.load_raw_data(raw_data_filename, numchannels=num_ivm_channels, dtype=amp_dtype).dataMatrix
+
+data_cube_filename = join(base_dir, data_cube_dir, 'baselined_data_cube.npy')
+
+autocor_bin_number = 100
+cluster_info_filename = join(base_dir, tsne_dir, 'cluster_info.pkl')
+prb_file = r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\klustakwik\128ch_passive_imec.prb'
+
+tsne_cluster.gui_manual_cluster_tsne_spikes(tsne_array_or_filename=tsne_filename,
+                                            spike_times_list_or_filename=kwik_filename,
+                                            time_samples_h5_dir=time_samples_h5_dir,
+                                            raw_extracellular_data=None,
+                                            num_of_points_for_baseline=num_of_points_for_baseline,
+                                            cut_extracellular_data_or_filename=data_cube_filename,
+                                            shape_of_cut_extracellular_data=shape_of_cut_extracellular_data,
+                                            cube_type=cube_type,
+                                            sampling_freq=sampling_freq,
+                                            autocor_bin_number=autocor_bin_number,
+                                            cluster_info_file=cluster_info_filename,
+                                            use_existing_cluster=True,
+                                            spike_indices_to_use=spike_indices_to_use,
+                                            prb_file=prb_file,
+                                            k4=True,
+                                            verbose=True)

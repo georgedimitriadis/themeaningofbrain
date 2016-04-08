@@ -420,7 +420,8 @@ def plot_topoplot(channel_positions, data, show=True, **kwargs):
     vlim = [np.min(chanY), np.max(chanY)]
 
     if interpolation_method is not 'none':
-        xi, yi = np.mgrid[hlim[0]:hlim[1]:complex(0, gridscale)*(hlim[1]-hlim[0]), vlim[0]:vlim[1]:complex(0, gridscale)*(vlim[1]-vlim[0])]
+        xi, yi = np.mgrid[hlim[0]:hlim[1]:complex(0, gridscale)*(hlim[1]-hlim[0]), vlim[0]:vlim[1]:complex(0, gridscale)
+                                                                                                   * (vlim[1]-vlim[0])]
     else:
         xi, yi = np.mgrid[hlim[0]:hlim[1]+1, vlim[0]:vlim[1]+1] #for no interpolation show one pixel per data point
 
@@ -436,13 +437,14 @@ def plot_topoplot(channel_positions, data, show=True, **kwargs):
 
     if not outline:
         expansion = 0.05*np.max([hlim, vlim])
-        outline = pd.DataFrame(np.array([[hlim[0]-expansion, vlim[0]-expansion], [hlim[1]+expansion, vlim[0]-expansion],\
-                                         [hlim[1]+expansion, vlim[1]+expansion], [hlim[0]-expansion, vlim[1]+expansion],\
+        outline = pd.DataFrame(np.array([[hlim[0]-expansion, vlim[0]-expansion], [hlim[1]+expansion, vlim[0]-expansion],
+                                         [hlim[1]+expansion, vlim[1]+expansion], [hlim[0]-expansion, vlim[1]+expansion],
                                          [hlim[0]-expansion, vlim[0]-expansion]]))
 
     ml = MultipleLocator(1)
     cmap = plt.get_cmap("seismic")
-    image = plt.imshow(Zi.T, cmap=cmap, aspect='equal', origin='upper',  extent=[hlim[0], hlim[1], vlim[1], vlim[0]], vmin=vmin, vmax=vmax, interpolation=interpolation_method)
+    image = plt.imshow(Zi.T, cmap=cmap, aspect='equal', origin='upper',  extent=[hlim[0], hlim[1], vlim[1], vlim[0]],
+                       vmin=vmin, vmax=vmax, interpolation=interpolation_method)
     plt.axes().yaxis.set_minor_locator(ml)
     plt.axes().xaxis.set_minor_locator(ml)
 
@@ -458,7 +460,8 @@ def plot_video_topoplot(data, time_axis, channel_positions, times_to_plot=[-0.1,
                         time_step=0.002, sampling_freq=1000, zlimits=None, filename=None):
     fig = plt.figure()
     sample_step = int(time_step * sampling_freq)
-    sub_time_indices = np.arange(ut.find_closest(time_axis, times_to_plot[0]), ut.find_closest(time_axis, times_to_plot[1]))
+    sub_time_indices = np.arange(ut.find_closest(time_axis, times_to_plot[0]), ut.find_closest(time_axis,
+                                                                                               times_to_plot[1]))
     sub_time_indices = sub_time_indices[0::sample_step]
     if np.shape(channel_positions)[0] <= 64:
         text_y = 8.3
@@ -469,7 +472,8 @@ def plot_video_topoplot(data, time_axis, channel_positions, times_to_plot=[-0.1,
     for t in sub_time_indices:
         samples = [t, t + (time_window*sampling_freq)]
         data_to_plot = np.mean(data[:, int(samples[0]):int(samples[1])], 1)
-        image, scat = plot_topoplot(channel_positions, data_to_plot, show=False, interpmethod="quadric", gridscale=5, zlimits = zlimits)
+        image, scat = plot_topoplot(channel_positions, data_to_plot, show=False, interpmethod="quadric", gridscale=5,
+                                    zlimits = zlimits)
         txt = plt.text(x=text_x, y=text_y, s=str(time_axis[t])+' secs')
         images.append([image, scat, txt])
     FFwriter = animation.FFMpegWriter()
@@ -477,12 +481,12 @@ def plot_video_topoplot(data, time_axis, channel_positions, times_to_plot=[-0.1,
     plt.colorbar(mappable=image)
     if filename is not None:
         plt.rcParams['animation.ffmpeg_path'] = r"C:\George\Development\PythonProjects\AnalysisDevelopment\Code\ExtraRequirements\ffmpeg-20140618-git-7f52960-win64-static\bin\ffmpeg.exe"
-        ani.save(filename, writer = FFwriter, fps=1, bitrate=5000, dpi=300, extra_args=['h264'])
+        ani.save(filename, writer=FFwriter, fps=1, bitrate=5000, dpi=300, extra_args=['h264'])
     plt.show()
 
 
-def plot_tsne(tsne, labels_dict=None, cm=None, subtitle=None, label_name='Label', label_array=None, axes=None,
-              sizes=None, markers=None, color=None):
+def plot_tsne(tsne, labels_dict=None, cm=None, cm_remapping=None, subtitle=None, label_name='Label', label_array=None,
+              axes=None, sizes=None, markers=None, color=None):
     if axes is None:
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -496,7 +500,7 @@ def plot_tsne(tsne, labels_dict=None, cm=None, subtitle=None, label_name='Label'
         markers = ['.', 'o']
     if color is None:
         color = 'k'
-    ax.scatter(tsne[0], tsne[1], s=sizes[0], marker=markers[0], color=color)
+    ax.scatter(tsne[0], tsne[1], s=sizes[0], marker=markers[0], color=color, alpha=1)
 
     if subtitle is None and ax is None:
             fig.suptitle('T-SNE')
@@ -508,10 +512,14 @@ def plot_tsne(tsne, labels_dict=None, cm=None, subtitle=None, label_name='Label'
         color_indices = plt.Normalize(0, number_of_labels)
         if cm is None:
             cm = plt.cm.Dark2
+        if cm_remapping is None:
+            cm_remapping = {}
+            for g in range(0, number_of_labels):
+                cm_remapping[g] = g
         for g in range(0, number_of_labels):
             labeled_scatters.append(ax.scatter(tsne[0][labels_dict[g]],
                                                tsne[1][labels_dict[g]],
-                                               s=sizes[1], color=cm(color_indices(g)),
+                                               s=sizes[1], color=cm(color_indices(cm_remapping[g])),
                                                marker=markers[1]))
 
         if label_array is None:
@@ -529,7 +537,6 @@ def plot_tsne(tsne, labels_dict=None, cm=None, subtitle=None, label_name='Label'
         pass
 
 
-
 def show_clustered_tsne(dbscan_result, X, juxta_cluster_indices_grouped=None, threshold_legend=None):
     core_samples_mask = np.zeros_like(dbscan_result.labels_, dtype=bool)
     core_samples_mask[dbscan_result.core_sample_indices_] = True
@@ -540,20 +547,22 @@ def show_clustered_tsne(dbscan_result, X, juxta_cluster_indices_grouped=None, th
     unique_labels = set(labels)
     colors = plt.cm.nipy_spectral(np.linspace(0, 1, len(unique_labels)))
     for k, col in zip(unique_labels, colors):
-        ms = 4
+        ms = 6
+        marker = 'o'
         if k == -1:
             # Black used for noise.
             col = 'k'
-            ms = 2
+            ms = 3
+            marker = '^'
 
         class_member_mask = (labels == k)
 
         xy = X[class_member_mask & core_samples_mask]
-        ax.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
-                markeredgecolor='k', markersize=6)
+        ax.plot(xy[:, 0], xy[:, 1], marker, markerfacecolor=col,
+                markeredgecolor='k', markersize=8)
 
         xy = X[class_member_mask & ~core_samples_mask]
-        ax.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
+        ax.plot(xy[:, 0], xy[:, 1], marker, markerfacecolor=col,
                 markeredgecolor='k', markersize=ms)
 
     if juxta_cluster_indices_grouped is not None:

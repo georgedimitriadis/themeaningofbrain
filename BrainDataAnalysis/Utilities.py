@@ -63,6 +63,6 @@ def find_points_in_array_with_jitter(points_to_be_found, array_to_search, jitter
             prev_spikes_added = curr_spikes_added
         else:
             not_found_points.append(juxta_spike)
-    print(np.shape(found_points))
-    print(str(100 * (np.shape(found_points)[0] / len(points_to_be_found)))+'% found')
+    print('Points found in array = ' + str(np.shape(found_points)[0]))
+    print('Percentage = ' + str(100 * (np.shape(found_points)[0] / len(points_to_be_found)))+'% found')
     return found_points, indices_of_found_points_in_searched_array, not_found_points

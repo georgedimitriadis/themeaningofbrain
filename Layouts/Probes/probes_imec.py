@@ -5,7 +5,7 @@ import Layouts.Probes.klustakwik_prb_generator as prb_gen
 import pandas as pd
 import itertools
 
-def create_128channels_imec_prb(filename=None, bad_channels=None):
+def create_128channels_imec_prb(filename=None, steps_r=2, steps_c=2, bad_channels=None):
     r1 = np.array([103, 101, 99, 97, 95, 93, 91, 89, 87, 70, 66, 84, 82, 80, 108, 110, 47, 45, 43, 41, 1, 61, 57, 36,
                    34, 32,	30,	28,	26,	24,	22,	20])
     r2 = np.array([106,	104, 115, 117, 119,	121, 123, 125, 127, 71,	67,	74,	76,	78,	114, 112, 49, 51, 53, 55, 2, 62, 58,
@@ -19,8 +19,6 @@ def create_128channels_imec_prb(filename=None, bad_channels=None):
     all_electrodes_concat = np.concatenate((r1, r2, r3, r4))
     all_electrodes = all_electrodes_concat.reshape((4, 32))
 
-    if filename is not None:
-        prb_gen.generate_prb_file(filename=filename, all_electrodes_array=all_electrodes, channel_number=128)
 
     all_electrodes = np.flipud(all_electrodes.T)
 
@@ -41,6 +39,10 @@ def create_128channels_imec_prb(filename=None, bad_channels=None):
         min_one_val = np.empty_like(bad_channels)
         min_one_val.fill(-1)
         np.place(all_electrodes, bad_channels_mask, min_one_val)
+
+    if filename is not None:
+        prb_gen.generate_prb_file(filename=filename, all_electrodes_array=all_electrodes,
+                                  steps_r=steps_r, steps_c=steps_c)
 
     return all_electrodes, channel_positions
 
