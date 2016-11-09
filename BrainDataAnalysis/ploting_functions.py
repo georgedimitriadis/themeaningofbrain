@@ -10,13 +10,13 @@ import scipy.interpolate as interpolate
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 import pandas as pd
-import itertools
 import warnings
 import BrainDataAnalysis.Utilities as ut
-import BrainDataAnalysis.timelocked_analysis_functions as tlf
-import matplotlib.animation as animation
 from matplotlib.widgets import Button
 from mpldatacursor import datacursor
+from os.path import join
+import matplotlib.animation as animation
+import t_sne_bhcuda.bhtsne_cuda as TSNE
 
 
 
@@ -485,14 +485,33 @@ def plot_video_topoplot(data, time_axis, channel_positions, times_to_plot=[-0.1,
     plt.show()
 
 
+def generate_labels_dict_from_cluster_info_dataframe(cluster_info):
+
+    if isinstance(cluster_info, str):
+        cluster_info = pd.read_pickle(cluster_info)
+    num_of_clusters = cluster_info.shape[0]
+    indices_list_of_lists = cluster_info['Spike_Indices'].tolist()
+    cluster_indices = np.arange(num_of_clusters)
+
+    labels_dict = {}
+    for c in np.arange(num_of_clusters):
+        labels_dict[c] = indices_list_of_lists[c]
+
+    return labels_dict
+
+
 def plot_tsne(tsne, labels_dict=None, cm=None, cm_remapping=None, subtitle=None, label_name='Label', label_array=None,
-              axes=None, sizes=None, markers=None, color=None):
+              legend_on=True, axes=None, sizes=None, markers=None, color=None, max_screen=False):
+
     if axes is None:
         fig = plt.figure()
         ax = fig.add_subplot(111)
     else:
         ax = axes
 
+    if max_screen:
+        figManager = plt.get_current_fig_manager()
+        figManager.window.showMaximized()
     labeled_scatters = []
     if sizes is None:
         sizes = [3, 10]
@@ -514,22 +533,33 @@ def plot_tsne(tsne, labels_dict=None, cm=None, cm_remapping=None, subtitle=None,
             cm = plt.cm.Dark2
         if cm_remapping is None:
             cm_remapping = {}
-            for g in range(0, number_of_labels):
+            #for g in range(0, number_of_labels):
+            for g in labels_dict.keys():
                 cm_remapping[g] = g
-        for g in range(0, number_of_labels):
+        #for g in range(0, number_of_labels):
+        for g in labels_dict.keys():
+            alpha = 1
+            if g==2:
+                alpha = 0.1
             labeled_scatters.append(ax.scatter(tsne[0][labels_dict[g]],
                                                tsne[1][labels_dict[g]],
                                                s=sizes[1], color=cm(color_indices(cm_remapping[g])),
-                                               marker=markers[1]))
-
-        if label_array is None:
-            label_array = np.array(range(number_of_labels))
-        if label_array.dtype == int:
-            threshold_legend = np.char.mod('{} %i'.format(label_name), label_array)
+                                               marker=markers[1], alpha=alpha))
+        if legend_on:
+            ncol = int(number_of_labels / 40)
+            box = ax.get_position()
+            ax.set_position([0.03, 0.03, box.width * (1 - 0.04 * ncol), 0.93])
+            if label_array is None:
+                label_array = np.array(range(number_of_labels))
+            if label_array.dtype == int:
+                threshold_legend = np.char.mod('{} %i'.format(label_name), label_array)
+            if label_array.dtype == float:
+                threshold_legend = np.char.mod('{} %f'.format(label_name), label_array)
+            else:
+                threshold_legend = label_array
+            plt.legend(labeled_scatters, threshold_legend, scatterpoints=1, ncol=ncol, loc='center left', bbox_to_anchor=(1.0, 0.5))
         else:
-            threshold_legend = np.char.mod('{} %f'.format(label_name), label_array)
-        plt.legend(labeled_scatters, threshold_legend)
-    plt.tight_layout(rect=[0, 0, 1, 1])
+            plt.tight_layout(rect=[0, 0, 1, 1])
 
     if axes is None:
         return fig, ax
@@ -580,3 +610,38 @@ def show_clustered_tsne(dbscan_result, X, juxta_cluster_indices_grouped=None, th
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
     plt.title('DBSCAN clustering of T-sne with {} estimated number of clusters'.format(n_clusters_))
     plt.show()
+
+
+def make_video_of_tsne_iterations(iterations, video_dir, data_file_name='interim_{:0>6}.dat',
+                                  video_file_name='tsne_video.mp4', figsize=(15, 15), dpi=200, fps=30,
+                                  movie_metadata=None, labels_dict=None, cm=None, cm_remapping=None, subtitle=None,
+                                  label_name='Label', legent_on=True, label_array=None, sizes=None, markers=None,
+                                  color=None, max_screen=False):
+    iters = np.arange(iterations)
+    FFMpegWriter = animation.writers['ffmpeg']
+    metadata = None
+    if movie_metadata:
+        metadata = movie_metadata
+    writer = FFMpegWriter(fps=fps, bitrate=-1, metadata=metadata)
+    if cm is None:
+        cm = plt.cm.Dark2
+    fig = plt.figure(figsize=figsize, dpi=dpi)
+    ax = fig.add_subplot(111)
+    with writer.saving(fig, join(video_dir, video_file_name), dpi):
+        for it in iters:
+            ax.cla()
+            tsne = TSNE.load_tsne_result(video_dir, data_file_name.format(it))
+            tsne = np.transpose(tsne)
+            plot_tsne(tsne, labels_dict=labels_dict, cm=cm, cm_remapping=cm_remapping, subtitle=subtitle,
+                      label_name=label_name, legent_on=legent_on, label_array=label_array, axes=ax, sizes=sizes,
+                      markers=markers, color=color, max_screen=max_screen)
+            min_x = np.min(tsne[0, :])
+            max_x = np.max(tsne[0, :])
+            min_y = np.min(tsne[1, :])
+            max_y = np.max(tsne[1, :])
+            range_x = np.max(np.abs([min_x, max_x]))
+            range_y = np.max(np.abs([min_y, max_y]))
+
+            plt.ylim([-range_y, range_y])
+            plt.xlim([-range_x, range_x])
+            writer.grab_frame()

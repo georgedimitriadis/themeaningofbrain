@@ -111,7 +111,7 @@ def create_juxta_label(kwik_file, spike_thresholds, num_of_spike_groups=1,
     indices_of_common_extra_spikes_grouped = {}
     for g in range(1, num_of_spike_groups+1):
         common_spikes_grouped[g], indices_of_common_extra_spikes_grouped[g], juxta_spikes_not_found_grouped[g] = \
-             ut.find_points_in_array_with_jitter(points_to_be_found=juxta_spikes_grouped[g],
+             ut.find_points_in_array_with_jitter(array_of_points_to_be_found=juxta_spikes_grouped[g],
                                                  array_to_search=extra_spike_times[:spikes_used],
                                                  jitter_around_each_point=7)
     if spike_channels is not None and num_of_raw_data_channels is not None:

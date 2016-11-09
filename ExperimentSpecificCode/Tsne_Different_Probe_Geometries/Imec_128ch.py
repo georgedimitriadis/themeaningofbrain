@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import h5py as h5
 import BrainDataAnalysis.Utilities as ut
 import pandas as pd
+import pickle
 
 
 raw_juxta_data_file = r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Data\adc2015-09-03T21_18_47.bin'
@@ -21,7 +22,7 @@ param_filename = join(basic_dir, 'threshold_6_5std.prm')
 geometry_dir = r'{}_channels_{}'
 prb_filename = r'{}.prb'
 
-geometry_codes = ['64_1', '64_2', '64_3', '64_4', '64_5', '32_1', '32_2', '22_1', '16_1', '16_2', '8_1', '8_2']
+geometry_codes = ['64_1', '64_2', '64_3', '64_4', '64_5', '32_1', '32_2', '32_t', '22_1', '16_1', '16_2', '8_1', '8_2']
 
 geometry_descriptions = {'64_1': 'columns_1_and_2',
                          '64_2': 'columns_1_and_3',
@@ -31,6 +32,7 @@ geometry_descriptions = {'64_1': 'columns_1_and_2',
                          '32_0': 'like_neuronexus',
                          '32_1': 'columns_1_and_3_alternate_rows',
                          '32_2': 'columns_1_and_4_alternate_rows',
+                         '32_t': 'tetrodes_spaced_40um_apart',
                          '22_1': 'every_3_electrodes',
                          '16_1': 'columns_1_and_3_every_4_rows',
                          '16_2': 'columns_1_and_4_every_4_rows',
@@ -45,6 +47,7 @@ channel_number = {'64_1': 64,
                   '32_0': 32,
                   '32_1': 32,
                   '32_2': 32,
+                  '32_t': 32,
                   '22_1': 22,
                   '16_1': 16,
                   '16_2': 16,
@@ -59,6 +62,7 @@ steps_r = {'64_1': 2,
            '64_5': 2,
            '32_1': 3,
            '32_2': 3,
+           '32_t': 3,
            '22_1': 4,
            '16_1': 2,
            '16_2': 3,
@@ -72,6 +76,7 @@ steps_c = {'64_1': 2,
            '64_5': 2,
            '32_1': 2,
            '32_2': 3,
+           '32_t': 3,
            '22_1': 4,
            '16_1': 5,
            '16_2': 5,
@@ -173,6 +178,13 @@ r4 = r4[every_other]
 bad_channels['32_2'] = np.concatenate((r1, r2, r3, r4))
 
 
+# Tetrodes spaced 40um (every three electrodes) apart
+r1 = [103, 101, 99, 97, 91, 89, 87, 70, 66, 84, 108, 110, 47, 45, 43, 41, 57, 36, 34, 32, 30, 24, 22, 20]
+r2 = [106, 104, 115, 117, 123, 125, 127, 71, 67, 74, 114, 112, 49, 51, 53, 55, 58, 4, 6, 8, 10, 21, 19, 16]
+r3 = [98,  96,  94,  92,  90,  88, 68, 65, 85, 83,  81, 111, 42, 40, 38, 63, 59, 39, 33, 31, 29, 27, 25, 23]
+r4 = [105, 116, 118, 120, 122, 124, 69,	64,	75,	77,	 79, 113, 52, 54, 56, 0, 60, 3, 9, 11, 13, 15, 18, -1]
+bad_channels['32_t'] = np.concatenate((r1, r2, r3, r4))
+
 # 22 CHANNELS GEOMETRIES
 
 # Every 2 electrodes
@@ -263,19 +275,19 @@ for code in geometry_codes:
     create_files_for_code(code)
 
 # Do a specific code
-code = '32_1'
+code = '32_t'
 create_files_for_code(code)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 # T-SNE
 # Run t-sne
-code = '64_1'
+code = '32_t'
 kwx_file_path = join(basic_dir, geometry_dir.format(channel_number[code], geometry_descriptions[code]),
                      'threshold_6_5std.kwx')
 perplexity = 100
 theta = 0.2
-iterations = 2000
+iterations = 5000
 gpu_mem = 0.8
 eta = 200
 early_exaggeration = 4.0
@@ -322,7 +334,6 @@ juxta_cluster_indices_grouped, spike_thresholds_groups = taf.create_juxta_label(
                                                                                 num_of_raw_data_channels=None,
                                                                                 spike_channels=None,
                                                                                 verbose=True)
-
 # ----------------------------------------------------------------------------------------------------------------------
 # PLOTTING
 
@@ -332,6 +343,7 @@ pf.plot_tsne(tsne)
 pf.plot_tsne(tsne, juxta_cluster_indices_grouped, cm=plt.cm.brg,
              label_name='Peak size in uV',
              label_array=(spike_thresholds_groups*1e6).astype(int))
+
 
 
 # Show all t-snes
@@ -381,7 +393,7 @@ h5file.close()
 
 clusters_subselection_all = {}
 
-code = '8_2'
+code = '32_t'
 
 def gen_clusters_subselection(clusters_subselection_all, code):
     kwik_file = join(basic_dir, geometry_dir.format(channel_number[code], geometry_descriptions[code]),
@@ -408,7 +420,7 @@ for c in np.arange(len(clusters)):
 #------------------------------
 
 
-codes = ['64_4', '32_2', '22_1', '16_2', '8_2']
+codes = ['32_t']
 
 # use to make a randomizer of the color map used
 temp_for_remaping = np.arange(len(clusters))
@@ -423,7 +435,7 @@ for code in codes:
     clusters_subselection_all = gen_clusters_subselection(clusters_subselection_all, code)
 
     tsne = load_tsne(code)
-    pf.plot_tsne(tsne, clusters_subselection_all[code], subtitle=code, cm_remapping=cm_remaping, cm=plt.cm.jet)
+    pf.plot_tsne(tsne, clusters_subselection_all[code], subtitle=code, cm_remapping=cm_remaping, cm=plt.cm.jet, legent_on=False)
 
 
 

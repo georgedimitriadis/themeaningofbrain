@@ -42,27 +42,28 @@ def nested_change(item, func):
     return func(item)
 
 
-def find_points_in_array_with_jitter(points_to_be_found, array_to_search, jitter_around_each_point):
-    found_points = []
+def find_points_in_array_with_jitter(array_of_points_to_be_found, array_to_search, jitter_around_each_point):
+    found_points_in_aoptbf = []
+    indices_of_found_points_in_aoptbf = []
     indices_of_found_points_in_searched_array = []
-    prev_spikes_added = 0
-    curr_spikes_added = 0
-    not_found_points = []
-    index_of_klusta_spike_found = 0
-    for juxta_spike in points_to_be_found[index_of_klusta_spike_found:]:
-        for possible_extra_spike in np.arange(juxta_spike - jitter_around_each_point,
-                                              juxta_spike + jitter_around_each_point):
-            possible_positions = np.where(array_to_search == possible_extra_spike)[0]
-            if len(possible_positions) != 0:
-                index_of_klusta_spike_found = possible_positions[0]
-                found_points.append(array_to_search[index_of_klusta_spike_found])
-                indices_of_found_points_in_searched_array.append(index_of_klusta_spike_found)
-                curr_spikes_added += 1
+    prev_points_added = 0
+    curr_points_added = 0
+    not_found_points_in_aoptbf = []
+    for index_of_aoptbf in np.arange(len(array_of_points_to_be_found)):
+        point_to_be_found = array_of_points_to_be_found[index_of_aoptbf]
+        for possible_point in np.arange(point_to_be_found - jitter_around_each_point,
+                                        point_to_be_found + jitter_around_each_point):
+            indices_of_possible_point_in_searched_array = np.where(array_to_search == possible_point)[0]
+            if len(indices_of_possible_point_in_searched_array) != 0:
+                found_points_in_aoptbf.append(array_to_search[indices_of_possible_point_in_searched_array[0]])
+                indices_of_found_points_in_aoptbf.append(index_of_aoptbf)
+                indices_of_found_points_in_searched_array.append(indices_of_possible_point_in_searched_array[0])
+                curr_points_added += 1
                 break
-        if curr_spikes_added > prev_spikes_added:
-            prev_spikes_added = curr_spikes_added
+        if curr_points_added > prev_points_added:
+            prev_points_added = curr_points_added
         else:
-            not_found_points.append(juxta_spike)
-    print('Points found in array = ' + str(np.shape(found_points)[0]))
-    print('Percentage = ' + str(100 * (np.shape(found_points)[0] / len(points_to_be_found)))+'% found')
-    return found_points, indices_of_found_points_in_searched_array, not_found_points
+            not_found_points_in_aoptbf.append(point_to_be_found)
+    print('Points found in array = ' + str(np.shape(found_points_in_aoptbf)[0]))
+    print('Percentage = ' + str(100 * (np.shape(found_points_in_aoptbf)[0] / len(array_of_points_to_be_found))) + '% found')
+    return found_points_in_aoptbf, indices_of_found_points_in_aoptbf, indices_of_found_points_in_searched_array, not_found_points_in_aoptbf

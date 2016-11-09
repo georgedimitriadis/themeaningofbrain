@@ -92,7 +92,7 @@ def select_spikes_in_certain_channels(common_spikes, indices_of_common_spikes_in
 # 3) Find the common spikes between the extra apikes and the juxta spikes for all the juxta spikes and for all the
 # sub groups of juxta spikes
 common_spikes, indices_of_common_spikes_in_extra, juxta_spikes_not_found = \
-     ut.find_points_in_array_with_jitter(points_to_be_found=juxta_spike_triggers,
+     ut.find_points_in_array_with_jitter(array_of_points_to_be_found=juxta_spike_triggers,
                                          array_to_search=extra_spike_times[:spikes_used],
                                          jitter_around_each_point=7)
 common_spikes_chan_selected = select_spikes_in_certain_channels(common_spikes, indices_of_common_spikes_in_extra,
@@ -106,7 +106,7 @@ indices_of_common_extra_spikes_grouped = {}
 indices_of_common_extra_spikes_grouped_chan_selected = {}
 for g in range(1, num_of_spike_groups+1):
     common_spikes_grouped[g], indices_of_common_extra_spikes_grouped[g], juxta_spikes_not_found_grouped[g] = \
-         ut.find_points_in_array_with_jitter(points_to_be_found=juxta_spikes_grouped[g],
+         ut.find_points_in_array_with_jitter(array_of_points_to_be_found=juxta_spikes_grouped[g],
                                              array_to_search=extra_spike_times[:spikes_used],
                                              jitter_around_each_point=7)
     common_spikes_grouped_chan_selected[g], indices_of_common_extra_spikes_grouped_chan_selected[g] \

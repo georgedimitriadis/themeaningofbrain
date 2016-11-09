@@ -16,7 +16,7 @@ from sklearn import metrics
 
 base_directory = r'D:\Data\George\Projects\SpikeSorting\HarrisLab_SyntheticData'
 
-data_set_num = 1
+data_set_num = 5
 data_set_dir = r'DataSet{}'.format(data_set_num)
 
 results_dir = join(base_directory, data_set_dir, 'tsne_results')
@@ -27,6 +27,7 @@ mat_file_dict = {1: '20141202_all_es_gtTimes.mat', 2: '20150924_1_e_gtTimes.mat'
                  5: '20150601_all_GT_gtTimes.mat', 6: '20141202_all_GT_gtTimes.mat'}
 spike_mat_file = join(base_directory, data_set_dir, mat_file_dict[data_set_num])
 
+tsne_video_path = join(base_directory, data_set_dir, 'video_allspikes_seed0')
 
 # Get spike times
 kwik_file_path = join(base_directory, data_set_dir, 'testOutput.kwik')
@@ -34,7 +35,7 @@ h5file = h5.File(kwik_file_path, mode='r')
 spike_times = np.array(list(h5file['channel_groups/1/spikes/time_samples']))
 h5file.close()
 
-spikes_used = len(spike_times)
+spikes_used = 400000#len(spike_times)#130000
 
 # Get clusters
 mat_dict = sio.loadmat(spike_mat_file)
@@ -64,29 +65,33 @@ for i in range(number_of_labels):
 
 
 # Run t-sne
-perplexity = 600
-theta = 0.5
-iterations = 1000
-gpu_mem = 0.8
+path_to_save_tmp_data = tsne_video_path
+perplexity = 200
+theta = 0.2
+iterations = 5000
+gpu_mem = 0.9
 eta = 200
 early_exaggeration = 4.0
-seed = 0
-verbose = 2
-tsne = tsne_spikes.t_sne_spikes(kwx_file_path, hdf5_dir_to_pca=r'channel_groups/1/features_masks',
+seed = 400000
+verbose = 3
+randseed = 0
+tsne = tsne_spikes.t_sne_spikes(kwx_file_path, path_to_save_tmp_data=path_to_save_tmp_data,
+                                hdf5_dir_to_pca=r'channel_groups/1/features_masks',
                                 mask_data=True, perplexity=perplexity, theta=theta, iterations=iterations,
                                 gpu_mem=gpu_mem, seed=seed, eta=eta, early_exaggeration=early_exaggeration,
-                                verbose=verbose, indices_of_spikes_to_tsne=range(spikes_used))
+                                verbose=verbose, indices_of_spikes_to_tsne=range(spikes_used), randseed=randseed)
 
 
 
 # Load t-sne results
 tsne = TSNE.load_tsne_result(results_dir, 'result_tsne40K_com46k_p500_it1k_th05_eta200.dat')
 tsne = np.transpose(tsne)
-tsne = np.load(join(results_dir, 't_sne_result_p800_it2k_th06_eta200.npy'))
+tsne = np.load(join(results_dir, 't_sne_results_s130k_100per_200lr_02theta.npy'))
 
 
 # 2D plot
-pf.plot_tsne(tsne, labels_dict=spikes_labeled_dict, subtitle='T-sne of 86000 spikes from Synthetic Data', label_name='"Cell" No')
+pf.plot_tsne(tsne, labels_dict=spikes_labeled_dict, subtitle='T-sne of first 130k spikes from Synthetic Data',
+             label_name='"Cell" No', cm=plt.cm.jet, markers=['.', '^'], sizes=[3, 20])
 pf.plot_tsne(tsne, labels_dict=None, subtitle='T-sne of 86000 spikes from Synthetic Data, not labeled', label_name=None)
 
 
@@ -114,7 +119,7 @@ def fit_dbscan(data, eps, min_samples, show=True, juxta_cluster_indices_grouped=
     return db, n_clusters_, db_labels, core_samples_mask, score
 
 
-db, n_clusters_, db_labels, core_samples_mask, score = fit_dbscan(tsne, 1.5, 25, show=True)
+db, n_clusters_, db_labels, core_samples_mask, score = fit_dbscan(tsne, 0.2, 4, show=True)
 
 
 # 2) Define TP / FP / TN and FN
@@ -171,58 +176,42 @@ for i, txt in enumerate(range(number_of_labels)):
 
 #---------------------------------------------------------------------------
 # MAKE VIDEO OF TSNE
-# 1) Generate the data for the video
-perplexity = 600
-theta = 0.5
-gpu_mem = 0.8
-eta = 200
-early_exaggeration = 4.0
-seed = 0
-verbose = 2
-data_to_tsne = tsne_spikes.generate_data_for_tsne(kwx_file_path, hdf5_dir_to_pca=r'channel_groups/1/features_masks',
-                                                  mask_data=True, indices_of_spikes_to_tsne=range(spikes_used))
-tsne_movie = []
-iters = np.append(np.arange(75, 350, 25), np.arange(350, 1050, 100))
-iters = np.arange(450, 1050, 100)
-for it in iters:
-    tsne_movie.append(TSNE.t_sne(data_to_tsne, use_scikit=False, files_dir=results_dir,
-                      no_dims=2, perplexity=perplexity, theta=theta, eta=eta,
-                      iterations=it, seed=seed, early_exaggeration=early_exaggeration,
-                      gpu_mem=gpu_mem, randseed=10, verbose=verbose))
-    rename(join(results_dir, 'result.dat'), join(results_dir, 'result_{}.dat'.format(it)))
 
-# 2) Make the frames and save the video
-iters = np.append(np.arange(25, 350, 25), np.arange(350, 1050, 100))
+video_dir = r'D:\Data\George\Projects\SpikeSorting\HarrisLab_SyntheticData\DataSet5\video_allspikes_seed0'
+iters = np.arange(5000)
 FFMpegWriter = manimation.writers['ffmpeg']
 metadata = dict(title='T-sne movie', artist='George Dimitriadis')
-writer = FFMpegWriter(fps=1, metadata=metadata)
+writer = FFMpegWriter(fps=30, bitrate=-1, metadata=metadata)
 number_of_labels = spikes_labeled_dict.__len__()
 color_indices = plt.Normalize(0, number_of_labels)
 cm = plt.cm.Dark2
-fig = plt.figure()
+fig = plt.figure(figsize=(15, 15), dpi=200)
 ax = fig.add_subplot(111)
-with writer.saving(fig, join(results_dir, 'writer_test.mp4'), 100):
+with writer.saving(fig, join(video_dir, 'writer_test.mp4'), 200):
     for it in iters:
         ax.cla()
-        tsne = TSNE.load_tsne_result(results_dir, 'result_{}.dat'.format(it))
+        tsne = TSNE.load_tsne_result(video_dir, 'interim_{:0>6}.dat'.format(it))
         tsne = np.transpose(tsne)
-        ax.scatter(tsne[0], tsne[1], s=3)
-        labeled_scatters = []
-        for g in range(0, number_of_labels):
-            labeled_scatters.append(ax.scatter(tsne[0][spikes_labeled_dict[g]],
-                                               tsne[1][spikes_labeled_dict[g]],
-                                               s=10, color=cm(color_indices(g))))
-
-        ax.set_ylim([-0.002, 0.002])
-        ax.set_xlim([-0.003, 0.003])
-        if it > 100:
-            ax.set_ylim([-0.4, 0.4])
-            ax.set_xlim([-0.6, 0.6])
-        if it > 150:
-            ax.set_ylim([-6, 6])
-            ax.set_xlim([-9, 9])
-        if it > 300:
-            ax.set_ylim([-20, 20])
-            ax.set_xlim([-30, 30])
+        pf.plot_tsne(tsne, axes=ax, labels_dict=spikes_labeled_dict, cm=plt.cm.jet, markers=['.', '^'], sizes=[1, 6], max_screen=False)
+        minX = np.min(tsne[0, :])
+        maxX = np.max(tsne[0, :])
+        minY = np.min(tsne[1, :])
+        maxY = np.max(tsne[1, :])
+        rangeX = np.max(np.abs([minX, maxX]))
+        rangeY = np.max(np.abs([minY, maxY]))
+        # print(rangeX)
+        plt.ylim([-rangeY, rangeY])
+        plt.xlim([-rangeX, rangeX])
         writer.grab_frame()
+
+
+#OR
+video_dir = r'D:\Data\George\Projects\SpikeSorting\HarrisLab_SyntheticData\DataSet5\video_allspikes_seed0'
+iterations = 5000
+cm = plt.cm.jet
+markers = ['.', '^']
+sizes = [1, 6]
+pf.make_video_of_tsne_iterations(iterations, video_dir, data_file_name='interim_{:0>6}.dat',
+                                 video_file_name='tsne_video.mp4', figsize=(15, 15), dpi=200, fps=30,
+                                 labels_dict=spikes_labeled_dict, cm=cm, sizes=sizes, markers=markers)
 #------------------------------------------------------------------------
