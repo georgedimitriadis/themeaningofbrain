@@ -583,3 +583,8 @@ for c in np.arange(len(indices_list_of_lists)):
 pf.plot_tsne(np.transpose(template_features_tsne), labels_dict, sizes=[1, 3], markers = ['.', 'o'], legend_on=False,
              cm=plt.cm.gnuplot, cm_remapping=[0, 1, 2, 3, 4],
              label_array=np.array(['Simple SUs', 'MUs', 'NOISE', 'UNLABELED', 'SUs FROM MERGES AND SPLITS', 'NONE']).astype(str))
+
+
+
+
+

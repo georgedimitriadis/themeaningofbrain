@@ -16,7 +16,7 @@ from matplotlib.widgets import Button
 from mpldatacursor import datacursor
 from os.path import join
 import matplotlib.animation as animation
-import t_sne_bhcuda.bhtsne_cuda as TSNE
+#import t_sne_bhcuda.bhtsne_cuda as TSNE
 
 
 

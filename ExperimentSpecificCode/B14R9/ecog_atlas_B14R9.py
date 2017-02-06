@@ -49,7 +49,7 @@ phases_all_shaftC = pl.load(os.path.join(memap_folder, 'phases_all_shaftC.npy'),
 data = pl.load(os.path.join(memap_folder,'B14R9_raw.npy'), mmap_mode='r+')
 
 
-#----------Data generation-----------------
+# ----------Data generation-----------------
 data = lio.read_all_csc(folder,  assume_same_fs=False, memmap=True, memmap_folder=memap_folder, save_for_spikedetekt=False, channels_to_save=None, return_sliced_data=False)
 pl.save(os.path.join(memap_folder, 'B14R9_raw.npy'), data)
 
@@ -72,7 +72,6 @@ for i in pl.arange(0, pl.shape(data_ecog)[0]):
     data_ecog_lp_ss.flush()
     print(i)
 pl.save(os.path.join(memap_folder, 'data_ecog_lp_ss.npy'), data_ecog_lp_ss)
-
 
 
 spike_samples = tf.spikedetect(data_probe_hp, threshold_multiplier=6.5, bad_channels=probe_bad_channels)
@@ -107,15 +106,14 @@ pl.save(os.path.join(memap_folder, 'spike_times_shaftA.npy'), spike_times_shaftA
 pl.save(os.path.join(memap_folder, 'spike_times_shaftC.npy'), spike_times_shaftC)
 
 
-#----------Analysis---------------------
+# ----------Analysis---------------------
 f_ecog = f_sampling/(int(f_sampling/f_subsample))
 spike_times_shaftA_ecog = np.array(spike_times_shaftA * f_ecog / f_sampling, dtype='int')
 spike_times_shaftC_ecog = np.array(spike_times_shaftC * f_ecog / f_sampling, dtype='int')
 data_ecog_lp_ss_clean = np.delete(data_ecog_lp_ss, ecog_bad_channels, axis=0)
 
 
-
-#Generate eMUA for each Shaft
+# Generate eMUA for each Shaft
 time_around_spike = 2
 time_points_around_spike = int(time_around_spike * f_sampling)
 data_ecog_clean = np.memmap(os.path.join(memap_folder,'data_ecog_clean.dat'), dtype='int16', mode='w+', shape=(np.shape(data_ecog)[0]-np.size(ecog_bad_channels), np.shape(data_ecog)[1]))
@@ -151,8 +149,7 @@ for i in np.arange(0, np.size(spike_times_shaftC_ecog)):
 pl.save(os.path.join(memap_folder, 'data_ecog_mua_shaftC.npy'), data_ecog_mua_shaftC)
 
 
-
-#SpikeTriggeredAverage
+# SpikeTriggeredAverage
 time_around_spike = 0.2
 time_points_around_spike = int(time_around_spike * f_ecog)
 data_sta_shaftA = np.zeros((np.shape(data_ecog_lp_ss_clean)[0], 2*time_points_around_spike))
