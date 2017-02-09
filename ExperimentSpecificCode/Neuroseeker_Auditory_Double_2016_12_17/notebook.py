@@ -2,8 +2,7 @@
 
 import os
 import numpy as np
-from TSne_Numba import spikes, gpu
-from numba import cuda
+from TSne_Numba import spikes, gpu, t_sne
 
 base_folder_a = r'D:\Data\George\Projects\SpikeSorting\Neuroseeker\Neuroseeker_2016_12_17_Anesthesia_Auditory_DoubleProbes\AngledProbe\KilosortResults'
 binary_data_filename_a = r'AngledProbe_BinaryAmplifier_12Regions_Penetration1_2016-12-17T19_02_12.bin'
@@ -101,7 +100,8 @@ brain_regions_v = {'AuD L1/2/3': 2960*position_mult, 'Au1 L4': 2630*position_mul
 spikes.view_spike_positions(spike_positions_v_cor, brain_regions_v, probe_dimensions)
 # ----------------------------------------------------------------------------------------------------------------------
 
-# ---------- CREATE ARRAY OF LISTS KEEPING THE SPIKES THAT ARE CLOSE TO EACH SPIKE ON PROBE ---------------------------
+# ---------- CREATE ARRAY OF LISTS KEEPING THE SPIKES THAT ARE CLOSE TO EACH SPIKE ON PROBE ----------------------------
+# ---------- DOES NOT WORK. NOT ENOUGH MEMORY --------------------------------------------------------------------------
 spike_indices_sorted_by_probe_distance_a = np.array([b[0] for b in sorted(enumerate(spike_distances_on_probe_a),
                                                                           key=lambda dist: dist[1])])
 spike_distances_on_probe_sorted_a = np.array([b[1] for b in sorted(enumerate(spike_distances_on_probe_a),
@@ -112,7 +112,7 @@ spike_indices_sorted_by_probe_distance_v = np.array([b[0] for b in sorted(enumer
 spike_distances_on_probe_sorted_v = np.array([b[1] for b in sorted(enumerate(spike_distances_on_probe_v),
                                                                    key=lambda dist: dist[1])])
 
-
+# ---------- CALCULATE THE INDICES OF THE 1st AND 2nd MATRICES USING THE PROBE DISTANCE SORTED INDICES -----------------
 distance_threshold = 100
 max_elements_in_matrix = 2e9
 
@@ -123,16 +123,61 @@ indices_of_first_arrays, indices_of_second_arrays = \
 np.save(os.path.join(base_folder_a, r'first_second_matrices_indices_for_distance_cal.npy'), (indices_of_first_arrays,
                                                                                              indices_of_second_arrays))
 
+# --------- CALCULATE THE CLOSEST DISTANCE PAIRS AND THEIR DISTANCES ---------------------------------------------------
+template_features_sparce_clean_probesorted = template_features_sparse_clean_a[spike_indices_sorted_by_probe_distance_a,
+                                                                              :]
+selected_sorted_indices, selected_sorted_distances = \
+    gpu.calculate_knn_distances_close_on_probe(template_features_sorted=template_features_sparce_clean_probesorted,
+                                               indices_of_first_and_second_matrices=(indices_of_first_arrays,
+                                                                                     indices_of_second_arrays))
+np.save(os.path.join(base_folder_a, r'selected_hdspace_sorted_distances.npy'), selected_sorted_distances)
+np.save(os.path.join(base_folder_a, r'selected_hdspace_sorted_indices.npy'), selected_sorted_indices)
+
+# --------- CALCULATE THE GAUSSIAN PERPLEXITY OF THE HIGH DIMENSIONAL SPACE --------------------------------------------
+perplexity = 100
+indices_p, values_p = t_sne._compute_gaussian_perplexity(selected_sorted_indices, selected_sorted_distances,
+                                                         perplexity=perplexity)
+np.save(os.path.join(base_folder_a, r'values_p.npy'), values_p)
+np.save(os.path.join(base_folder_a, r'indices_p.npy'), indices_p)
+
+# ----------------------------------------------------------------------------------------------------------------------
+# -----------------------ONE OF PIPELINE--------------------------------------------------------------------------------
+
+# Probe Angled
+import os
+import numpy as np
+from TSne_Numba import spikes, gpu, t_sne
+
+# define the path for all files and filename of raw data----------------------------------------------------------------
+base_folder = r'D:\Data\George\Projects\SpikeSorting\Neuroseeker\\' + \
+                  r'Neuroseeker_2016_12_17_Anesthesia_Auditory_DoubleProbes\AngledProbe\KilosortResults'
+
+
+# load the spikes x features matrix that is cleaned (no bad templates)--------------------------------------------------
+template_features_sparse_clean = np.load(os.path.join(base_folder, 'data_to_tsne_(110728, 292).npy'))
+
+# get the distance of each spike on the probe---------------------------------------------------------------------------
+std = 2
+spike_positions_cor = np.load(os.path.join(base_folder, 'spike_positions_on_probe_std'+str(std)+'.npy'))
+spike_distances_on_probe = np.sqrt(np.power(spike_positions_cor[:, 0], 2) + np.power(spike_positions_cor[:, 1], 2))
+
+# sort the spike distances and their original indices according to probe distance---------------------------------------
+spike_indices_sorted_by_probe_distance = np.array([b[0] for b in sorted(enumerate(spike_distances_on_probe),
+                                                                          key=lambda dist: dist[1])])
+spike_distances_on_probe_sorted = np.array([b[1] for b in sorted(enumerate(spike_distances_on_probe),
+                                                                   key=lambda dist: dist[1])])
+
+# use the sorted indices to sort the spike x features matrix according to the probe distance of each spike--------------
+template_features_sparce_clean_probesorted = template_features_sparse_clean[spike_indices_sorted_by_probe_distance, :]
+
+# load the saved gpu calculated and sorted distances and indices -------------------------------------------------------
 (indices_of_first_arrays, indices_of_second_arrays) = np.load(os.path.join(base_folder_a,
                                                               r'first_second_matrices_indices_for_distance_cal.npy'))
 
+selected_sorted_indices = np.load(os.path.join(base_folder, 'selected_hdspace_sorted_indices.npy'))
+selected_sorted_distances = np.load(os.path.join(base_folder, 'selected_hdspace_sorted_distances.npy'))
 
-
-# ----------- GET THE DISTANCES ON THE KILOSORT TEMPLATE FEATURE SPACE -------------------------------------------------
-template_features_sparce_clean_probesorted = template_features_sparse_clean_a[spike_indices_sorted_by_probe_distance_a,
-                                                                              :]
-
-fas_indices_path = os.path.join(base_folder_a, r'first_second_matrices_indices_for_distance_cal.npy')
-selected_sorted_indices, selected_sorted_distances = \
-    gpu.calculate_knn_distances_close_on_probe(template_features_sorted=template_features_sparce_clean_probesorted,
-                                               indices_of_first_and_second_matrices=np.load(fas_indices_path))
+# Get the gaussian perplexities ----------------------------------------------------------------------------------------
+perplexity = 100
+indices_p = np.load(os.path.join(base_folder, r'indices_p.npy'))
+values_p = np.load(os.path.join(base_folder, r'values_p.npy'))

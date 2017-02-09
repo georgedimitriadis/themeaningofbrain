@@ -4,6 +4,7 @@ import numpy as np
 from numba import cuda
 from timeit import default_timer as timer
 import scipy.spatial.distance as spdist
+import os
 
 import accelerate.cuda.blas as cublas
 import accelerate.cuda.sorting as sorting
@@ -12,6 +13,50 @@ from numba import float32, uint32, guvectorize, jit
 import math
 from TSne_Numba import spikes, gpu
 
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# --------------------------- TEST LOW DIM SPACE DISTANCES CALCULATIONS -----------------------------------------------
+
+# set up data
+base_folder = r'D:\Data\George\Projects\SpikeSorting\Neuroseeker\\' + \
+                  r'Neuroseeker_2016_12_17_Anesthesia_Auditory_DoubleProbes\AngledProbe\KilosortResults'
+
+indices_p = np.load(os.path.join(base_folder, r'indices_p.npy'))
+values_p = np.load(os.path.join(base_folder, r'values_p.npy'))
+
+n = indices_p.shape[0]
+num_of_dims = 2
+t_sne = np.random.random((n, num_of_dims))
+
+delta = gpu.compute_gradient(t_sne, indices_p, values_p, verbose=True)
+
+
+
+
+
+
+
+n = 1e6
+spike_distances_on_probe = 8000 * np.random.random(n)
+spike_indices_sorted_by_probe_distance = np.array([b[0] for b in sorted(enumerate(spike_distances_on_probe),
+                                                                        key=lambda dist: dist[1])])
+spike_distances_on_probe_sorted = np.array([b[1] for b in sorted(enumerate(spike_distances_on_probe),
+                                                                 key=lambda dist: dist[1])])
+
+t_sne_positions = np.random.random((n, 2)) * 0.0001
+
+# cut the data into matrices to do distance calcs
+distance_threshold = 100
+max_elements_in_matrix = 2e9
+
+indices_of_first_arrays, indices_of_second_arrays = \
+    spikes.define_all_spike_spike_matrices_for_distance_calc(spike_distances_on_probe_sorted,
+                                                             max_elements_in_matrix=max_elements_in_matrix,
+                                                             probe_distance_threshold=distance_threshold)
+
+# ----------------------------------------------------------------------------------------------------------------------
+# --------------------------- TEST HIGH DIM SPACE DISTANCES CALCULATIONS -----------------------------------------------
 # ----- generate some data ------
 m = 100000
 n = 20000
