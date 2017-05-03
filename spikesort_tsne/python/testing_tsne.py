@@ -69,3 +69,83 @@ for spike in np.arange(100):
     cur_p /= sum_p
 
     val_p[spike, :] = cur_p
+
+
+
+
+
+
+
+
+
+
+
+
+from os.path import join
+from struct import calcsize, unpack
+
+def _read_unpack(fmt, fh):
+    return unpack(fmt, fh.read(calcsize(fmt)))
+
+
+folder = r'E:\George\SourceCode\Repos\t_sne_bhcuda\bin\windows'
+distances = np.empty((50, 30))
+indices = np.empty((50, 30))
+
+for i in np.arange(50):
+    if i < 10:
+        file_d = 'distances_row00000'+str(i)+'.dat'
+        file_i = 'indices_row00000' + str(i) + '.dat'
+    else:
+        file_d = 'distances_row0000'+ str(i) +'.dat'
+        file_i = 'indices_row0000' + str(i) + '.dat'
+    with open(join(folder, file_d), 'rb') as output_file:
+        # The first two integers are the number of samples and the dimensionality
+        result_samples, result_dims = _read_unpack('ii', output_file)
+        results = [_read_unpack('{}i'.format(result_dims), output_file) for _ in range(result_samples)]
+    distances[i, :] = np.array(results).squeeze()
+    with open(join(folder, file_i), 'rb') as output_file:
+        # The first two integers are the number of samples and the dimensionality
+        result_samples, result_dims = _read_unpack('ii', output_file)
+        results = [_read_unpack('{}i'.format(result_dims), output_file) for _ in range(result_samples)]
+    indices[i, :] = np.array(results).squeeze()
+distances = np.sqrt(np.array(distances))
+
+
+file = 'interim_000019.dat'
+with open(join(folder, file), 'rb') as output_file:
+    # The first two integers are the number of samples and the dimensionality
+    result_samples, result_dims = _read_unpack('ii', output_file)
+    y = [_read_unpack('{}d'.format(result_dims), output_file) for _ in range(result_samples)]
+y = np.array(y)
+
+
+
+from numba import jitclass, jit
+from numba import int32, float32
+import inspect
+
+spec = [
+    ('a', int32),
+    ('b', float32[:])
+]
+
+
+class Test:
+    def __init__(self, a, b=None):
+        if b is None:
+            print(a)
+
+    def jitf(self, a):
+        return testf(self, a)
+
+@jit(nopython=True)
+def testf(test, a):
+    a += 1
+    return a
+
+
+T = Test(a=3)
+t = T.jitf(a=10)
+
+

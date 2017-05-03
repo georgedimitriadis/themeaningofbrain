@@ -14,7 +14,7 @@ number_of_channels_in_binary_file = 1440
 # -----------------------
 
 
-def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, binary_data_filename,
+def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, binary_data_filename, generate_all=False,
                             overwrite_avg_spike_template_file=False, overwrite_template_marking_file=False, freq=20000,
                             time_points=100, figure_id=0, timeToPlot=None):
 
@@ -53,6 +53,7 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
         time_points = int(data.shape[2] / 2)
     else:
         data = np.zeros((number_of_templates, num_of_channels, time_points * 2))
+
 
     # -------Callback Functions---------------
     def on_next():
@@ -175,9 +176,16 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
                 y = np.zeros((num_of_channels, time_points * 2))
                 print('Loading template ' + str(template_index) + ' with ' + str(num_of_spikes_in_template) +
                       ' spikes for the first time.')
+
                 for i in np.arange(0, num_of_spikes_in_template):
-                    y = y + data_raw_kilosorted[active_channel_map,
-                            spike_times[template[i, 0]][0] - time_points: spike_times[template[i, 0]][0] + time_points]
+                    template_time_points = (
+                    spike_times[template[i, 0]][0] - time_points, spike_times[template[i, 0]][0] + time_points)
+                    ks_time_points = data_raw_kilosorted[active_channel_map, template_time_points[0]: template_time_points[1]].shape[1]
+                    if ks_time_points < 2 * time_points:
+                        pass
+                    else:
+                        y = y + data_raw_kilosorted[active_channel_map, template_time_points[0]: template_time_points[1]]
+
                 y = y / num_of_spikes_in_template
                 data[template_index, :, :] = y
                 np.save(os.path.join(base_folder, 'avg_spike_template.npy'), data)
@@ -193,6 +201,9 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
 
     # ------ Generating the Matplotlib Figure -----------
     starting_data = generate_data(0)
+    if generate_all:
+        for template_index in np.arange(1, number_of_templates):
+            generate_data(template_index)
 
     fig = plt.figure(figure_id)
 

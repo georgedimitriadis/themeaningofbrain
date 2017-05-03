@@ -222,7 +222,7 @@ def define_spike_spike_matrix_for_distance_calc(spike_probe_distances_sorted, st
                                      (final_index_of_first_array - starting_index)
         final_index_of_first_array += 1
 
-        if final_index_of_first_array == spike_probe_distances_sorted.shape[0] - 1:
+        if final_index_of_first_array == spike_probe_distances_sorted.shape[0]:   # - 1:
             final_index_of_second_array = (
                 np.abs(spike_probe_distances_sorted_shifted - probe_distance_threshold)).argmin()
             return final_index_of_first_array, final_index_of_second_array

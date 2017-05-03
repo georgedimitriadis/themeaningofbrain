@@ -1,4 +1,4 @@
-
+"""
 # TESTING WHICH METHOD FOR CALCULATING EUCLIDEAN DISTANCE IS FASTER
 import numpy as np
 from numba import cuda
@@ -291,5 +291,119 @@ time_cudajit = e - s
 print("CUDA.JIT TIME:", "%.3f" % time_cudajit, "s")
 print("Testing discrepancy between CUDA.JIT and CDIST %1.3e" % (np.sqrt(((dist_cudajit - dist_sp) ** 2).sum())))
 
+"""
+
+import numpy as np
+import math
+from TSne_Numba import gpu
+from timeit import default_timer as timer
+import os
+from numba import cuda
+
+base_folder = r'D:\Data\George\Projects\SpikeSorting\Neuroseeker\Neuroseeker_2016_12_17_Anesthesia_Auditory_DoubleProbes\AngledProbe\KilosortResults'
+
+perplexity = 100
+indices_p = np.load(os.path.join(base_folder, r'indices_p.npy'))
+values_p = np.load(os.path.join(base_folder, r'values_p.npy'))
+num_dims = 2
+
+extender = 1
+n = indices_p.shape[0] * extender
+print('N = ' + str(n))
+
+indices_p = np.tile(indices_p, (extender, 1))
+values_p = np.tile(values_p, (extender, 1))
+
+verbose = True
+threadsperblock = (32, 32)
+
+sum_blockspergrid_x = math.ceil(n / threadsperblock[0])
+sum_blockspergrid_y = math.ceil(n / threadsperblock[1])
+sum_blockspergrid = (sum_blockspergrid_x, sum_blockspergrid_y)
+
+af_blockspergrid_x = math.ceil(n / threadsperblock[0])
+af_blockspergrid_y = math.ceil(values_p.shape[1] / threadsperblock[1])
+af_blockspergrid = (af_blockspergrid_x, af_blockspergrid_y)
+
+partial_sum_q = np.zeros(sum_blockspergrid)
+delta = np.zeros((n, num_dims))
+d_partial_sum_q = gpu._put_array_to_device(partial_sum_q, 'partial_sum_q', np.float32, False)
+d_indices_p = gpu._put_array_to_device(indices_p, 'indices_p', dtype=np.float32, verbose=False)
+d_values_p = gpu._put_array_to_device(values_p, 'values_p', dtype=np.float32, verbose=False)
+d_delta = gpu._put_array_to_device(delta, 'delta', dtype=np.float32, verbose=False)
+
+tsne = np.array(np.random.random((n, num_dims)), dtype=np.float32)
+d_tsne = gpu._put_array_to_device(tsne, 't_sne', np.float32, False)
+
+print('Max tsne = ' + str(np.max(tsne)))
+t2s = timer()
+gpu._compute_sum_of_q_on_gpu[sum_blockspergrid, threadsperblock](d_tsne, d_partial_sum_q)
+partial_sum_q = d_partial_sum_q.copy_to_host()
+t2e = timer()
+print('Time to run the sum of q on the gpu = ' + str(t2e - t2s))
+sum_q = np.sum(partial_sum_q)
+print('sum_q = ' + str(sum_q))
+
+d_sum_q = gpu._put_array_to_device(sum_q, 'sum_q', np.float32, False)
+
+t1s = timer()
+for i in np.arange(5):
+    t4s = timer()
+    gpu._compute_repulsive_forces[sum_blockspergrid, threadsperblock](d_tsne, d_sum_q, d_delta)
+    t4e = timer()
+    print('Time to run compute_repulsive_forces = ' + str(t4e - t4s))
+
+    #cuda.synchronize()
+
+    t5s = timer()
+    gpu._compute_attractive_forces[af_blockspergrid, threadsperblock](d_tsne, d_values_p, d_indices_p, d_delta)
+    t5e = timer()
+    print('Time to run compute_attractive_forces = ' + str(t5e - t5s))
+    t6s = timer()
+    delta = d_delta.copy_to_host()
+    t6e = timer()
+    print('Time to copy delta to host = ' + str(t6e - t6s))
+    print('Max delta = '+str(np.max(delta)))
+    tsne += delta
+cuda.synchronize()
+t1e = timer()
+print('Iter time = ' + str(t1e - t1s))
+# ------------------------------------
 
 
+
+# ------------------------------------
+delta = np.zeros((n, num_dims))
+d_indices_p = gpu._put_array_to_device(indices_p, 'indices_p', dtype=np.float32, verbose=verbose)
+d_values_p = gpu._put_array_to_device(values_p, 'values_p', dtype=np.float32, verbose=verbose)
+d_delta = gpu._put_array_to_device(delta, 'delta', dtype=np.float32, verbose=verbose)
+t4s = timer()
+gpu._compute_gradient_on_gpu_sharedmem[blockspergrid, threadsperblock](d_tsne, d_values_p, d_indices_p, d_sum_q, d_delta)
+t4e = timer()
+print('Time to run one __compute_gradient_on_gpu_sharedmem = ' + str(t4e - t4s))
+delta = d_delta.copy_to_host()
+t1e = timer()
+print('Time to copy t_sne to host = ' + str(t1e - t4e))
+# ------------------------------------
+
+
+# ------------------------------------
+delta = np.zeros((n, num_dims))
+d_indices_p = gpu._put_array_to_device(indices_p, 'indices_p', dtype=np.float32, verbose=verbose)
+d_values_p = gpu._put_array_to_device(values_p, 'values_p', dtype=np.float32, verbose=verbose)
+d_delta = gpu._put_array_to_device(delta, 'delta', dtype=np.float32, verbose=verbose)
+
+threadsperblock = (8, 8, 8)
+blockspergrid_x = math.ceil(tsne.shape[0] / threadsperblock[0])
+blockspergrid_y = math.ceil(tsne.shape[0] / threadsperblock[1])
+blockspergrid_z = math.ceil((indices_p.shape[1] + 1) / threadsperblock[2])
+blockspergrid = (blockspergrid_x, blockspergrid_y, blockspergrid_z)
+
+gpu._compute_gradient_on_gpu[blockspergrid, threadsperblock](d_tsne, d_values_p, d_indices_p, d_sum_q, d_delta)
+t4e = timer()
+print('Time to run one iteration on gpu = ' + str(t4e - t4s))
+delta = d_delta.copy_to_host()
+t1e = timer()
+print('Time to copy delta to host = ' + str(t1e - t4e))
+print('Total time = ' + str(t1e - t1s))
+# ------------------------------------

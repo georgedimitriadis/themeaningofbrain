@@ -1,36 +1,23 @@
-
 import os
-import numpy as np
-import BrainDataAnalysis.timelocked_analysis_functions as tf
-import IO.ephys as ephys
-import mne.filter as filters
-from sklearn.manifold import TSNE as tsne
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
-import BrainDataAnalysis.ploting_functions as pf
 import random
-from matplotlib import colors
-import Layouts.Probes.probes_imec as pr_imec
-import h5py as h5
-import IO.klustakwik as klusta
+import time
 
-#jpak97_cell9
-import os
+import h5py as h5
+import matplotlib.pyplot as plt
+import mne.filter as filters
 import numpy as np
 import numpy.core.defchararray as np_char
+from matplotlib import colors
+from sklearn import metrics
+from sklearn.cluster import DBSCAN
+from sklearn.manifold import TSNE as tsne
+
 import BrainDataAnalysis.timelocked_analysis_functions as tf
 import IO.ephys as ephys
-import mne.filter as filters
-from sklearn.manifold import TSNE as tsne
-import bhtsne_cuda
-import matplotlib.pyplot as plt
-import Layouts.Probes.probes_imec as pr_imec
-import h5py as h5
 import IO.klustakwik as klusta
-import pickle
-from sklearn.cluster import DBSCAN
-from sklearn import metrics
-import time
+import Layouts.Probes.probes_imec as pr_imec
+from t_sne_bhcuda import bhtsne_cuda
+
 #
 
 
@@ -890,7 +877,8 @@ file.close()
 
 bhtsne_cuda.save_data_for_tsne(data_for_tsne, r'E:\George\SourceCode\Repos\t_sne_gpu\t_sne_gpu\windows', 'data.dat',
                                theta=0.6, perplexity=50, eta=200, no_dims=2, iterations=1000, gpu_mem=0.8, randseed=-1)
-t_tsne = np.transpose(bhtsne_cuda.load_tsne_result(r'E:\George\SourceCode\Repos\t_sne_gpu\t_sne_gpu\windows', 'result.dat'))
+t_tsne = np.transpose(
+    bhtsne_cuda.load_tsne_result(r'E:\George\SourceCode\Repos\t_sne_gpu\t_sne_gpu\windows', 'result.dat'))
 
 # C++ wrapper t-sne using CPU
 t0 = time.time()
@@ -916,9 +904,9 @@ learning_rate = 200.0
 iterations = 5000
 gpu_mem = 0.8
 t_tsne = bhtsne_cuda.bh_tsne(data_for_tsne,
-                        tmp_dir_path=r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\tsne_results',
-                        no_dims=2, perplexity=perplexity, eta=learning_rate, theta=theta,
-                        iterations=iterations, gpu_mem=gpu_mem, randseed=-1, verbose=3)
+                             tmp_dir_path=r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\tsne_results',
+                             no_dims=2, perplexity=perplexity, eta=learning_rate, theta=theta,
+                             iterations=iterations, gpu_mem=gpu_mem, randseed=-1, verbose=3)
 t_tsne = np.transpose(t_tsne)
 t1 = time.time()
 print("CUDA t-sne took {} seconds, ({} minutes), for {} spikes".format(t1-t0, (t1-t0)/60, up_to_extra_spike))
@@ -1094,12 +1082,7 @@ print('Precision = {}, Recall = {}, F1 factor = {}'.format(precision, recall, f_
 #Distances
 import numpy as np
 import matplotlib.pyplot as plt
-import numpy as np
-import matplotlib.pyplot as plt
 import itertools
-import scipy
-from sklearn.decomposition import FastICA
-from mpl_toolkits.mplot3d import Axes3D
 
 #ALL_ELECTRODES
 r1 = np.array([103,	101, 99,	97,	95,	93,	91,	89,	87,	70,	66,	84,	82,	80,	108,	110,	47,	45,	43,	41,	1, 61,	57,
