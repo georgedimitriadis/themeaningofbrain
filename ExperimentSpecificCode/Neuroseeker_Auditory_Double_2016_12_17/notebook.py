@@ -4,6 +4,7 @@ import os
 import numpy as np
 from tsne_for_spikesort import spikes, t_sne, gpu
 
+
 base_folder_a = r'D:\Data\George\Projects\SpikeSorting\Neuroseeker\Neuroseeker_2016_12_17_Anesthesia_Auditory_DoubleProbes\AngledProbe\KilosortResults'
 binary_data_filename_a = r'AngledProbe_BinaryAmplifier_12Regions_Penetration1_2016-12-17T19_02_12.bin'
 

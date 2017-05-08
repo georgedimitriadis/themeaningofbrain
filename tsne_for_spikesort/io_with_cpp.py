@@ -46,11 +46,30 @@ def save_data_for_tsne(files_dir, y, col_p, val_p, theta, perplexity, eta, itera
             data_file.write(pack('{}d'.format(len(sample)), *sample))
 
         for sample in col_p.flatten():
-            data_file.write(pack('I', sample))
+            data_file.write(pack('i', sample))
 
         for sample in val_p.flatten():
             data_file.write(pack('d', sample))
 
+
+def save_data_for_barneshut(files_dir, sorted_distances, sorted_indices, num_of_dims, perplexity, theta, eta, iterations, verbose):
+
+    sorted_indices = np.array(sorted_indices, dtype=np.int32)
+    num_of_spikes = len(sorted_distances)
+    num_of_nns = len(sorted_distances[0])
+
+    filename = 'data.dat'
+
+    with open(path_join(files_dir, filename), 'wb') as data_file:
+        # Write the t_sne_bhcuda header
+        data_file.write(pack('ddiiiiii', theta, eta, num_of_spikes, num_of_dims, num_of_nns, iterations, verbose,
+                             perplexity))
+        # Write the data
+        for sample in sorted_distances:
+            data_file.write(pack('{}d'.format(len(sample)), *sample))
+
+        for sample in sorted_indices:
+            data_file.write(pack('{}i'.format(len(sample)), *sample))
 
 
 def load_tsne_result(files_dir):
@@ -64,4 +83,4 @@ def load_tsne_result(files_dir):
         # Collect the results, but they may be out of order
         results = [_read_unpack('{}d'.format(result_dims), output_file) for _ in range(result_samples)]
 
-        return results
+        return np.array(results)

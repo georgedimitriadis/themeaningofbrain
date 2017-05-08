@@ -7,7 +7,7 @@ import numpy as np
 from tsne_for_spikesort import gpu
 from tsne_for_spikesort import sptree_jit as sptree
 
-import tsne_for_spikesort.spikesorttsne as sptsne
+# import tsne_for_spikesort.spikesorttsne as sptsne
 import tsne_for_spikesort.io_with_cpp as io
 
 from subprocess import Popen, PIPE
@@ -196,13 +196,13 @@ def run_iterations_with_python(iters, indices_p, values_p, num_samples, num_dims
 
     return y
 
-
+'''
 def run_iterations_with_cython(Y, N, no_dims, col_P, val_P, K, perplexity, theta, eta, iterations, verbose):
     tsne = sptsne.SP_TSNE()
     Y = tsne.run(Y, N, no_dims, col_P, val_P, K, int(perplexity), theta, eta, iterations, verbose)
 
     return Y
-
+'''
 
 def run_iterations_with_cpp_exe(files_dir, y, col_p, val_p, k, theta, perplexity, eta, iterations, verbose, exe_dir=None):
 
