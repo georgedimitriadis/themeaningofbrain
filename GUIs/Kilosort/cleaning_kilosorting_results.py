@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from BrainDataAnalysis import ploting_functions as pf
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import Qt
+from numba import jit
 
 # ---- Some basic input--
 base_folder = r'D:\Data\George\Projects\SpikeSorting\Neuroseeker\Neuroseeker_2016_12_17_Anesthesia_Auditory_DoubleProbes\AngledProbe\KilosortResults'
@@ -229,14 +230,7 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
     grid = QtWidgets.QGridLayout(panel)
     grid.setColumnStretch(1, 6)
     grid.setColumnStretch(2, 6)
-
-    button_keep = QtWidgets.QPushButton('Keep')
-    grid.addWidget(button_keep, 0, 0)
-    button_keep.pressed.connect(on_keep)
-
-    button_delete = QtWidgets.QPushButton('Delete')
-    grid.addWidget(button_delete, 0, 1)
-    button_delete.pressed.connect(on_delete)
+    grid.setColumnStretch(3, 6)
 
     label_text_marking = QtWidgets.QLabel('Template is marked as :')
     grid.addWidget(label_text_marking, 0, 2)
@@ -258,8 +252,16 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
     grid.addWidget(button_next, 0, 5)
     button_next.pressed.connect(on_next)
 
+    button_delete = QtWidgets.QPushButton('Delete')
+    grid.addWidget(button_delete, 1, 4)
+    button_delete.pressed.connect(on_delete)
+
+    button_keep = QtWidgets.QPushButton('Keep')
+    grid.addWidget(button_keep, 1, 5)
+    button_keep.pressed.connect(on_keep)
+
     textbox = QtWidgets.QLineEdit(parent=panel)
-    grid.addWidget(textbox, 1, 0)
+    grid.addWidget(textbox, 2, 0)
     textbox.returnPressed.connect(on_text_update)
 
     slider_threshold = QtWidgets.QSlider(Qt.Horizontal)
@@ -269,7 +271,7 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
     slider_threshold.setTickPosition(QtWidgets.QSlider.TicksBelow)
     slider_threshold.setSingleStep(1)
     slider_threshold.setValue(int(visibility_threshold*10))
-    grid.addWidget(slider_threshold, 1, 1, 1, 5)
+    grid.addWidget(slider_threshold, 2, 1, 1, 5)
     slider_threshold.valueChanged.connect(on_slider_update)
 
     panel.setLayout(grid)

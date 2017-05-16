@@ -116,6 +116,106 @@ def generate_probe_positions_of_spikes(base_folder, binary_data_filename, number
     return weighted_average_postions, spike_distance_on_probe
 
 
+
+
+def generate_probe_positions_of_spikes_2(base_folder, binary_data_filename, number_of_channels_in_binary_file,
+                                       used_spikes_indices=None, threshold=0.1):
+    """
+    Generate positions (x, y coordinates) for each spike on the probe. This function assumes that the spikes were
+    generated with the kilosort algorithm so the base_folder holds all the necessary .npy arrays.
+    In order for this function to find which channels are the most relevant in each spike it looks into the spike's
+    assigned template (a channels x time points array in spike_templates.npy). It then find the minimum points of all
+    channels, takes their median and their standard deviation and for each channel creates the difference between the
+    minimum and the median. Finally it demarcates the relevant to the template channels by keeping the ones whose
+    difference is larger than a number of times (threshold) over the standard deviation.
+    It then picks the relevant channels of the spike's raw data, finds the differences between the minimum value
+    and the channel's time series median value (over time), orders the channels according to these differences and
+    assigns weights between 0 and 1 (0 for a difference of 0, 1 for a maximum difference).
+    It finally finds the x, y positions of the selected channels and adds to the position of the largest difference
+    channel the weighted average positions of the remaining selected channels
+
+    Parameters
+    ----------
+    base_folder : string
+                 the folder name into which the kilosort result .npy arrays are
+    binary_data_filename : string
+                          the name of the binary file that holds the raw data that were originally passed to kilosort
+    number_of_channels_in_binary_file : int
+                                       How many channels does the binary file have (this is different to the number
+                                       of channels that are set to active in kilosort)
+    used_spikes_indices : array of int
+                         which of the spikes found by kilosort should be considered.
+    threshold : float
+               the number of times the standard deviation should be larger than the difference between a
+               channel's minimum and the median of the minima of all channels in order to demarcate the channel as
+               relevant to the spike
+
+    Returns
+    -------
+    weighted_average_postions : (len(used_spike_indices) x 2 float array)
+    """
+    # Load the required data from the kilosort folder
+    channel_map = np.load(os.path.join(base_folder, 'channel_map.npy'))
+    active_channel_map = np.squeeze(channel_map, axis=1)
+    channel_positions = np.load(os.path.join(base_folder, 'channel_positions.npy'))
+
+    spike_templates = np.load(os.path.join(base_folder, r'spike_templates.npy'))
+    templates = np.load(os.path.join(base_folder, r'templates.npy'))
+
+    data_raw = np.memmap(os.path.join(base_folder, binary_data_filename),
+                         dtype=np.int16, mode='r')
+
+    number_of_timepoints_in_raw = int(data_raw.shape[0] / number_of_channels_in_binary_file)
+    data_raw_kilosorted = np.reshape(data_raw, (number_of_channels_in_binary_file, number_of_timepoints_in_raw), order='F')
+
+    spike_times = np.squeeze(np.load(os.path.join(base_folder, 'spike_times.npy')).astype(np.int))
+
+    time_points = 50
+    if used_spikes_indices is None:
+        used_spikes_indices = np.arange(0, len(spike_times))
+
+    # Run the loop over all spikes to get the positions
+    weighted_average_postions = np.empty((len(used_spikes_indices), 2))
+    spike_distance_on_probe = np.empty(len(used_spikes_indices))
+    counter = 0
+    templates_positions = np.empty((len(templates), 2))
+    for spike_index in np.arange(0, len(used_spikes_indices)):
+        spike_raw_data = data_raw_kilosorted[active_channel_map,
+                                             (spike_times[used_spikes_indices[spike_index]]-time_points):
+                                             (spike_times[used_spikes_indices[spike_index]]+time_points)]
+        template = templates[spike_templates[used_spikes_indices[spike_index]], :, :].squeeze()
+        relevant_channels = _get_relevant_channels_over_median_peaks(threshold, template)
+
+        spike_raw_data_median_over_time = np.median(spike_raw_data, axis=1)
+        peaks_to_median = spike_raw_data_median_over_time - spike_raw_data.min(axis=1)
+        peaks_to_median = peaks_to_median[relevant_channels]
+
+        relevant_channels_sorted = [v for (k, v) in sorted(zip(peaks_to_median, relevant_channels), reverse=True)]
+
+        peaks_to_median_sorted = sorted(peaks_to_median, reverse=True)
+        peaks_to_median_sorted.append(np.median(spike_raw_data_median_over_time[relevant_channels]))
+
+        weights = _normalize(peaks_to_median_sorted)[:-1]
+        relevant_channels_positions = channel_positions[relevant_channels_sorted]
+
+        pos_x = relevant_channels_positions[0, 0]
+        pos_y = relevant_channels_positions[0, 1]
+
+        templates_positions[spike_templates[used_spikes_indices[spike_index]], 0] = pos_x
+        templates_positions[spike_templates[used_spikes_indices[spike_index]], 1] = pos_y
+
+        new_pos_x = pos_x - np.mean(((pos_x - relevant_channels_positions[:, 0]) * weights)[1:])
+        new_pos_y = pos_y - np.mean(((pos_y - relevant_channels_positions[:, 1]) * weights)[1:])
+        weighted_average_postions[spike_index, :] = [new_pos_x, new_pos_y]
+        spike_distance_on_probe[spike_index] = np.sqrt(np.power(new_pos_x, 2) + np.power(new_pos_y, 2))
+
+        counter += 1
+        if not (counter % 10000):
+            print('Completed ' + str(counter) + ' spikes')
+
+    return weighted_average_postions, spike_distance_on_probe, templates_positions
+
+
 def view_spike_positions(spike_positions, brain_regions, probe_dimensions):
     """
     Plot the spike positions as a scatter plot on a probe marked with brain regions
