@@ -30,7 +30,7 @@ def gui_manual_cluster_tsne_spikes(tsne_array_or_filename, spike_times_list_or_f
                                    num_of_points_for_baseline, cut_extracellular_data_or_filename,
                                    shape_of_cut_extracellular_data, cube_type,
                                    sampling_freq, autocor_bin_number,
-                                   cluster_info_file, use_existing_cluster=False, time_samples_h5_dir=None,
+                                     cluster_info_file, use_existing_cluster=False, time_samples_h5_dir=None,
                                    spike_indices_to_use=None, prb_file=None, k4=False,
                                    verbose=False):
     """
@@ -263,8 +263,9 @@ def create_new_cluster_info_file(filename, tsne_length):
     cluster_info.to_pickle(filename)
     return cluster_info
 
-    # This is not used in the gui but it is useful to create the cluster_info DataFrame that the gui needs if one has
-    # the kilosort spike_templates.npy file
+
+# This is not used in the gui but it is useful to create the cluster_info DataFrame that the gui needs if one has
+# the kilosort spike_templates.npy file
 def create_cluster_info_from_kilosort_spike_templates(cluster_info_filename, spike_templates):
     kilosort_units = {}
     for i in np.arange(len(spike_templates)):

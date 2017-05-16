@@ -101,7 +101,6 @@ def _segment_sort_distances_get_knns(num_of_neighbours, distances_on_gpu, start_
 
     m = distances_on_gpu.shape[0]
     n = distances_on_gpu.shape[1]
-    k = num_of_neighbours + 1
 
     selected_sorted_distances = np.empty((m, num_of_neighbours))
     selected_sorted_indices = np.empty((m, num_of_neighbours))
@@ -114,10 +113,10 @@ def _segment_sort_distances_get_knns(num_of_neighbours, distances_on_gpu, start_
         values = np.ascontiguousarray(np.tile(np.arange(n) + start_index, (delta_m, 1)).reshape(n * delta_m))
         segments = np.ascontiguousarray(np.arange(0, n * delta_m, n)[1:] + start_index)
         sorting.segmented_sort(keys=keys, vals=values, segments=segments)
-        keys = np.reshape(keys, (delta_m, n))[:, :k]
-        values = np.reshape(values, (delta_m, n))[:, :k]
-        selected_sorted_distances[p[i - 1]:p[i], :] = keys[:, 1:]  # throw away the dist to self
-        selected_sorted_indices[p[i - 1]:p[i], :] = values[:, 1:]
+        keys = np.reshape(keys, (delta_m, n))[:, :num_of_neighbours]
+        values = np.reshape(values, (delta_m, n))[:, :num_of_neighbours]
+        selected_sorted_distances[p[i - 1]:p[i], :] = keys[:, :]  # throw away the last dist
+        selected_sorted_indices[p[i - 1]:p[i], :] = values[:, :]
         if verbose:
             print('     Sorted ' + str(i) + ' of ' + str(p.shape[0] - 1) + ' segments of this iteration')
     e = timer()
@@ -135,7 +134,7 @@ def calculate_knn_distances_close_on_probe(template_features_sorted, indices_of_
     indices_of_first_matrices = indices_of_first_and_second_matrices[0]
     indices_of_second_matrices = indices_of_first_and_second_matrices[1]
 
-    num_of_neighbours = perplexity * 3
+    num_of_neighbours = perplexity * 3 + 1
     closest_indices = np.empty((template_features_sorted.shape[0], num_of_neighbours))
     closest_distances = np.empty((template_features_sorted.shape[0], num_of_neighbours))
     for matrix_index in np.arange(indices_of_first_matrices.shape[0]):
@@ -195,7 +194,7 @@ def calculate_knn_distances_close_on_probe(template_features_sorted, indices_of_
         if verbose:
             print("Spend Time:", "%.3f" % full_time, "s")
 
-    return closest_indices, closest_distances
+    return closest_indices, np.sqrt(np.abs(closest_distances))
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Function relating to computing the gradient of the force field in the low dimensional space

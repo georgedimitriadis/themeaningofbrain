@@ -13,7 +13,11 @@ import pandas as pd
 import warnings
 import BrainDataAnalysis.Utilities as ut
 from matplotlib.widgets import Button
-from mpldatacursor import datacursor
+try:
+    from mpldatacursor import datacursor
+except:
+    datacursor = None
+
 from os.path import join
 import matplotlib.animation as animation
 #import t_sne_bhcuda.bhtsne_cuda as TSNE
@@ -61,7 +65,7 @@ def plot_avg_time_locked_data(timeLockedData, timeAxis, subplot=None, timeToPlot
     else:
         lines = ax.plot(timeAxis[samplesToPlot[0]:samplesToPlot[1]], timeLockedData[samplesToPlot[0]:samplesToPlot[1]], picker=picker)
 
-    if labels:
+    if labels and datacursor is not None:
         datacursor(hover=True)
         for i in np.arange(0,len(lines)):
             lines[i].set_label(str(i))
