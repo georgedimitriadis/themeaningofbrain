@@ -28,7 +28,7 @@ def _normalize(L, normalizeFrom=0, normalizeTo=1):
 
 
 def generate_probe_positions_of_spikes(base_folder, binary_data_filename, number_of_channels_in_binary_file,
-                                       used_spikes_indices=None, threshold=0.1):
+                                       used_spikes_indices=None, position_mult=2.25, threshold=0.1):
     """
     Generate positions (x, y coordinates) for each spike on the probe. This function assumes that the spikes were
     generated with the kilosort algorithm so the base_folder holds all the necessary .npy arrays.
@@ -61,7 +61,12 @@ def generate_probe_positions_of_spikes(base_folder, binary_data_filename, number
 
     Returns
     -------
-    weighted_average_postions : (len(used_spike_indices) x 2 float array)
+    weighted_average_postions : (len(used_spike_indices) x 2 float array) The position of each spike on the probe
+    spike_distance_on_probe : len(used_spike_indices) The distance of each spike form the 0,0 of the probe
+    spike_indices_sorted_by_probe_distance: len(used_spike_indices) The indices of the original ordering of the spikes
+     on the new order sorted according to their distance on the probe
+    spike_distances_on_probe_sorted : len(used_spike_indices) The distance of each spike on the probe sorted
+    
     """
     # Load the required data from the kilosort folder
     channel_map = np.load(os.path.join(base_folder, 'channel_map.npy'))
@@ -84,6 +89,7 @@ def generate_probe_positions_of_spikes(base_folder, binary_data_filename, number
         used_spikes_indices = np.arange(0, len(spike_times))
 
     # Run the loop over all spikes to get the positions
+    counter = 0
     weighted_average_postions = np.empty((len(used_spikes_indices), 2))
     spike_distance_on_probe = np.empty(len(used_spikes_indices))
     for spike_index in np.arange(0, len(used_spikes_indices)):
@@ -113,7 +119,19 @@ def generate_probe_positions_of_spikes(base_folder, binary_data_filename, number
         weighted_average_postions[spike_index, :] = [new_pos_x, new_pos_y]
         spike_distance_on_probe[spike_index] = np.sqrt(np.power(new_pos_x, 2) + np.power(new_pos_y, 2))
 
-    return weighted_average_postions, spike_distance_on_probe
+        counter += 1
+        if counter % 5000 == 0:
+            print('Completed ' + str(counter) + ' spikes')
+    weighted_average_postions = weighted_average_postions * position_mult
+
+    # sort according to position on probe
+    spike_indices_sorted_by_probe_distance = np.array([b[0] for b in sorted(enumerate(spike_distance_on_probe),
+                                                                            key=lambda dist: dist[1])])
+    spike_distances_on_probe_sorted = np.array([b[1] for b in sorted(enumerate(spike_distance_on_probe),
+                                                                     key=lambda dist: dist[1])])
+
+    return weighted_average_postions, spike_distance_on_probe, \
+        spike_indices_sorted_by_probe_distance, spike_distances_on_probe_sorted
 
 
 def view_spike_positions(spike_positions, brain_regions, probe_dimensions):
@@ -186,7 +204,7 @@ def define_spike_spike_matrix_for_distance_calc(spike_probe_distances_sorted, st
     Each spike needs to have its distances found with a number of spikes that are probe_distance_threshold closer to it
     on the spike_probe_distances_sorted array. So this function goes through the spikes starting at index starting_index
     and checks what is the index of the final spike each one of these spikes should have its distance calculated with.
-    As it moves down the indices the of the sorted array it defines the last index of the first matrix as the current
+    As it moves down the indices of the sorted array it defines the last index of the first matrix as the current
     index it is on and the last index of the second array as the index of the spike that is just under
     probe_distance_threshold away on the probe to the last spike on the first array.
     Once the number of spikes accumulated in the first matrix times the number of spikes on the second surpasses the
@@ -213,7 +231,7 @@ def define_spike_spike_matrix_for_distance_calc(spike_probe_distances_sorted, st
     """
     current_elements_in_matrix = 0
     final_index_of_first_array = starting_index
-    while max_elements_in_matrix > current_elements_in_matrix:
+    while max_elements_in_matrix >= current_elements_in_matrix:
         spike_probe_distances_sorted_shifted = spike_probe_distances_sorted - \
                                                     spike_probe_distances_sorted[final_index_of_first_array]
         final_index_of_second_array = (
@@ -223,8 +241,9 @@ def define_spike_spike_matrix_for_distance_calc(spike_probe_distances_sorted, st
         final_index_of_first_array += 1
 
         if final_index_of_first_array == spike_probe_distances_sorted.shape[0]:   # - 1:
-            final_index_of_second_array = (
-                np.abs(spike_probe_distances_sorted_shifted - probe_distance_threshold)).argmin()
+            final_index_of_second_array = final_index_of_first_array
+            #final_index_of_second_array = (
+            #    np.abs(spike_probe_distances_sorted_shifted - probe_distance_threshold)).argmin()
             return final_index_of_first_array, final_index_of_second_array
 
     return final_index_of_first_array, final_index_of_second_array
