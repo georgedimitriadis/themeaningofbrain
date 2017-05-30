@@ -115,7 +115,7 @@ def _segment_sort_distances_get_knns(num_of_neighbours, distances_on_gpu, start_
         sorting.segmented_sort(keys=keys, vals=values, segments=segments)
         keys = np.reshape(keys, (delta_m, n))[:, :num_of_neighbours]
         values = np.reshape(values, (delta_m, n))[:, :num_of_neighbours]
-        selected_sorted_distances[p[i - 1]:p[i], :] = keys[:, :]  # throw away the last dist
+        selected_sorted_distances[p[i - 1]:p[i], :] = keys[:, :]
         selected_sorted_indices[p[i - 1]:p[i], :] = values[:, :]
         if verbose:
             print('     Sorted ' + str(i) + ' of ' + str(p.shape[0] - 1) + ' segments of this iteration')

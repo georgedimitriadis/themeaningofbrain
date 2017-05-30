@@ -50,7 +50,7 @@ def get_some_data(base_folder, binary_data_filename, number_of_spikes):
 
 
 
-    distance_threshold = 100
+    distance_threshold = 1000
     max_elements_in_matrix = 0.5e9
 
     indices_of_first_arrays, indices_of_second_arrays = \
@@ -69,7 +69,7 @@ def get_some_data(base_folder, binary_data_filename, number_of_spikes):
 # GET SOME TEMPLATE FEATURES DATA
 base_folder = r'E:\Data\Brain\Neuroseeker_2016_12_17_Anesthesia_Auditory_DoubleProbes\AngledProbe\Kilosort results'
 binary_data_filename = r'AngledProbe_BinaryAmplifier_12Regions_Penetration1_2016-12-17T19_02_12.bin'
-number_of_spikes = 100000
+number_of_spikes = 40000
 indices_of_first_arrays, indices_of_second_arrays, \
 spike_indices_sorted_by_probe_distance, template_features_sparce_clean_probesorted = \
     get_some_data(base_folder=base_folder, binary_data_filename=binary_data_filename, number_of_spikes=number_of_spikes)
