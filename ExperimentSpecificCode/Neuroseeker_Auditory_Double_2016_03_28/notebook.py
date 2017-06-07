@@ -45,17 +45,35 @@ weighted_average_postions_v, spike_distance_on_probe_v = \
     spikes.generate_probe_positions_of_spikes(base_folder_v, binary_v, number_of_channels_in_binary_file,
                                               spikes_clean_index_v)
 
+weighted_template_positions_v = spikes.generate_probe_positions_of_templates(base_folder_v, binary_v,
+                                                                             number_of_channels_in_binary_file)
 
 weighted_average_postions_a, spike_distance_on_probe_a = \
     spikes.generate_probe_positions_of_spikes(base_folder_a, binary_a, number_of_channels_in_binary_file,
                                               spikes_clean_index_a)
 
+weighted_template_positions_a = spikes.generate_probe_positions_of_templates(base_folder_a, binary_a,
+                                                                             number_of_channels_in_binary_file)
 
 position_mult = 2.25
 probe_dimensions = [100, 8100]
 
+brain_regions_v = {'AuD': 5208, 'Au1': 4748, 'AuV': 2890, 'TeA': 2248, 'Ectorhinal': 1933,
+                   'Perirhinal': 1418, 'Entorhinal': 808}
+
 spike_positions_v_cor = weighted_average_postions_v * position_mult
-spikes.view_spike_positions(spike_positions_v_cor,brain_regions=None, probe_dimensions=probe_dimensions)
+spikes.view_spike_positions(spike_positions_v_cor,brain_regions=brain_regions_v, probe_dimensions=probe_dimensions)
+
+template_positions_v_cor = weighted_template_positions_v * position_mult
+spikes.view_spike_positions(template_positions_v_cor,brain_regions=brain_regions_v, probe_dimensions=probe_dimensions,
+                            labels_offset=250, font_size=12)
+
+brain_regions_a = {'Au1 L1-3': 6396, 'Au1 L4': 5983, 'Au1 L5': 5783, 'Au1 L6': 5443, 'CA1': 5038,
+                   'Dentate \nGyrus': 4353, 'MGN - PP': 2733, 'Substantia \nNigra': 1440}
 
 spike_positions_a_cor = weighted_average_postions_a * position_mult
 spikes.view_spike_positions(spike_positions_a_cor,brain_regions=None, probe_dimensions=probe_dimensions)
+
+template_positions_a_cor = weighted_template_positions_a * position_mult
+spikes.view_spike_positions(template_positions_a_cor,brain_regions=brain_regions_a, probe_dimensions=probe_dimensions,
+                            labels_offset=160, font_size=12)

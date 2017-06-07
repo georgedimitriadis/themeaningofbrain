@@ -6,13 +6,6 @@ import matplotlib.pyplot as plt
 from BrainDataAnalysis import ploting_functions as pf
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import Qt
-from numba import jit
-
-# ---- Some basic input--
-base_folder = r'D:\Data\George\Projects\SpikeSorting\Neuroseeker\Neuroseeker_2016_12_17_Anesthesia_Auditory_DoubleProbes\AngledProbe\KilosortResults'
-binary_data_filename = r'AngledProbe_BinaryAmplifier_12Regions_Penetration1_2016-12-17T19_02_12.bin'
-number_of_channels_in_binary_file = 1440
-# -----------------------
 
 
 def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, binary_data_filename, generate_all=False,
@@ -26,7 +19,7 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
     template_feature_ind = np.load(os.path.join(base_folder, 'template_feature_ind.npy'))
     number_of_templates = template_feature_ind.shape[0]
 
-    data_raw = np.memmap(os.path.join(base_folder, binary_data_filename),
+    data_raw = np.memmap(binary_data_filename,
                          dtype=np.int16, mode='r')
 
     number_of_timepoints_in_raw = int(data_raw.shape[0] / number_of_channels_in_binary_file)
@@ -76,7 +69,8 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
                 lines_multi_data[i].set_alpha(1)
                 if i not in visible_channels:
                     lines_multi_data[i].set_alpha(0)
-            trial_text.set_text("Template: " + str(current_template_index))
+            test_string = 'Template: ' + str(current_template_index) + '\n# Spikes: ' + str(num_of_spikes_in_template)
+            trial_text.set_text(test_string)
             plt.draw()
             update_marking_led()
 
@@ -99,7 +93,8 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
                 lines_multi_data[i].set_alpha(1)
                 if i not in visible_channels:
                     lines_multi_data[i].set_alpha(0)
-            trial_text.set_text("Template: " + str(current_template_index))
+            test_string = 'Template: ' + str(current_template_index) + '\n# Spikes: ' + str(num_of_spikes_in_template)
+            trial_text.set_text(test_string)
             plt.draw()
             update_marking_led()
 
@@ -108,6 +103,8 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
         temp_template_index = int(textbox.text())
         if temp_template_index < data.shape[0] and temp_template_index > 0:
             current_template_index = temp_template_index
+            template = np.argwhere(spike_templates == current_template_index)
+            num_of_spikes_in_template = template.shape[0]
             lines_multi_data = ax_multidim_data.get_lines()
             y = generate_data(current_template_index)
             visible_channels = get_visible_channels()
@@ -117,7 +114,8 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
                 lines_multi_data[i].set_alpha(1)
                 if i not in visible_channels:
                     lines_multi_data[i].set_alpha(0)
-            trial_text.set_text("Template: " + str(current_template_index))
+            test_string = 'Template: ' + str(current_template_index) + '\n# Spikes: ' + str(num_of_spikes_in_template)
+            trial_text.set_text(test_string)
             plt.draw()
             update_marking_led()
 
@@ -281,7 +279,7 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
     dock.setWidget(panel)
 
 
-def generate_data_cube(base_folder, binary_data_filename, time_points=100):
+def generate_data_cube(base_folder, binary_data_filename, number_of_channels_in_binary_file, time_points=100):
 
 
     channel_map = np.load(os.path.join(base_folder, 'channel_map.npy'))
@@ -291,7 +289,7 @@ def generate_data_cube(base_folder, binary_data_filename, time_points=100):
     template_feature_ind = np.load(os.path.join(base_folder, 'template_feature_ind.npy'))
     number_of_templates = template_feature_ind.shape[0]
 
-    data_raw = np.memmap(os.path.join(base_folder, binary_data_filename),
+    data_raw = np.memmap(binary_data_filename,
                          dtype=np.int16, mode='r')
 
     number_of_timepoints_in_raw = int(data_raw.shape[0] / number_of_channels_in_binary_file)

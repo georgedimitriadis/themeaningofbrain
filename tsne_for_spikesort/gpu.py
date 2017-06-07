@@ -126,6 +126,17 @@ def _segment_sort_distances_get_knns(num_of_neighbours, distances_on_gpu, start_
     return selected_sorted_indices, selected_sorted_distances
 
 
+def calculate_knn_distances_all_to_all(template_features_sorted, perplexity=100, mem_usage=0.9, verbose=True):
+    start = timer()
+    num_of_neighbours = perplexity * 3 + 1
+    closest_indices = np.empty((template_features_sorted.shape[0], num_of_neighbours))
+    closest_distances = np.empty((template_features_sorted.shape[0], num_of_neighbours))
+
+    gpu_mem = cuda.current_context().get_memory_info()
+    available_gpu_mem = mem_usage * gpu_mem[0]
+
+
+
 def calculate_knn_distances_close_on_probe(template_features_sorted, indices_of_first_and_second_matrices,
                                            perplexity=100, verbose=True):
 
