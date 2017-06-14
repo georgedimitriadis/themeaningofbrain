@@ -280,6 +280,7 @@ def generate_average_over_spikes_per_template(base_folder, binary_data_filename,
         spike_indices_in_template = np.argwhere(np.in1d(spike_templates, template))
         spike_times_in_template = np.squeeze(spike_times[spike_indices_in_template])
         num_of_spikes_in_template = spike_indices_in_template.shape[0]
+        y = np.zeros((num_of_channels, cut_time_points_around_spike * 2))
         if num_of_spikes_in_template != 0:
             # remove any spikes that don't have enough time points
             too_early_spikes = np.squeeze(np.argwhere(spike_times_in_template < cut_time_points_around_spike), axis=1)
@@ -288,16 +289,15 @@ def generate_average_over_spikes_per_template(base_folder, binary_data_filename,
             spike_indices_in_template = np.delete(spike_indices_in_template, out_of_time_spikes)
             num_of_spikes_in_template = spike_indices_in_template.shape[0]
 
-            y = np.zeros((num_of_channels, cut_time_points_around_spike * 2))
             for spike_in_template in spike_indices_in_template:
                 y = y + data_raw_matrix[active_channel_map,
                                         spike_times[spike_in_template] - cut_time_points_around_spike:
                                         spike_times[spike_in_template] + cut_time_points_around_spike]
 
             y = y / num_of_spikes_in_template
-            data[template, :, :] = y
-            del y
-            print('Added template ' + str(template) + ' with ' + str(num_of_spikes_in_template) + ' spikes')
+        data[template, :, :] = y
+        del y
+        print('Added template ' + str(template) + ' with ' + str(num_of_spikes_in_template) + ' spikes')
 
     np.save(join(base_folder, 'avg_spike_template2.npy'), data)
 
