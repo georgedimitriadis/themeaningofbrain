@@ -15,12 +15,12 @@ import pandas as pd
 import itertools
 import warnings
 
-def peaktopeak(data, voltage_step_size=1e-6, scale_microvolts=1000000, window_size=60):
+def peaktopeak(data, window_size=60):
     """
     Generates the minima, maxima and peak to peak (p2p) numbers (in microvolts) of all the channels of all spikes
     Parameters
     ----------
-    data: a channels x time x spikes array
+    data: a channels x time array of average over spikes voltages in microvolts
     voltage_step_size: the y digitization of the amplifier
     scale_microvolts
     window_size: the window size (in samples) within which the function searches for maxima, minima and p2p.
@@ -34,9 +34,8 @@ def peaktopeak(data, voltage_step_size=1e-6, scale_microvolts=1000000, window_si
     minima: the channels' minima
     p2p: the channels' peak to peak voltage difference
     """
-    extracellular_avg_volts = np.average(data[:, :, :], axis=2)
-    num_time_points = extracellular_avg_volts.shape[1]
-    extracellular_avg_microvolts = extracellular_avg_volts * scale_microvolts * voltage_step_size
+    extracellular_avg_microvolts = data
+    num_time_points = extracellular_avg_microvolts.shape[1]
     num_channels = np.size(extracellular_avg_microvolts, axis=0)
     lower_bound = int(num_time_points / 2.0 - window_size / 2.0)
     upper_bound = int(num_time_points / 2.0 + window_size / 2.0)
@@ -59,19 +58,7 @@ def peaktopeak(data, voltage_step_size=1e-6, scale_microvolts=1000000, window_si
 
     p2p = maxima-minima
 
-    stdv_minima = np.zeros(num_channels)
-    stdv_maxima = np.zeros(num_channels)
-
-    stdv = stats.sem(data[:, :, :], axis=2)
-    stdv = stdv * voltage_step_size * scale_microvolts
-
-    for b in range(num_channels):
-        stdv_minima[b] = stdv[b, int(argminima[b])]
-        stdv_maxima[b] = stdv[b, int(argmaxima[b])]
-
-    error = np.sqrt((stdv_minima * stdv_minima) + (stdv_maxima * stdv_maxima))
-
-    return argmaxima, argminima, maxima, minima, p2p, error
+    return argmaxima, argminima, maxima, minima, p2p
 
 
 def get_probe_geometry_from_prb_file(prb_file):
@@ -130,34 +117,28 @@ def plot_topoplot(axis, channel_positions, data, show=True, rotate_90=False, fli
     image: the heatmap.
     channels_grid: the grid of electrodes.
     """
-    if not kwargs.get('hpos'):
-        hpos = 0
-    else:
-        hpos = kwargs['hpos']
-    if not kwargs.get('vpos'):
-        vpos = 0
-    else:
-        vpos = kwargs['vpos']
-    if not kwargs.get('width'):
-        width = None
-    else:
-        width = kwargs['width']
-    if not kwargs.get('height'):
-        height = None
-    else:
-        height = kwargs['height']
-    if not kwargs.get('gridscale'):
-        gridscale = 1
-    else:
-        gridscale = kwargs['gridscale']
-    if not kwargs.get('interpolation_method'):
-        interpolation_method = "bicubic"
-    else:
-        interpolation_method = kwargs['interpolation_method']
-    if not kwargs.get('zlimits'):
-        zlimits = None
-    else:
-        zlimits = kwargs['zlimits']
+    hpos = 0
+    vpos = 0
+    width = None
+    height = None
+    gridscale = 1
+    interpolation_method = "bicubic"
+    zlimits = None
+    if kwargs is not None:
+        if 'hpos' in kwargs:
+            hpos = kwargs['hpos']
+        if 'vpos' in kwargs:
+            vpos = kwargs['vpos']
+        if 'width' in kwargs:
+            width = kwargs['width']
+        if 'height' in kwargs:
+            height = kwargs['height']
+        if 'gridscale' in kwargs:
+            gridscale = kwargs['gridscale']
+        if 'interpolation_method' in kwargs:
+            interpolation_method = kwargs['interpolation_method']
+        if 'zlimits' in kwargs:
+            zlimits = kwargs['zlimits']
 
     if np.isnan(data).any():
         warnings.warn('The data passed to contain NaN values. \
@@ -211,7 +192,7 @@ def plot_topoplot(axis, channel_positions, data, show=True, rotate_90=False, fli
 
     zi = interpolate.griddata((chan_x, chan_y), data, (xi, yi))
 
-    if not zlimits:
+    if zlimits is None:
         vmin = data.min()
         vmax = data.max()
     else:
@@ -222,8 +203,8 @@ def plot_topoplot(axis, channel_positions, data, show=True, rotate_90=False, fli
     image = axis.imshow(zi.T, cmap=cmap, origin=['lower'], vmin=vmin,
                         vmax=vmax, interpolation=interpolation_method,
                         extent=[hlim[0], hlim[1], vlim[0], vlim[1]],
-                        aspect='equal')
-    channels_grid = axis.scatter(chan_y, chan_x)
+                        aspect='equal').make_image(renderer=None)
+    channels_grid = axis.scatter(chan_y, chan_x, s=0.5)
 
     if show:
         cb = plt.colorbar(image)
@@ -231,15 +212,13 @@ def plot_topoplot(axis, channel_positions, data, show=True, rotate_90=False, fli
     return image, channels_grid
 
 
-def create_heatmap(data, prb_file, voltage_step_size=1e-6, scale_microvolts=1000000, window_size=60,
-                   rotate_90=False, flip_ud=False, flip_lr=False):
+def create_heatmap_image(data, prb_file, window_size=60, bad_channels=None, num_of_shanks=None,
+                         rotate_90=False, flip_ud=False, flip_lr=False):
     """
 
     Parameters
     ----------
-    data: a channels x time x spikes array
-    voltage_step_size: the y digitization of the amplifier
-    scale_microvolts
+    data: a channels x time array of average over spikes voltages in microvolts
     window_size: the window size (in samples) within which the function searches for maxima, minima and p2p.
     Must be smaller than the size of the time axis in the data
     prb_file: the probe definition file as is used by phy to generate the spikes
@@ -249,25 +228,42 @@ def create_heatmap(data, prb_file, voltage_step_size=1e-6, scale_microvolts=1000
 
     Returns
     -------
-    final_image: 2d array of int32 of x_size x y_size numbers defining the color of each pixel
+    view: 3d array of int32 of x_size x y_size x rgba channels numbers defining the color of each pixel
     x_size: the pixel number of the heatmap's x axis
     y_size: the pixel number of the heatmap's y axis
     """
-    _, _, _, _, p2p, error = peaktopeak(data, voltage_step_size=voltage_step_size,
-                                        scale_microvolts=scale_microvolts, window_size=window_size)
+    _, _, _, _, p2p = peaktopeak(data, window_size=window_size)
+    zlimits = np.zeros(2)
+    zlimits[0] = p2p.min()
+    zlimits[1] = p2p.max()
 
-    shanks = get_probe_geometry_from_prb_file(prb_file)
-    num_of_shanks = len(list(shanks.keys()))
+    probe = get_probe_geometry_from_prb_file(prb_file)
+
+    if num_of_shanks is None:
+        num_of_shanks = len(list(probe.keys()))
+
     fig = plt.figure()
-    for shank in shanks:
-        channel_positions = pd.Series(shanks[shank]['geometry'])
-        ax = fig.add_subplot(1, num_of_shanks, shank + 1)
-        data = p2p[channel_positions.index]
-        image, channels_grid = plot_topoplot(ax, channel_positions, data, show=False, rotate_90=rotate_90,
-                                             flip_ud=flip_ud, flip_lr=flip_lr)
 
-        image.write_png('temp.png')  # Required to generate the _rgbacache info
-        temp_image = image._rgbacache
+    channel_positions = pd.Series(probe[0]['geometry'])
+    if bad_channels is not None:
+        channel_positions = channel_positions.drop(bad_channels)
+        channel_positions.index = np.arange(len(channel_positions))
+
+    total_electrodes = len(channel_positions)
+    electrodes_per_shank = int(total_electrodes / num_of_shanks)
+
+    for shank in np.arange(num_of_shanks):
+        ax = fig.add_subplot(1, num_of_shanks, shank + 1)
+        begin_electrode = shank * electrodes_per_shank
+        end_electrode = (shank + 1) * electrodes_per_shank
+        if shank == num_of_shanks - 1:
+            end_electrode = total_electrodes
+        channel_positions_shank = channel_positions[begin_electrode:end_electrode]
+        data = p2p[channel_positions_shank.index]
+        image, channels_grid = plot_topoplot(ax, channel_positions_shank, data, show=False, rotate_90=rotate_90,
+                                             flip_ud=flip_ud, flip_lr=flip_lr, zlimits=zlimits)
+
+        temp_image = image[0]
 
         if shank == 0:
             y_dim_pixels = temp_image.shape[0]
@@ -277,6 +273,7 @@ def create_heatmap(data, prb_file, voltage_step_size=1e-6, scale_microvolts=1000
         else:
             conc = np.concatenate((grid_image_spacing, temp_image), axis=1)
             grid_image = np.append(grid_image, conc, axis=1)
+
     plt.close(fig)
     x_size = grid_image.shape[0]
     y_size = grid_image.shape[1]
@@ -285,5 +282,60 @@ def create_heatmap(data, prb_file, voltage_step_size=1e-6, scale_microvolts=1000
     for i in np.arange(4):
         view[:, :, i] = grid_image[:, :, i]
 
-    return final_image, (x_size, y_size)
+    return view, (x_size, y_size)
+
+
+
+def create_heatmap_on_matplotlib_widget(widget, data, prb_file, window_size=60, bad_channels=None,
+                                        num_of_shanks=None, rotate_90=False, flip_ud=False, flip_lr=False):
+    """
+
+    Parameters
+    ----------
+    data: a channels x time array of average over spikes voltages in microvolts
+    window_size: the window size (in samples) within which the function searches for maxima, minima and p2p.
+    Must be smaller than the size of the time axis in the data
+    prb_file: the probe definition file as is used by phy to generate the spikes
+    rotate_90: if True rotate the heatmap by 90 degrees
+    flip_ud: if True flip the heatmap upside down
+    flip_lr: If True flip the heatmap left to right
+
+    Returns
+    -------
+    Nothing. Just fills the widget with the image generated
+    """
+    _, _, _, _, p2p = peaktopeak(data, window_size=window_size)
+    zlimits = [p2p.min(), p2p.max()]
+
+    probe = get_probe_geometry_from_prb_file(prb_file)
+
+    if num_of_shanks is None:
+        num_of_shanks = len(list(probe.keys()))
+
+    fig = widget.getFigure()
+    fig.clf(True)
+    fig.set_tight_layout({'rect': [0, 0, 1, 1]})
+    fig.canvas.toolbar.hide()
+
+    channel_positions = pd.Series(probe[0]['geometry'])
+    if bad_channels is not None:
+        channel_positions = channel_positions.drop(bad_channels)
+        channel_positions.index = np.arange(len(channel_positions))
+
+    total_electrodes = len(channel_positions)
+    electrodes_per_shank = int(total_electrodes / num_of_shanks)
+
+    for shank in np.arange(num_of_shanks):
+        ax = fig.add_subplot(1, num_of_shanks, shank + 1)
+        ax.set_axis_off()
+        begin_electrode = shank * electrodes_per_shank
+        end_electrode = (shank + 1) * electrodes_per_shank
+        if shank == num_of_shanks - 1:
+            end_electrode = total_electrodes
+        channel_positions_shank = channel_positions[begin_electrode:end_electrode]
+        data = p2p[channel_positions_shank.index]
+        image, channels_grid = plot_topoplot(ax, channel_positions_shank, data, show=False, rotate_90=rotate_90,
+                                             flip_ud=flip_ud, flip_lr=flip_lr, zlimits=zlimits)
+
+
 

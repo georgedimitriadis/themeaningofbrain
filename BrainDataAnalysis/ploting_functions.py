@@ -359,38 +359,31 @@ def spread_data(data, electrode_structure, col_spacing=3, row_spacing=0.5):
 
 
 def plot_topoplot(channel_positions, data, show=True, **kwargs):
-    if not kwargs.get('hpos'):
-        hpos = 0
-    else:
-        hpos = kwargs['hpos']
-    if not kwargs.get('vpos'):
-        vpos = 0
-    else:
-        vpos = kwargs['vpos']   
-    if not kwargs.get('width'):
-        width = None
-    else:
-        width = kwargs['width']    
-    if not kwargs.get('height'):
-        height = None
-    else:
-        height = kwargs['height']
-    if not kwargs.get('gridscale'):
-        gridscale = 10
-    else:
-        gridscale = kwargs['gridscale']
-    if not kwargs.get('interpolation_method'):
-        interpolation_method = "bicubic"  # ‘none’, ‘nearest’, ‘bilinear’, ‘bicubic’, ‘spline16’, ‘spline36’, ‘hanning’, ‘hamming’, ‘hermite’, ‘kaiser’, ‘quadric’, ‘catrom’, ‘gaussian’, ‘bessel’, ‘mitchell’, ‘sinc’, ‘lanczos’
-    else:
-        interpolation_method = kwargs['interpolation_method']
-    if not kwargs.get('zlimits'):
-        zlimits = None
-    else:
-        zlimits = kwargs['zlimits']
-    if not kwargs.get('outline'):
-        outline = None
-    else:
-        outline = kwargs['outline']   
+    hpos = 0
+    vpos = 0
+    width = None
+    height = None
+    gridscale = 1
+    interpolation_method = "bicubic"
+    zlimits = None
+    outline = None
+    if kwargs is not None:
+        if 'hpos' in kwargs:
+            hpos = kwargs['hpos']
+        if 'vpos' in kwargs:
+            vpos = kwargs['vpos']
+        if 'width' in kwargs:
+            width = kwargs['width']
+        if 'height' in kwargs:
+            height = kwargs['height']
+        if 'gridscale' in kwargs:
+            gridscale = kwargs['gridscale']
+        if 'interpolation_method' in kwargs:
+            interpolation_method = kwargs['interpolation_method']
+        if 'zlimits' in kwargs:
+            zlimits = kwargs['zlimits']
+        if 'outline' in kwargs:
+            outline = kwargs['outline']
     
     if np.isnan(data).any():
         warnings.warn('The data passed to plot_topoplot contain NaN values. These will create unexpected results in the interpolation. Deal with them.')

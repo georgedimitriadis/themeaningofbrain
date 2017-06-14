@@ -1,7 +1,7 @@
 
 from os.path import join
 import numpy as np
-from GUIs.Kilosort import cleaning_kilosorting_results as clean
+from GUIs.Kilosort import cleaning_kilosorting_results_depricated as clean
 from tsne_for_spikesort import spikes
 
 base_folder_v = r'F:\Data\George\Projects\SpikeSorting\Neuroseeker\\' + \

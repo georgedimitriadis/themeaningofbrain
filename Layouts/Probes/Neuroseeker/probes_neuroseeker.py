@@ -2,11 +2,9 @@
 import numpy as np
 import Layouts.Probes.klustakwik_prb_generator as prb_gen
 import pandas as pd
-import itertools
 from os.path import join
 
 def create_1440channels_neuroseeker_prb(base_info_folder, connected_channels_filename, prb_filename=None):
-
     x_coords = np.squeeze(np.load(join(base_info_folder, 'neuroseeker_channel_coordinates_x.npy')))
     y_coords = np.squeeze(np.load(join(base_info_folder, 'neuroseeker_channel_coordinates_y.npy')))
     connected = np.squeeze(np.load(join(base_info_folder, connected_channels_filename)))
@@ -23,16 +21,12 @@ def create_1440channels_neuroseeker_prb(base_info_folder, connected_channels_fil
 
     all_electrodes_concat = np.concatenate((r1, r2, r3, r4))
     all_electrodes = all_electrodes_concat.reshape((4, 360))
-    all_electrodes = np.flipud(all_electrodes.T)
-
 
     if prb_filename is not None:
-        prb_gen.generate_prb_file(filename=prb_filename, all_electrodes_array=all_electrodes, channel_number=1440)
+        prb_gen.generate_prb_file(filename=prb_filename, all_electrodes_array=all_electrodes)
 
     electrode_coordinate_grid = [i for i in list(zip(x_coords, y_coords))]
 
-    #electrode_coordinate_grid = list(itertools.product(np.arange(1, 32), np.arange(1, 5)))
-    #electrode_coordinate_grid = [tuple(reversed(x)) for x in electrode_coordinate_grid]
     electrode_amplifier_index_on_grid = np.arange(len(electrode_coordinate_grid))
     electrode_amplifier_name_on_grid = np.array(["Int" + str(x) for x in electrode_amplifier_index_on_grid])
     indices_arrays = [electrode_amplifier_index_on_grid.tolist(), electrode_amplifier_name_on_grid.tolist()]
