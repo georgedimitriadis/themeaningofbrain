@@ -37,6 +37,7 @@ def get_some_data(base_folder, binary_data_filename, number_of_spikes):
             template_features_sparse_clean[np.argwhere(spikes_clean_index == spike),
                                              np.argwhere(templates_clean_index == indices[i])] = template_features[spike, i]
 
+
     position_mult = 2.25
 
     spike_positions, spike_distances_on_probe, \
@@ -57,6 +58,8 @@ def get_some_data(base_folder, binary_data_filename, number_of_spikes):
         spikes.define_all_spike_spike_matrices_for_distance_calc(spike_distances_on_probe_sorted,
                                                                  max_elements_in_matrix=max_elements_in_matrix,
                                                                  probe_distance_threshold=distance_threshold)
+
+
     indices_of_first_arrays = np.array(indices_of_first_arrays)
     indices_of_second_arrays = np.array(indices_of_second_arrays)
 
@@ -69,7 +72,7 @@ def get_some_data(base_folder, binary_data_filename, number_of_spikes):
 # GET SOME TEMPLATE FEATURES DATA
 base_folder = r'E:\Data\Brain\Neuroseeker_2016_12_17_Anesthesia_Auditory_DoubleProbes\AngledProbe\Kilosort results'
 binary_data_filename = r'AngledProbe_BinaryAmplifier_12Regions_Penetration1_2016-12-17T19_02_12.bin'
-number_of_spikes = 40000
+number_of_spikes = 100000
 indices_of_first_arrays, indices_of_second_arrays, \
 spike_indices_sorted_by_probe_distance, template_features_sparce_clean_probesorted = \
     get_some_data(base_folder=base_folder, binary_data_filename=binary_data_filename, number_of_spikes=number_of_spikes)
@@ -80,11 +83,12 @@ data /= data.max()
 
 # CALCULATE DISTANCES ON THE GPU
 indices_of_first_and_second_matrices = (indices_of_first_arrays, indices_of_second_arrays)
+
 perplexity = 100
 theta = 0.4
 eta = 200.0
 num_dims = 2
-iterations = 2000
+iterations = 1000
 verbose = 2
 
 num_samples = data.shape[0]
@@ -94,6 +98,22 @@ closest_indices_in_hd, closest_distances_in_hd = \
                                                indices_of_first_and_second_matrices,
                                                perplexity=perplexity,
                                                verbose=verbose)
+
+
+
+import numpy as np
+import matplotlib.pylab as pylab
+from tsne_for_spikesort import gpu
+from os.path import join
+from tsne_for_spikesort import io_with_cpp as io
+base_folder = r'E:\Data\Brain\Neuroseeker_2016_12_17_Anesthesia_Auditory_DoubleProbes\AngledProbe\Kilosort results'
+
+template_features_sparse_clean = np.load(join(base_folder, 'template_features_sparce_clean_100k.npy'))
+data = pylab.demean(template_features_sparse_clean, axis=0)
+data /= data.max()
+closest_indices_in_hd, closest_distances_in_hd = \
+    gpu.calculate_knn_distances_all_to_all(template_features_sparse_clean=data, perplexity=perplexity, mem_usage=0.9,
+                                           verbose=True)
 
 
 # PASS THE SORTED DISTANCES TO BARNES HUT C++ TO GENERATE T-SNE RESULTS
