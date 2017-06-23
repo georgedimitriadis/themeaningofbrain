@@ -4,6 +4,7 @@ import numpy as np
 from os.path import join, exists
 import matplotlib
 matplotlib.use('Qt5Agg')
+import matplotlib.pyplot as plt
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph.widgets import MatplotlibWidget as ptl_widget
@@ -29,7 +30,6 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
 
     global current_template_index
     current_template_index = 0
-    #global visibility_threshold
     visibility_threshold = 2
 
     if exists(join(base_folder, 'template_marking.npy')):
@@ -40,8 +40,8 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
 
     assert exists(join(base_folder, 'avg_spike_template.npy'))
     data = np.load(join(base_folder, 'avg_spike_template.npy'))
-    time_points = int(data.shape[2] / 2)
 
+    time_points = data.shape[2]
 
     def get_visible_channels(current_template_index, visibility_threshold):
         median = np.median(np.nanmin(templates[current_template_index, :, :], axis=0))
@@ -50,13 +50,11 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
         channels_over_threshold = np.unique(points_under_median[:, 1])
         return channels_over_threshold
 
-
     def update_all_plots():
         update_average_spikes_plot()
         update_heatmap_plot()
         update_autocorelogram()
         update_marking_led()
-
 
     def update_average_spikes_plot():
         global current_template_index
@@ -71,6 +69,36 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
                 electrode_curves[i].setPen(pg.mkPen((i, len(visible_channels) * 1.3)))
             else:
                 electrode_curves[i].setPen(pg.mkPen(None))
+
+    def get_all_spikes_form_template(template):
+        visible_channels = get_visible_channels(current_template_index=current_template_index,
+                                                visibility_threshold=visibility_threshold)
+        num_of_channels = len(visible_channels)
+        data_raw = np.memmap(binary_data_filename, dtype=np.int16, mode='r')
+
+        number_of_timepoints_in_raw = int(data_raw.shape[0] / number_of_channels_in_binary_file)
+        data_raw_matrix = np.reshape(data_raw, (number_of_channels_in_binary_file, number_of_timepoints_in_raw),
+                                     order='F')
+
+        spike_indices_in_template = np.argwhere(np.in1d(spike_templates, template))
+        spike_times_in_template = np.squeeze(spike_times[spike_indices_in_template])
+
+        too_early_spikes = np.squeeze(np.argwhere(spike_times_in_template < (time_points / 2)), axis=1)
+        too_late_spikes = np.squeeze(
+            np.argwhere(spike_times_in_template > number_of_timepoints_in_raw - (time_points / 2)), axis=1)
+        out_of_time_spikes = np.concatenate((too_early_spikes, too_late_spikes))
+        spike_indices_in_template = np.delete(spike_indices_in_template, out_of_time_spikes)
+        num_of_spikes_in_template = spike_indices_in_template.shape[0]
+
+        data = np.zeros((num_of_spikes_in_template, num_of_channels, time_points))
+
+        for spike_in_template in spike_indices_in_template:
+            data[spike_in_template, :, :] = data_raw_matrix[visible_channels,
+                                                            spike_times[spike_in_template] - (time_points / 2):
+                                                            spike_times[spike_in_template] + (time_points / 2)]
+
+        return data
+
 
 
     '''
@@ -123,7 +151,7 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
         spike_indices_in_template = np.argwhere(np.in1d(spike_templates, current_template_index))
         diffs, norm = crosscorrelate_spike_trains(spike_times[spike_indices_in_template].astype(np.int64),
                                                   spike_times[spike_indices_in_template].astype(np.int64),
-                                                  lag=1500)
+                                                  lag=3000)
         hist, edges = np.histogram(diffs, bins=100)
         autocorelogram_curve.setData(x=edges, y=hist, stepMode=True, fillLevel=0, brush=(0, 0, 255, 150))
 
@@ -247,11 +275,12 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
     label_led_marking.setPalette(deleted_palette)
     # ----------------------------
 
-
     main_window.show()
     update_all_plots()
 
-
+    import sys
+    if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
+        QtGui.QApplication.instance().exec_()
 
 
 
