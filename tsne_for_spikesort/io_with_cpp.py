@@ -72,14 +72,11 @@ def save_data_for_barneshut(files_dir, sorted_distances, sorted_indices, num_of_
             data_file.write(pack('{}i'.format(len(sample)), *sample))
 
 
-def load_tsne_result(files_dir):
-    filename = 'result.dat'
+def load_tsne_result(files_dir, filename='result.dat'):
     # Read and pass on the results
     with open(path_join(files_dir, filename), 'rb') as output_file:
         # The first two integers are the number of samples and the dimensionality
         result_samples, result_dims = _read_unpack('ii', output_file)
-        print(result_samples)
-        print(result_dims)
         # Collect the results, but they may be out of order
         results = [_read_unpack('{}d'.format(result_dims), output_file) for _ in range(result_samples)]
 

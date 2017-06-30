@@ -21,6 +21,7 @@ except:
 from os.path import join
 import matplotlib.animation as animation
 #import t_sne_bhcuda.bhtsne_cuda as TSNE
+from tsne_for_spikesort import io_with_cpp as io
 
 
 
@@ -505,7 +506,8 @@ def generate_labels_dict_from_cluster_info_dataframe(cluster_info):
 
 
 def plot_tsne(tsne, labels_dict=None, cm=None, cm_remapping=None, subtitle=None, label_name='Label', label_array=None,
-              legend_on=True, axes=None, sizes=None, markers=None, color=None, max_screen=False):
+              legent_on=True, axes=None, unlabeled_sizes=None, labeled_sizes=None, markers=None, color=None,
+              max_screen=False):
 
     if axes is None:
         fig = plt.figure()
@@ -517,13 +519,13 @@ def plot_tsne(tsne, labels_dict=None, cm=None, cm_remapping=None, subtitle=None,
         figManager = plt.get_current_fig_manager()
         figManager.window.showMaximized()
     labeled_scatters = []
-    if sizes is None:
-        sizes = [3, 10]
+    if unlabeled_sizes is None:
+        unlabeled_sizes = [3, 10]
     if markers is None:
         markers = ['.', 'o']
     if color is None:
         color = 'k'
-    ax.scatter(tsne[0], tsne[1], s=sizes[0], marker=markers[0], color=color, alpha=1)
+    ax.scatter(tsne[0], tsne[1], s=unlabeled_sizes[0], marker=markers[0], color=color, alpha=1)
 
     if subtitle is None and ax is None:
             fig.suptitle('T-SNE')
@@ -545,11 +547,19 @@ def plot_tsne(tsne, labels_dict=None, cm=None, cm_remapping=None, subtitle=None,
             alpha = 1
             if g==2:
                 alpha = 0.1
+            if len(markers) > 2:
+                marker = np.random.choice(markers)
+            else:
+                marker = markers[1]
+            if labeled_sizes is not None:
+                size = np.random.choice(labeled_sizes)
+            else:
+                size = unlabeled_sizes[1]
             labeled_scatters.append(ax.scatter(tsne[0][labels_dict[g]],
                                                tsne[1][labels_dict[g]],
-                                               s=sizes[1], color=cm(color_indices(cm_remapping[g])),
-                                               marker=markers[1], alpha=alpha))
-        if legend_on:
+                                               s=size, color=cm(color_indices(cm_remapping[g])),
+                                               marker=marker, alpha=alpha))
+        if legent_on:
             ncol = int(number_of_labels / 40)
             box = ax.get_position()
             ax.set_position([0.03, 0.03, box.width * (1 - 0.04 * ncol), 0.93])
@@ -634,7 +644,7 @@ def make_video_of_tsne_iterations(iterations, video_dir, data_file_name='interim
     with writer.saving(fig, join(video_dir, video_file_name), dpi):
         for it in iters:
             ax.cla()
-            tsne = TSNE.load_tsne_result(video_dir, data_file_name.format(it))
+            tsne = io.load_tsne_result(video_dir, data_file_name.format(it))
             tsne = np.transpose(tsne)
             plot_tsne(tsne, labels_dict=labels_dict, cm=cm, cm_remapping=cm_remapping, subtitle=subtitle,
                       label_name=label_name, legent_on=legent_on, label_array=label_array, axes=ax, sizes=sizes,

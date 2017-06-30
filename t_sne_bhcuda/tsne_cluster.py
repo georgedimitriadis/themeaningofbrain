@@ -127,6 +127,8 @@ def gui_manual_cluster_tsne_spikes(tsne_array_or_filename, spike_times_list_or_f
                                                                       cube_type, used_extra_spike_times,
                                                                       num_of_points_for_baseline=
                                                                       num_of_points_for_baseline)
+    elif cut_extracellular_data_or_filename is not None and type(cut_extracellular_data_or_filename) is not str:
+        cut_extracellular_data = cut_extracellular_data_or_filename
     else:
         if num_of_spikes_used != num_of_initial_spikes:
             print('Warning! If the cut_extracellular_data_or_filename does not point to a cut data cube with a number' +
@@ -169,8 +171,9 @@ def get_spike_times_from_kwik_file(kwik_filename, time_samples_h5_dir, verbose=F
     return all_extra_spike_times
 
 
-def create_data_cube_from_raw_extra_data(raw_extracellular_data, data_cube_filename, num_ivm_channels,
+def create_data_cube_from_raw_extra_data(raw_extracellular_data, data_cube_filename,
                                          num_of_points_in_spike_trig, cube_type, extra_spike_times,
+                                         num_of_electrodes=None, used_electrodes=None,
                                          num_of_points_for_baseline=None):
     import os.path as path
     if path.isfile(data_cube_filename):
@@ -178,7 +181,14 @@ def create_data_cube_from_raw_extra_data(raw_extracellular_data, data_cube_filen
         os.remove(data_cube_filename)
 
     num_of_spikes = len(extra_spike_times)
-    shape_of_spike_trig_avg = ((num_ivm_channels,
+    if used_electrodes is None and num_of_electrodes is not None:
+        used_electrodes = np.arange(num_of_electrodes)
+    elif used_electrodes is not None:
+        num_of_electrodes = used_electrodes.shape[0]
+    else:
+        print('Please provide either a number of electrodes or a list of electrodes')
+        return
+    shape_of_spike_trig_avg = ((num_of_electrodes,
                                 num_of_points_in_spike_trig,
                                 num_of_spikes))
 
@@ -194,13 +204,15 @@ def create_data_cube_from_raw_extra_data(raw_extracellular_data, data_cube_filen
         end_point = int(trigger_point + num_of_points_in_spike_trig / 2)
         if end_point > raw_extracellular_data.shape[1]:
             break
-        temp = raw_extracellular_data[:, start_point:end_point]
+        temp = raw_extracellular_data[used_electrodes, start_point:end_point]
         if num_of_points_for_baseline is not None:
             baseline = np.mean(temp[:, [0, num_of_points_for_baseline]], 1)
             temp = (temp.T - baseline.T).T
         data_cube[:, :, spike] = temp.astype(cube_type)
+        if spike % 1000 == 0:
+            print('Done ' + str(spike) + ' spikes')
+        del temp
     del raw_extracellular_data
-    del temp
     del baseline
     del data_cube
 
@@ -527,6 +539,9 @@ def generate_gui(tsne, cut_extracellular_data, all_extra_spike_times, time_axis,
     hist_plot = hist_figure.quad(bottom=0, left=edges[:-1], right=edges[1:], top=hist, color="#3A5785", alpha=0.5,
                                  line_color="#3A5785")
     # heatmap plot
+    heatmap_plot = figure(toolbar_location='right', plot_width=1, plot_height=heatmap_plot_size[1],
+                          x_range=(0, 1), y_range=(0, 1), title='Probe heatmap',
+                          toolbar_sticky=False)
     if prb_file is not None:
         data = np.zeros(cut_extracellular_data.shape)
         final_image, (x_size, y_size) = spike_heatmap.create_heatmap(data, prb_file, rotate_90=True,
@@ -665,6 +680,7 @@ def generate_gui(tsne, cut_extracellular_data, all_extra_spike_times, time_axis,
     button_show_clusters_of_selected_points = Button(label='Show clusters of selected points')
 
     def on_button_show_clusters_change():
+        print('Hello')
         global clusters_of_all_spikes
         currently_selected_spike_indices = tsne_source.selected['1d']['indices']
         cluster_info = load_cluster_info(cluster_info_file)

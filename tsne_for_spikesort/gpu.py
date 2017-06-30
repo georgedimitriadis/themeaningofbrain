@@ -132,28 +132,28 @@ def _segment_sort_transposed_distances_get_knns(num_of_neighbours, distances_on_
     m = distances_on_gpu.shape[0]  # all spikes
     n = distances_on_gpu.shape[1]  # part of spikes in iteration
 
-    selected_sorted_distances = np.empty((num_of_neighbours, n))
-    selected_sorted_indices = np.empty((num_of_neighbours, n))
+    selected_sorted_distances = np.empty((n, num_of_neighbours))
+    selected_sorted_indices = np.empty((n, num_of_neighbours))
 
     s = timer()
     p = np.append(np.arange(0, n, int(n / number_of_sorts)), n)
     for i in np.arange(1, p.shape[0]):
         delta_n = p[i] - p[i - 1]
-        keys = np.ascontiguousarray(distances_on_gpu.copy_to_host()[:, p[i - 1]:p[i]].reshape(m * delta_n))
+        keys = np.ascontiguousarray(distances_on_gpu.copy_to_host()[:, p[i - 1]:p[i]].transpose().reshape(m * delta_n))
         values = np.ascontiguousarray(np.tile(np.arange(m), (delta_n, 1)).reshape(m * delta_n))
-        segments = np.ascontiguousarray(np.arange(0, m * delta_n, m)[1:])
+        segments = np.ascontiguousarray(np.arange(m, m * delta_n, m))
         sorting.segmented_sort(keys=keys, vals=values, segments=segments)
-        keys = np.reshape(keys, (m, delta_n))[:num_of_neighbours, :]
-        values = np.reshape(values, (m, delta_n))[:num_of_neighbours, :]
-        selected_sorted_distances[:, p[i - 1]:p[i]] = keys[:, :]
-        selected_sorted_indices[:, p[i - 1]:p[i]] = values[:, :]
+        keys = np.reshape(keys, (delta_n, m))[:, :num_of_neighbours]
+        values = np.reshape(values, (delta_n, m))[:, :num_of_neighbours]
+        selected_sorted_distances[p[i - 1]:p[i], :] = keys[:, :]
+        selected_sorted_indices[p[i - 1]:p[i], :] = values[:, :]
         if verbose:
             print('     Sorted ' + str(i) + ' of ' + str(p.shape[0] - 1) + ' segments of this iteration')
     e = timer()
     sort_time = e - s
     print("SORTING TIME:", "%.3f" % sort_time, "s")
 
-    return selected_sorted_indices.transpose(), selected_sorted_distances.transpose()
+    return selected_sorted_indices, selected_sorted_distances
 
 
 def calculate_knn_distances_all_to_all(template_features_sparse_clean, perplexity=100, mem_usage=0.9, verbose=True):
@@ -178,7 +178,8 @@ def calculate_knn_distances_all_to_all(template_features_sparse_clean, perplexit
 
     for iter in np.arange(number_of_iters):
         second_matrix = np.array(template_features_sparse_clean[indices_of_second_matrices[iter][0]:
-        indices_of_second_matrices[iter][1], :], dtype=np.float32)
+                                                                indices_of_second_matrices[iter][1], :],
+                                 dtype=np.float32)
 
         s = timer()
         if iter != 0:
