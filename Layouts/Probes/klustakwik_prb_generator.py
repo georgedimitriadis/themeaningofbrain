@@ -90,8 +90,8 @@ def generate_prb_file(filename, all_electrodes_array, steps_r=2, steps_c=2):
         file.write(line + '\n')
     file.write('            ],\n')
     file.write('\n')
-    file.write('            # 2D positions of the channels, only for visualization purposes\n')
-    file.write('            # in KlustaViewa. The unit doesn\'t matter.\n')
+    file.write('            # 2D positions of the channels, only for visualization purposes.\n')
+    file.write('            # The unit doesn\'t matter.\n')
     file.write('            \'geometry\': {\n')
     step = 10
     for r in np.arange(all_electrodes_array.shape[0]):
