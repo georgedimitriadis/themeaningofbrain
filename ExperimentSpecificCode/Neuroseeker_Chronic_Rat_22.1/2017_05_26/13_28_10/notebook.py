@@ -7,7 +7,7 @@ data_folder = r'F:\Data\George\Projects\SpikeSorting\Neuroseeker\Neuroseeker_Chr
 binary_data_filename = join(data_folder, r'2017_05_26T13_28_10_Amp_S16_LP3p5KHz_uV.bin')
 
 probe_info_folder = r'E:\Software\Develop\Source\Repos\Python35Projects\TheMeaningOfBrain\Layouts\Probes\Neuroseeker'
-probe_connected_channels_file = r'neuroseeker_connected_channels_chronic_rat_22p1.npy'
+prb_file = join(probe_info_folder, 'prb.txt')
 
 time_points = 100
 sampling_frequency = 20000
@@ -15,8 +15,8 @@ sampling_frequency = 20000
 number_of_channels_in_binary_file = 1440
 
 
-clean.cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, binary_data_filename,
-                              probe_info_folder, probe_connected_channels_file, sampling_frequency=20000)
+clean.cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, binary_data_filename, prb_file,
+                              sampling_frequency=20000)
 
 
 import matplotlib.pyplot as plt

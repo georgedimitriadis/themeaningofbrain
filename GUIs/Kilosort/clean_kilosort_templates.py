@@ -4,7 +4,6 @@ import numpy as np
 from os.path import join, exists
 import matplotlib
 matplotlib.use('Qt5Agg')
-import matplotlib.pyplot as plt
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph.widgets import MatplotlibWidget as ptl_widget
@@ -13,8 +12,9 @@ from joblib import Parallel, delayed
 import pandas as pd
 import time
 
-def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, binary_data_filename,
-                            probe_info_folder, probe_connected_channels_file, sampling_frequency=20000):
+
+def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, binary_data_filename, prb_file,
+                            sampling_frequency=20000):
 
     spike_templates = np.load(join(base_folder, r'spike_templates.npy'))
     template_feature_ind = np.load(join(base_folder, 'template_feature_ind.npy'))
@@ -80,7 +80,6 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
                 avg_electrode_curves[i].setPen(pg.mkPen(None))
 
     def initialize_single_spike_window():
-        prb_file = join(probe_info_folder, 'prb.txt')
         probe = sh.get_probe_geometry_from_prb_file(prb_file)
         all_electrode_positions = pd.Series(probe[0]['geometry']).tolist()
         all_elec_pos_x = [x for x, y in all_electrode_positions]
@@ -172,7 +171,6 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
         visible_electrodes = get_visible_channels(current_template_index=current_template_index,
                                                   visibility_threshold=visibility_threshold)
 
-        prb_file = join(probe_info_folder, 'prb.txt')
         probe = sh.get_probe_geometry_from_prb_file(prb_file)
         all_electrode_positions = pd.Series(probe[0]['geometry']).tolist()
         all_elec_pos_x = [x for x, y in all_electrode_positions]
@@ -276,9 +274,9 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
             return single_spikes_cube
 
     def update_heatmap_plot():
-        prb_file = join(probe_info_folder, 'prb.txt')
-        connected = np.squeeze(np.load(join(probe_info_folder, probe_connected_channels_file)))
-        bad_channels = np.squeeze(np.argwhere(connected == False).astype(np.int))
+        connected = np.squeeze(np.load(join(base_folder, 'channel_map.npy')))
+        connected_binary = np.in1d(np.arange(number_of_channels_in_binary_file), connected)
+        bad_channels = np.squeeze(np.argwhere(connected_binary == False).astype(np.int))
         sh.create_heatmap_on_matplotlib_widget(heatmap_plot, data[current_template_index], prb_file, window_size=60,
                                                bad_channels=bad_channels, num_of_shanks=5, rotate_90=True, flip_ud=False,
                                                flip_lr=False)
