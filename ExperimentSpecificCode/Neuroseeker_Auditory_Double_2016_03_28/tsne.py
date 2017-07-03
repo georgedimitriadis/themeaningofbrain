@@ -10,15 +10,6 @@ from BrainDataAnalysis import ploting_functions as pf
 import matplotlib.pyplot as plt
 from t_sne_bhcuda import tsne_cluster as tsne_cl
 
-
-'''
-#base_folder_v = r'D:\Data\George\Projects\SpikeSorting\\Neuroseeker\\' + \
-#                r'Neuroseeker_2017_03_28_Anesthesia_Auditory_DoubleProbes\Vertical\\' + \
-#                r'Experiment_2_T18_48_25_And_Experiment_3_T19_41_07\Kilosort'
-#binary_v = r'Exp2and3_2017_03_28T18_48_25_Amp_S16_LP3p5KHz_mV.bin'
-'''
-
-
 base_folder = r'D:\Data\Brain\Neuroseeker_2017_03_28_Anesthesia_Auditory_DoubleProbes\Angled\Analysis\Experiment_2_T18_48_25_And_Experiment_3_T19_41_07\Kilosort'
 
 template_marking = np.load(join(base_folder, 'template_marking.npy'))
@@ -88,3 +79,5 @@ markers = ['.', '*', 'o', '>', '<', '_', ',']
 labeled_sizes = range(20, 100, 20)
 
 pf.plot_tsne(tsne.T, cm=plt.cm.prism, labels_dict=labels_dict, legent_on=False, markers=markers, labeled_sizes=labeled_sizes)
+
+
