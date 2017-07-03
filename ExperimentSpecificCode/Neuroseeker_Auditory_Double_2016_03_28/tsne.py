@@ -10,7 +10,9 @@ from BrainDataAnalysis import ploting_functions as pf
 import matplotlib.pyplot as plt
 from t_sne_bhcuda import tsne_cluster as tsne_cl
 
-base_folder = r'D:\Data\Brain\Neuroseeker_2017_03_28_Anesthesia_Auditory_DoubleProbes\Angled\Analysis\Experiment_2_T18_48_25_And_Experiment_3_T19_41_07\Kilosort'
+
+base_folder = r'Z:\n\Neuroseeker Probe Recordings\Neuroseeker_2017_03_28_Auditory_DoubleProbes\Angled\Analysis\Experiment_2_T18_48_25_And_Experiment_3_T19_41_07\Kilosort' # Desktop
+#base_folder = r'D:\Data\Brain\Neuroseeker_2017_03_28_Anesthesia_Auditory_DoubleProbes\Angled\Analysis\Experiment_2_T18_48_25_And_Experiment_3_T19_41_07\Kilosort' # Laptop
 
 template_marking = np.load(join(base_folder, 'template_marking.npy'))
 spike_templates = np.load(join(base_folder, 'spike_templates.npy'))
@@ -27,9 +29,13 @@ clean_templates = np.unique(spike_templates[spikes_clean_index])
 
 # -------
 template_features_sparse_clean = np.zeros((spikes_clean_index.size, clean_templates.size))
+s = 0
 for spike in spikes_clean_index:
     cluster = spike_templates[spike][0]
     indices = template_features_ind[cluster, :]
+    if s % 5000 == 0:
+        print(s)
+    s+=1
     for i in np.arange(len(indices)):
         template_features_sparse_clean[np.argwhere(spikes_clean_index == spike),
                                        np.argwhere(clean_templates == indices[i])] = template_features[
@@ -54,9 +60,10 @@ closest_indices_in_hd, closest_distances_in_hd = \
 theta = 0.4
 eta = 200.0
 num_dims = 2
-iterations = 1000
-verbose = 2
-exe_folder = r'E:\Projects\Analysis\Brain\spikesorting_tsne_bhpart\Barnes_Hut\x64\Release'
+iterations = 2000
+verbose = 3
+exe_folder = r'E:\Software\Develop\Source\Repos\spikesorting_tsne_bhpart\Barnes_Hut\x64\Release' # Desktop
+#exe_folder = r'E:\Projects\Analysis\Brain\spikesorting_tsne_bhpart\Barnes_Hut\x64\Release' # Laptop
 io.save_data_for_barneshut(exe_folder, closest_distances_in_hd, closest_indices_in_hd, eta=eta, iterations=iterations,
                            num_of_dims=num_dims, perplexity=perplexity, theta=theta, verbose=verbose)
 
@@ -80,4 +87,7 @@ labeled_sizes = range(20, 100, 20)
 
 pf.plot_tsne(tsne.T, cm=plt.cm.prism, labels_dict=labels_dict, legent_on=False, markers=markers, labeled_sizes=labeled_sizes)
 
-
+pf.make_video_of_tsne_iterations(iterations=2000, video_dir=exe_folder, data_file_name='interim_{:0>6}.dat',
+                                  video_file_name='tsne_video.mp4', figsize=(15, 15), dpi=200, fps=30,
+                                 labels_dict=labels_dict, cm=plt.cm.prism,
+                                  label_name='Label', legent_on=False, labeled_sizes=labeled_sizes, markers=markers,max_screen=True)

@@ -622,8 +622,8 @@ def show_clustered_tsne(dbscan_result, X, juxta_cluster_indices_grouped=None, th
 def make_video_of_tsne_iterations(iterations, video_dir, data_file_name='interim_{:0>6}.dat',
                                   video_file_name='tsne_video.mp4', figsize=(15, 15), dpi=200, fps=30,
                                   movie_metadata=None, labels_dict=None, cm=None, cm_remapping=None, subtitle=None,
-                                  label_name='Label', legent_on=True, label_array=None,
-                                  unlabeled_sizes=None, labeled_sizes=None, markers=None, color=None, max_screen=False):
+                                  label_name='Label', legent_on=True, label_array=None, labeled_sizes=None,
+                                  unlabeled_sizes=None, markers=None, color=None, max_screen=False):
     iters = np.arange(iterations)
     FFMpegWriter = animation.writers['ffmpeg']
     metadata = None
@@ -652,6 +652,6 @@ def make_video_of_tsne_iterations(iterations, video_dir, data_file_name='interim
             plt.ylim([-range_y, range_y])
             plt.xlim([-range_x, range_x])
             writer.grab_frame()
+            if it%100 == 0:
+                print('Done '+str(it) + ' frames')
 
-            if it % 50 == 0:
-                print('Completed ' + str(it) + ' frames')
