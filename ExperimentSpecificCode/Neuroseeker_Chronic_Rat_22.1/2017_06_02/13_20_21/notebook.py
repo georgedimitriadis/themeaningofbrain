@@ -6,8 +6,8 @@ from os.path import join
 import numpy as np
 import matplotlib.pyplot as plt
 
-base_folder = r'Z:\n\Neuroseeker Probe Recordings\Neuroseeker Chronic Rat 22.1\2017_05_29\13_30_53\Analysis\Kilosort'
-data_folder = r'Z:\n\Neuroseeker Probe Recordings\Neuroseeker Chronic Rat 22.1\2017_05_29\13_30_53\Data'
+base_folder = r'Z:\n\Neuroseeker Probe Recordings\Neuroseeker Chronic Rat 22.1\2017_06_02\13_20_21\Analysis\Kilosort'
+data_folder = r'Z:\n\Neuroseeker Probe Recordings\Neuroseeker Chronic Rat 22.1\2017_06_02\13_20_21\Data'
 binary_data_filename = join(data_folder, r'2017_05_29T13_30_53_Amp_S16_LP3p5KHz_uV.bin')
 
 probe_info_folder = r'E:\George\Python35Projects\TheMeaningOfBrain\Layouts\Probes\Neuroseeker'
@@ -35,8 +35,8 @@ clean.cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bi
 # Generate Square wave pulse train to recapture Camera TTL information
 number_of_channels_in_binary_file = 1440
 
-binary_data_filename = join(data_folder, r'2017_05_29T13_30_53_Amp_S16_LP3p5KHz_uV.bin')
-pulse_data_trace_filename = r'2017_05_29T13_30_53_Sync_U16.bin'
+binary_data_filename = join(data_folder, r'InBehaviour_2017-06-02T13_20_21_Amp_S16_uV.bin')
+pulse_data_trace_filename = r'InBehaviour_2017-06-02T13_20_21_Sync_U16_uV.bin'
 
 raw_data = np.memmap(binary_data_filename, dtype=np.int16, mode='r')
 number_of_timepoints_in_raw = int(raw_data.shape[0] / number_of_channels_in_binary_file)
@@ -63,7 +63,7 @@ def plot_both_pulses(pulse_data, pulse_square=None, pulse_freq=None, sampling_fr
         etp = int(et * sampling_frequency)
         t = np.linspace(st, et, etp - stp)
         if pulse_square is None:
-            square = ssig.square(2 * np.pi * pulse_freq * (t + 20/sampling_frequency), duty=1.0-0.0434) / 2 + 0.5 + 65278
+            square = ssig.square(2 * np.pi * pulse_freq * (t + 40/sampling_frequency), duty=1.0-0.0434) / 2 + 0.5 + 65278
         else:
             square = pulse_square[stp:etp]
 
@@ -79,15 +79,15 @@ bottom_of_pulse_points = np.argwhere(pulse_data==65278)
 starting_pulse = bottom_of_pulse_points[0][0]-167
 end_pulse = top_of_pulse_points[-1][0]
 time_points_in_ttl_train = end_pulse - starting_pulse
-time_of_frames_train = 5453.015 # 5422.866 # From the csv file
-sampling_frequency_corrected = time_points_in_ttl_train / time_of_frames_train
+time_of_frames_train = 4217.07639  # From the csv file
+# sampling_frequency_corrected = time_points_in_ttl_train / time_of_frames_train
 
 
-
-pulse_freq = 119.6057583 # 119.6057583 # 120.27072
+sampling_frequency_corrected = 19998.5
+pulse_freq = 119.6058485  # 119.6058485
 full_time = pulse_data.shape[0] / sampling_frequency_corrected
 plot_both_pulses(pulse_data, pulse_freq=pulse_freq, sampling_frequency=sampling_frequency_corrected,
-                 start_time=15, end_time=full_time, step_time=2)
+                 start_time=44.5, end_time=full_time, step_time=20)
 
 
 
@@ -97,18 +97,18 @@ plot_both_pulses(pulse_data, pulse_freq=pulse_freq, sampling_frequency=sampling_
 
 t = np.linspace(0, full_time, pulse_data.shape[0])
 
-square = ssig.square(2 * np.pi * pulse_freq * (t + 20/sampling_frequency_corrected), duty=1.0-0.0434) / 2 + 0.5 + 65278
+square = ssig.square(2 * np.pi * pulse_freq * (t + 40/sampling_frequency_corrected), duty=1.0-0.0434) / 2 + 0.5 + 65278
 square[:starting_pulse] = 65278
 square[end_pulse:] = 65278
 
 plot_both_pulses(pulse_data, pulse_square=square, start_time=full_time-60, end_time=full_time+1, step_time=0.5)
 
-stp = int(14 * sampling_frequency_corrected)
-etp = int(18 * sampling_frequency_corrected)
+stp = int(44 * sampling_frequency_corrected)
+etp = int(48 * sampling_frequency_corrected)
 plt.plot(t[stp:etp], square[stp:etp], t[stp:etp], pulse_data[stp:etp])
 
-stp = int((full_time - 15) * sampling_frequency_corrected)
-etp = int((full_time - 10) * sampling_frequency_corrected)
+stp = int((full_time - 85) * sampling_frequency_corrected)
+etp = int((full_time - 55) * sampling_frequency_corrected)
 plt.plot(t[stp:etp], square[stp:etp], t[stp:etp], pulse_data[stp:etp])
 
 np.save(join(data_folder, r'corrected_camera_ttl_pulses.npy'), square)
@@ -125,19 +125,19 @@ num_of_pulses = np.sum(transitions==-1)
 
 
 
-frame_times = np.load(r'Z:\n\Neuroseeker Probe Recordings\Neuroseeker Chronic Rat 22.1\2017_05_29\13_30_53\Data\frame_times.npy')
+frame_times = np.load(join(data_folder, r'frame_times.npy'))
 
 csv_frames = np.ones(pulse_data.shape[0])*65278
 frame_times_offseted = frame_times + 15.9348
 for frame_time in frame_times_offseted:
     csv_frames[int(frame_time*sampling_frequency_corrected)] = 65279
 
-stp = int(14 * sampling_frequency_corrected)
-etp = int(18 * sampling_frequency_corrected)
+stp = int(44 * sampling_frequency_corrected)
+etp = int(48 * sampling_frequency_corrected)
 plt.plot(t[stp:etp], csv_frames[stp:etp], t[stp:etp], pulse_data[stp:etp])
 
-stp = int((full_time - 45) * sampling_frequency_corrected)
-etp = int((full_time - 35) * sampling_frequency_corrected)
+stp = int(4255 * sampling_frequency_corrected)
+etp = int(full_time * sampling_frequency_corrected)
 plt.plot(t[stp:etp], csv_frames[stp:etp], t[stp:etp], pulse_data[stp:etp])
 
 

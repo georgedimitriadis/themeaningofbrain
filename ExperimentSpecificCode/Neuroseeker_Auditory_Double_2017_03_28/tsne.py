@@ -57,11 +57,11 @@ closest_indices_in_hd, closest_distances_in_hd = \
                                            verbose=True)
 
 # PASS THE SORTED DISTANCES TO BARNES HUT C++ TO GENERATE T-SNE RESULTS
-theta = 0.4
+theta = 0.2
 eta = 200.0
 num_dims = 2
 iterations = 2000
-verbose = 3
+verbose = 2
 exe_folder = r'E:\Software\Develop\Source\Repos\spikesorting_tsne_bhpart\Barnes_Hut\x64\Release' # Desktop
 #exe_folder = r'E:\Projects\Analysis\Brain\spikesorting_tsne_bhpart\Barnes_Hut\x64\Release' # Laptop
 io.save_data_for_barneshut(exe_folder, closest_distances_in_hd, closest_indices_in_hd, eta=eta, iterations=iterations,

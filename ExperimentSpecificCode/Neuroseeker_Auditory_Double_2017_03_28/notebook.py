@@ -4,12 +4,12 @@ import numpy as np
 from GUIs.Kilosort import cleaning_kilosorting_results_depricated as clean
 from tsne_for_spikesort import spikes
 
-base_folder_v = r'F:\Data\George\Projects\SpikeSorting\Neuroseeker\\' + \
-                r'Neuroseeker_2017_03_28_Anesthesia_Auditory_DoubleProbes\Vertical\\' + \
+base_folder_v = r'Z:\n\Neuroseeker Probe Recordings\\' + \
+                r'Neuroseeker_2017_03_28_Anesthesia_Auditory_DoubleProbes\Vertical\Analysis\\' + \
                 r'Experiment_2_T18_48_25_And_Experiment_3_T19_41_07\Kilosort'
 
-base_folder_a = r'F:\Data\George\Projects\SpikeSorting\Neuroseeker\\' + \
-                r'Neuroseeker_2017_03_28_Anesthesia_Auditory_DoubleProbes\Angled\\' + \
+base_folder_a = r'Z:\n\Neuroseeker Probe Recordings\\' + \
+                r'Neuroseeker_2017_03_28_Anesthesia_Auditory_DoubleProbes\Angled\Analysis\\' + \
                 r'Experiment_2_T18_48_25_And_Experiment_3_T19_41_07\Kilosort'
 
 binary_v = r'Exp2and3_2017_03_28T18_48_25_Amp_S16_LP3p5KHz_mV.bin'

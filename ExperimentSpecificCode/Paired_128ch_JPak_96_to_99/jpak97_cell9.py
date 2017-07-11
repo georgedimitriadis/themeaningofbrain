@@ -19,6 +19,7 @@ import time
 
 
 base_folder = r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch'
+base_folder = r'Z:\g\George\DataAndResults\Experiments\Anesthesia\Joana_Paired_128ch'
 rat = 97
 good_cells = '9'
 date = '2015-09-03'
@@ -143,6 +144,8 @@ for spike in np.arange(0, num_of_spikes):
                                              iir_params=iir_params)  # 4th order Butter with no padding
     temp_filtered = temp_filtered[:, int(num_of_points_for_padding / 2):-int(num_of_points_for_padding / 2)]
     ivm_data_filtered[:, :, spike] = temp_filtered
+    if spike % 100 == 0:
+        print('Done ' + str(spike) + 'spikes')
 
 
 # Load the already saved ivm_data_filtered
@@ -184,7 +187,7 @@ electrode_structure = pr_imec.create_128channels_imec_prb(file_prb)
 
 
 # 0.5) Grab the mask and the PCA components for all spikes from the .kwx file
-filename = r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\klustakwik\threshold_6_5std\threshold_6_5std.kwx'
+filename = os.path.join(analysis_folder, 'klustakwik', 'threshold_6_5std', r'threshold_6_5std.kwx')
 h5file = h5.File(filename, mode='r')
 pca_and_masks = np.array(list(h5file['channel_groups/0/features_masks']))
 masks = np.array(pca_and_masks[:, :, 1])
@@ -194,7 +197,7 @@ masked_pca_features = pca_features * masks
 
 
 # 1) Grab the spike times from the .kwik file
-filename = r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\klustakwik\threshold_6_5std\threshold_6_5std.kwik'
+filename = os.path.join(analysis_folder, 'klustakwik', 'threshold_6_5std', r'threshold_6_5std.kwik')
 h5file = h5.File(filename, mode='r')
 spike_times_phy = np.array(list(h5file['channel_groups/0/spikes/time_samples']))
 #klusta_clusters = np.array(list(h5file['channel_groups/0/spikes/clusters/main']))
@@ -385,7 +388,7 @@ spike_channels = np.concatenate((r1[:8], r2[:8], r3[:8]))
 
 common_spikes_grouped[g], indices_of_common_spikes_in_klusta_grouped[g] \
     = select_spikes_in_certain_channels(spike_thresholds, common_spikes_grouped[g],
-                                        indices_of_common_spikes_in_klusta_grouped[g+1],
+                                        indices_of_common_spikes_in_klusta_grouped[g],
                                         spike_channels, num_of_raw_data_channels=128)
 
 
@@ -510,7 +513,7 @@ print("CUDA t-sne took {} seconds, ({} minutes), for {} spikes".format(t1-t0, (t
 
 #  2D plot
 pf.plot_tsne(t_tsne, juxta_cluster_indices_grouped, subtitle='T-sne', cm=plt.cm.coolwarm, label_name='Peak size in uV',
-             label_array=(spike_thresholds_groups*1e6).astype(int), sizes=[2, 15])
+             label_array=(spike_thresholds_groups*1e6).astype(int), labeled_sizes=[2, 15])
 pf.plot_tsne(t_tsne, subtitle='T-sne of 129000 spikes from Juxta Paired recordings, not labeled',
              label_name=None,
              label_array=None)
