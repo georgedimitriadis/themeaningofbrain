@@ -651,7 +651,7 @@ import IO.ephys as ephys
 from t_sne_bhcuda import tsne_cluster
 
 # Parameters for testing (128 channels)
-base_dir = r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03'
+base_dir = r'Z:\g\George\DataAndResults\Experiments\Anesthesia\Joana_Paired_128ch\2015-09-03'
 tsne_dir = r'Analysis\klustakwik\threshold_6_5std'
 data_dir = r'Data'
 data_cube_dir = r'Analysis\TempCube'
@@ -685,7 +685,7 @@ data_cube_filename = join(base_dir, data_cube_dir, 'baselined_data_cube.npy')
 
 autocor_bin_number = 100
 cluster_info_filename = join(base_dir, tsne_dir, 'cluster_info.pkl')
-prb_file = r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\klustakwik\128ch_passive_imec.prb'
+prb_file = join(base_dir, 'Analysis', 'klustakwik', '128ch_passive_imec.prb')
 
 tsne_cluster.gui_manual_cluster_tsne_spikes(tsne_array_or_filename=tsne_filename,
                                             spike_times_list_or_filename=kwik_filename,
@@ -701,7 +701,7 @@ tsne_cluster.gui_manual_cluster_tsne_spikes(tsne_array_or_filename=tsne_filename
                                             use_existing_cluster=True,
                                             spike_indices_to_use=spike_indices_to_use,
                                             prb_file=prb_file,
-                                            k4=True,
+                                            k4=False,
                                             verbose=True)
 
 

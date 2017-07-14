@@ -267,7 +267,8 @@ def create_heatmap(data, prb_file, voltage_step_size=1e-6, scale_microvolts=1000
                                              flip_ud=flip_ud, flip_lr=flip_lr)
 
         image.write_png('temp.png')  # Required to generate the _rgbacache info
-        temp_image = image._rgbacache
+        #temp_image = image._rgbacache
+        temp_image = image.to_rgba(image._A)
 
         if shank == 0:
             y_dim_pixels = temp_image.shape[0]

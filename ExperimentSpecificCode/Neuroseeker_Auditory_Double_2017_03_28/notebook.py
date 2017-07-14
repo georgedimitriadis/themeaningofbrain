@@ -62,10 +62,10 @@ brain_regions_v = {'AuD': 5208, 'Au1': 4748, 'AuV': 2890, 'TeA': 2248, 'Ectorhin
                    'Perirhinal': 1418, 'Entorhinal': 808}
 
 spike_positions_v_cor = weighted_average_postions_v * position_mult
-spikes.view_spike_positions(spike_positions_v_cor,brain_regions=brain_regions_v, probe_dimensions=probe_dimensions)
+spikes.view_spike_positions(spike_positions_v_cor, brain_regions=brain_regions_v, probe_dimensions=probe_dimensions)
 
 template_positions_v_cor = weighted_template_positions_v * position_mult
-spikes.view_spike_positions(template_positions_v_cor,brain_regions=brain_regions_v, probe_dimensions=probe_dimensions,
+spikes.view_spike_positions(template_positions_v_cor, brain_regions=brain_regions_v, probe_dimensions=probe_dimensions,
                             labels_offset=250, font_size=12)
 
 brain_regions_a = {'Au1 L1-3': 6396, 'Au1 L4': 5983, 'Au1 L5': 5783, 'Au1 L6': 5443, 'CA1': 5038,

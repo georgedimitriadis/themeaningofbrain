@@ -184,3 +184,9 @@ file = r'InBehaviour_2017-06-02T13_20_21_Sync_U16_uV.bin'
 pulse_data = np.memmap(join(folder, file), dtype=np.uint16, mode='r')
 
 
+
+
+
+
+brain_regions = {'Parietal Cortex': 8000, 'Hypocampus CA1': 6230, 'Hypocampus DG': 5760, 'Thalamus LPMR': 4450,
+                 'Thalamus Posterior': 3500, 'Thalamus VPM': 1930, 'SubThalamic': 1050}
