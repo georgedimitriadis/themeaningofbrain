@@ -202,7 +202,7 @@ def generate_probe_positions_of_templates(base_folder, binary_data_filename, num
         templates_positions.append([new_pos_x, new_pos_y])
         counter += 1
         if not (counter % 100):
-            print('Completed ' + str(counter) + ' spikes')
+            print('Completed ' + str(counter) + ' templates')
 
     return np.array(templates_positions)
 
