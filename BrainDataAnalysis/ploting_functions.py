@@ -505,8 +505,11 @@ def plot_tsne(tsne, labels_dict=None, cm=None, cm_remapping=None, subtitle=None,
     if axes is None:
         fig = plt.figure()
         ax = fig.add_subplot(111)
+        fig.tight_layout()
     else:
         ax = axes
+
+
 
     if max_screen:
         figManager = plt.get_current_fig_manager()
@@ -634,6 +637,7 @@ def make_video_of_tsne_iterations(iterations, video_dir, data_file_name='interim
         cm = plt.cm.Dark2
     fig = plt.figure(figsize=figsize, dpi=dpi)
     ax = fig.add_subplot(111)
+    fig.tight_layout()
     with writer.saving(fig, join(video_dir, video_file_name), dpi):
         for it in iters:
             ax.cla()
@@ -641,7 +645,8 @@ def make_video_of_tsne_iterations(iterations, video_dir, data_file_name='interim
             tsne = np.transpose(tsne)
             plot_tsne(tsne, labels_dict=labels_dict, cm=cm, cm_remapping=cm_remapping, subtitle=subtitle,
                       label_name=label_name, legent_on=legent_on, label_array=label_array, axes=ax,
-                      unlabeled_sizes=None, labeled_sizes=None, markers=markers, color=color, max_screen=max_screen)
+                      unlabeled_sizes=unlabeled_sizes, labeled_sizes=labeled_sizes, markers=markers, color=color,
+                      max_screen=max_screen)
             min_x = np.min(tsne[0, :])
             max_x = np.max(tsne[0, :])
             min_y = np.min(tsne[1, :])
