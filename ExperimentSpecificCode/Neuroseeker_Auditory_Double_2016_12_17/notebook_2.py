@@ -1,9 +1,9 @@
 
 import numpy as np
-from tsne_for_spikesort import spikes
+from tsne_for_spikesort_old import spikes
 import matplotlib.pylab as pylab
-from tsne_for_spikesort import t_sne, gpu
-from tsne_for_spikesort import io_with_cpp as io
+from tsne_for_spikesort_old import t_sne, gpu
+from tsne_for_spikesort_old import io_with_cpp as io
 from os.path import join
 from struct import calcsize, unpack
 import matplotlib.pyplot as plt
@@ -103,9 +103,9 @@ closest_indices_in_hd, closest_distances_in_hd = \
 
 import numpy as np
 import matplotlib.pylab as pylab
-from tsne_for_spikesort import gpu
+from tsne_for_spikesort_old import gpu
 from os.path import join
-from tsne_for_spikesort import io_with_cpp as io
+from tsne_for_spikesort_old import io_with_cpp as io
 base_folder = r'E:\Data\Brain\Neuroseeker_2016_12_17_Anesthesia_Auditory_DoubleProbes\AngledProbe\Kilosort results'
 
 perplexity = 100
@@ -205,8 +205,8 @@ cpu_distances_sorted = np.sort(cpu_distances, axis=-1)
 
 import numpy as np
 import matplotlib.pylab as pylab
-from tsne_for_spikesort import gpu
-from tsne_for_spikesort import io_with_cpp as io
+from tsne_for_spikesort_old import gpu
+from tsne_for_spikesort_old import io_with_cpp as io
 from t_sne_bhcuda import tsne_cluster as tsne_cl
 from os.path import join
 from BrainDataAnalysis import ploting_functions as pl

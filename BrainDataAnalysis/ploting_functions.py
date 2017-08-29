@@ -21,7 +21,7 @@ except:
 from os.path import join
 import matplotlib.animation as animation
 #import t_sne_bhcuda.bhtsne_cuda as TSNE
-from tsne_for_spikesort import io_with_cpp as io
+from tsne_for_spikesort_old import io_with_cpp as io
 
 
 
@@ -500,7 +500,7 @@ def generate_labels_dict_from_cluster_info_dataframe(cluster_info):
 
 def plot_tsne(tsne, labels_dict=None, cm=None, cm_remapping=None, subtitle=None, label_name='Label', label_array=None,
               legent_on=True, axes=None, unlabeled_sizes=None, labeled_sizes=None, markers=None, color=None,
-              max_screen=False):
+              max_screen=False, hide_ticklabels=False):
 
     if axes is None:
         fig = plt.figure()
@@ -509,6 +509,9 @@ def plot_tsne(tsne, labels_dict=None, cm=None, cm_remapping=None, subtitle=None,
     else:
         ax = axes
 
+    if hide_ticklabels:
+        ax.set_yticklabels([])
+        ax.set_xticklabels([])
 
 
     if max_screen:
@@ -646,7 +649,7 @@ def make_video_of_tsne_iterations(iterations, video_dir, data_file_name='interim
             plot_tsne(tsne, labels_dict=labels_dict, cm=cm, cm_remapping=cm_remapping, subtitle=subtitle,
                       label_name=label_name, legent_on=legent_on, label_array=label_array, axes=ax,
                       unlabeled_sizes=unlabeled_sizes, labeled_sizes=labeled_sizes, markers=markers, color=color,
-                      max_screen=max_screen)
+                      max_screen=max_screen, hide_ticklabels=True)
             min_x = np.min(tsne[0, :])
             max_x = np.max(tsne[0, :])
             min_y = np.min(tsne[1, :])

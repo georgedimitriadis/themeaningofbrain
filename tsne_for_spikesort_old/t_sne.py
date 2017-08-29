@@ -4,11 +4,11 @@ import time
 import matplotlib.pylab as pylab
 import numpy as np
 
-from tsne_for_spikesort import gpu
-from tsne_for_spikesort import sptree_jit as sptree
+from tsne_for_spikesort_old import gpu
+from tsne_for_spikesort_old import sptree_jit as sptree
 
-# import tsne_for_spikesort.spikesorttsne as sptsne
-import tsne_for_spikesort.io_with_cpp as io
+# import tsne_for_spikesort_old.spikesorttsne as sptsne
+import tsne_for_spikesort_old.io_with_cpp as io
 
 from subprocess import Popen, PIPE
 

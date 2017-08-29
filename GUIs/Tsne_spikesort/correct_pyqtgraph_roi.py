@@ -4,6 +4,7 @@ import pyqtgraph as pg
 from pyqtgraph import QtCore
 from pyqtgraph import functions as fn
 
+
 class PolyLineROI(pg.PolyLineROI):
 
     def __init__(self, positions, closed=False, pos=None, **args):

@@ -134,8 +134,7 @@ def generate_probe_positions_of_spikes(base_folder, binary_data_filename, number
         spike_indices_sorted_by_probe_distance, spike_distances_on_probe_sorted
 
 
-def generate_probe_positions_of_templates(base_folder, binary_data_filename, number_of_channels_in_binary_file,
-                                          threshold=0.1):
+def generate_probe_positions_of_templates(base_folder, threshold=0.1):
     """
     Generate positions (x, y coordinates) for each template found by kilosort on the probe.
     This function assumes that the base_folder holds all the necessary .npy arrays.
@@ -154,13 +153,6 @@ def generate_probe_positions_of_templates(base_folder, binary_data_filename, num
     ----------
     base_folder : string
                  the folder name into which the kilosort result .npy arrays are
-    binary_data_filename : string
-                          the name of the binary file that holds the raw data that were originally passed to kilosort
-    number_of_channels_in_binary_file : int
-                                       How many channels does the binary file have (this is different to the number
-                                       of channels that are set to active in kilosort)
-    used_spikes_indices : array of int
-                         which of the spikes found by kilosort should be considered.
     threshold : float
                the number of times the standard deviation should be larger than the difference between a
                channel's minimum and the median of the minima of all channels in order to demarcate the channel as
@@ -174,7 +166,7 @@ def generate_probe_positions_of_templates(base_folder, binary_data_filename, num
     channel_positions = np.load(os.path.join(base_folder, 'channel_positions.npy'))
     templates = np.load(os.path.join(base_folder, r'templates.npy'))
     template_markings = np.load(os.path.join(base_folder, r'template_marking.npy'))
-    templates = templates[template_markings == 1, :, :]
+    templates = templates[template_markings > 0, :, :]
 
     # Run the loop over all templates to get the positions
     counter = 0
@@ -234,138 +226,3 @@ def view_spike_positions(spike_positions, brain_regions, probe_dimensions, label
         ax.plot([0, probe_dimensions[0]], [brain_regions[region], brain_regions[region]], 'k--', linewidth=2)
     return fig, ax
 
-
-def create_indices_for_difference_comparison(spike_indices_sorted_by_probe_distance, spike_distances_on_probe_sorted,
-                                             distance_threshold, start, end):
-    """
-
-    Parameters
-    ----------
-    spike_indices_sorted_by_probe_distance
-    spike_distances_on_probe_sorted
-    distance_threshold
-    start
-    end
-
-    Returns
-    -------
-
-    """
-    spike_indices_for_difference_comparison = []
-    for spike_index in np.arange(start, end):
-        spike_distances_on_probe_sorted_shifted_a = spike_distances_on_probe_sorted - \
-                                                    spike_distances_on_probe_sorted[spike_index]
-        index_of_spike_index_at_threshold = (
-        np.abs(spike_distances_on_probe_sorted_shifted_a - distance_threshold)).argmin()
-        spike_indices_closer_than_threshold = spike_indices_sorted_by_probe_distance[spike_index:
-        index_of_spike_index_at_threshold]
-        spike_index_to_compare_diff = spike_indices_sorted_by_probe_distance[spike_index] * \
-                                      np.ones(len(spike_indices_closer_than_threshold))
-        spike_index_to_compare_diff = spike_index_to_compare_diff.astype(np.int)
-        temp = list(zip(spike_index_to_compare_diff, spike_indices_closer_than_threshold))
-        for pair in temp:
-            spike_indices_for_difference_comparison.append(pair)
-
-    return spike_indices_for_difference_comparison
-
-
-def define_spike_spike_matrix_for_distance_calc(spike_probe_distances_sorted, starting_index, max_elements_in_matrix,
-                                                probe_distance_threshold=100):
-    """
-    Define the two spikes-features matrices that are going to be compared by the generate_probe_positions_of_spikes()
-    function to find the distances of all the spikes of the first matrix to all the spikes of the second.
-    Each spike needs to have its distances found with a number of spikes that are probe_distance_threshold closer to it
-    on the spike_probe_distances_sorted array. So this function goes through the spikes starting at index starting_index
-    and checks what is the index of the final spike each one of these spikes should have its distance calculated with.
-    As it moves down the indices of the sorted array it defines the last index of the first matrix as the current
-    index it is on and the last index of the second array as the index of the spike that is just under
-    probe_distance_threshold away on the probe to the last spike on the first array.
-    Once the number of spikes accumulated in the first matrix times the number of spikes on the second surpasses the
-    number of elements the GPU can hold in memory it returns the final_index_of_first_array and the
-    final_index_of_second_array indices that define the two matrices to be distance compared to each other.
-    Those matrices should have the spikes from starting_index to final_index_of_first_array for the first one and from
-    starting_index to final_index_of_second_array for the second one.
-    IMPORTANT NOTE: All these indices are the ones after the spikes are sorted according to distance on the probe!
-
-    Parameters
-    ----------
-    spike_probe_distances_sorted: (np.array(N)) the sorted distances of the spikes on the probe
-    starting_index: (int) the starting spike index on the sorted according to probe distance spikes
-    max_elements_in_matrix: (int) the number of spike spike distances the gpu will be able to work with
-    (GPU memory < 4 * max_elements_in_matrix)
-    probe_distance_threshold: (float) the probe distance over which spikes don't need to have their distances calculated
-
-    Returns
-    -------
-    final_index_of_first_array: (int) the spike index of the spikes sorted according to probe distance of the last spike
-    to be included in the first spike-features matrix
-    final_index_of_second_array: (int) the spike index of the spikes sorted according to probe distance of the last spike
-    to be included in the second spike-features matrix
-    """
-    current_elements_in_matrix = 0
-    final_index_of_first_array = starting_index
-    while max_elements_in_matrix >= current_elements_in_matrix:
-        spike_probe_distances_sorted_shifted = spike_probe_distances_sorted - \
-                                                    spike_probe_distances_sorted[final_index_of_first_array]
-        final_index_of_second_array = (
-            np.abs(spike_probe_distances_sorted_shifted - probe_distance_threshold)).argmin()
-        current_elements_in_matrix = (final_index_of_second_array - starting_index) * \
-                                     (final_index_of_first_array - starting_index)
-        final_index_of_first_array += 1
-
-        if final_index_of_first_array == spike_probe_distances_sorted.shape[0]:   # - 1:
-            final_index_of_second_array = final_index_of_first_array
-            #final_index_of_second_array = (
-            #    np.abs(spike_probe_distances_sorted_shifted - probe_distance_threshold)).argmin()
-            return final_index_of_first_array, final_index_of_second_array
-
-    return final_index_of_first_array, final_index_of_second_array
-
-
-def define_all_spike_spike_matrices_for_distance_calc(spike_probe_distances_sorted, max_elements_in_matrix,
-                                                      probe_distance_threshold=100):
-    starting_index = 0
-    indices_of_first_matrices = []
-    indices_of_second_matrices = []
-
-    while starting_index < spike_probe_distances_sorted.shape[0]:
-        fifa, fisa = define_spike_spike_matrix_for_distance_calc(spike_probe_distances_sorted,
-                                                                 starting_index=starting_index,
-                                                                 max_elements_in_matrix=max_elements_in_matrix,
-                                                                 probe_distance_threshold=probe_distance_threshold)
-        indices_of_first_matrices.append((starting_index, fifa))
-        indices_of_second_matrices.append((starting_index, fisa))
-
-        print("Matrices defined with starting index: " + str(starting_index) + ", first matrix last index: " +
-              str(indices_of_first_matrices[-1][1]) + " and second matrix last index: "
-              + str(indices_of_second_matrices[-1][1]))
-
-        starting_index = fifa + 1
-
-    return indices_of_first_matrices, indices_of_second_matrices
-
-
-# NOT USED==============================================================================================================
-def define_multiple_spike_spike_matrices_for_distance_calc(spike_probe_distances_sorted, probe_distance_threshold=100,
-                                                           max_spikes_on_second_array=2000):
-    final_indices_of_first_array = []
-    final_indices_of_second_array = []
-
-    spike_probe_distances_sorted_shifted = spike_probe_distances_sorted - spike_probe_distances_sorted[0]
-    cur_spike_index_of_second_array = (
-        np.abs(spike_probe_distances_sorted_shifted - probe_distance_threshold)).argmin()
-    prev_spike_index_of_second_array = cur_spike_index_of_second_array
-
-    for i in np.arange(spike_probe_distances_sorted.shape[0]):
-        spike_probe_distances_sorted_shifted = spike_probe_distances_sorted - spike_probe_distances_sorted[i]
-        cur_spike_index_of_second_array = (
-            np.abs(spike_probe_distances_sorted_shifted - probe_distance_threshold)).argmin()
-
-        print(cur_spike_index_of_second_array - prev_spike_index_of_second_array)
-        if cur_spike_index_of_second_array - prev_spike_index_of_second_array > max_spikes_on_second_array:
-            final_indices_of_first_array.append(i)
-            final_indices_of_second_array.append(cur_spike_index_of_second_array)
-        prev_spike_index_of_second_array = cur_spike_index_of_second_array
-
-    return final_indices_of_first_array, final_indices_of_second_array
-#=======================================================================================================================

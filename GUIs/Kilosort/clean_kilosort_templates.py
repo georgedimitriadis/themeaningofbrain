@@ -8,7 +8,6 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph.widgets import MatplotlibWidget as ptl_widget
 from GUIs.Kilosort import spike_heatmap as sh
-from joblib import Parallel, delayed
 import pandas as pd
 import time
 
@@ -292,7 +291,7 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
         autocorelogram_curve.setData(x=edges, y=hist, stepMode=True, fillLevel=0, brush=(0, 0, 255, 150))
 
         number_of_spikes = len(spike_indices_in_template)
-        num_of_kept_templates = int(np.sum(template_marking))
+        num_of_kept_templates = int(np.sum(template_marking > 0))
         plot_average_spikes_in_template.plotItem.setTitle('Average spikes in template {}.  Spike number = {}\n Kept templates = {}'.
                                                           format(current_template_index, number_of_spikes, num_of_kept_templates))
 
@@ -319,24 +318,47 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
         norm = np.sqrt(spike_times_train_1.size * spike_times_train_2.size)
         return differences, norm
 
+
     def update_marking_led():
         global current_template_index
-        if template_marking[current_template_index]:
-            label_led_marking.setText('KEPT')
-            label_led_marking.setPalette(kept_palette)
+        if template_marking[current_template_index]== 1:
+            label_led_marking.setText('Single Unit')
+            label_led_marking.setPalette(su_palette)
+        elif template_marking[current_template_index]== 2:
+            label_led_marking.setText('SU Contaminated')
+            label_led_marking.setPalette(suc_palette)
+        elif template_marking[current_template_index]== 3:
+            label_led_marking.setText('SU Putative')
+            label_led_marking.setPalette(sup_palette)
+        elif template_marking[current_template_index]== 4:
+            label_led_marking.setText('Multi Unit')
+            label_led_marking.setPalette(mu_palette)
+        elif template_marking[current_template_index]== 5:
+            label_led_marking.setText('Unclasified 1')
+            label_led_marking.setPalette(un1_palette)
+        elif template_marking[current_template_index]== 6:
+            label_led_marking.setText('Unclasified 2')
+            label_led_marking.setPalette(un2_palette)
+        elif template_marking[current_template_index]== 7:
+            label_led_marking.setText('Unclasified 3')
+            label_led_marking.setPalette(un3_palette)
         else:
-            label_led_marking.setText('DELETED')
-            label_led_marking.setPalette(deleted_palette)
+            label_led_marking.setText('Noise')
+            label_led_marking.setPalette(noise_palette)
     # ----------------------------
 
     # On_do_something functions
     def on_press_button_next():
         global current_template_index
         current_template_index += 1
+        if current_template_index > number_of_templates - 1:
+            return
         spike_indices_in_template = np.argwhere(np.in1d(spike_templates, current_template_index))
         number_of_spikes = len(spike_indices_in_template)
         while number_of_spikes == 0:
             current_template_index += 1
+            if current_template_index > number_of_templates - 1:
+                return
             spike_indices_in_template = np.argwhere(np.in1d(spike_templates, current_template_index))
             number_of_spikes = len(spike_indices_in_template)
         update_all_plots()
@@ -344,23 +366,21 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
     def on_press_button_previous():
         global current_template_index
         current_template_index -= 1
+        if current_template_index < 0:
+            return
         spike_indices_in_template = np.argwhere(np.in1d(spike_templates, current_template_index))
         number_of_spikes = len(spike_indices_in_template)
         while number_of_spikes == 0:
             current_template_index -= 1
+            if current_template_index < 0:
+                return
             spike_indices_in_template = np.argwhere(np.in1d(spike_templates, current_template_index))
             number_of_spikes = len(spike_indices_in_template)
         update_all_plots()
 
-    def on_keep():
+    def on_classify_combo_box_index_change(index):
         global current_template_index
-        template_marking[current_template_index] = 1
-        update_marking_led()
-        np.save(join(base_folder, 'template_marking.npy'), template_marking)
-
-    def on_delete():
-        global current_template_index
-        template_marking[current_template_index] = 0
+        template_marking[current_template_index] = index
         update_marking_led()
         np.save(join(base_folder, 'template_marking.npy'), template_marking)
 
@@ -455,26 +475,19 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
     button_next.clicked.connect(on_press_button_next)
     grid_layout.addWidget(button_next, 5, 2, 1, 1)
 
-    button_delete = QtGui.QPushButton('Delete')
-    button_delete.clicked.connect(on_delete)
-    grid_layout.addWidget(button_delete, 6, 1, 1, 1)
-
-    #button_add = QtGui.QPushButton('Keep')
-    #button_add.clicked.connect(on_keep)
-    #grid_layout.addWidget(button_add, 6, 2, 1, 1)
 
     classify_combo_box = QtGui.QComboBox()
+    classify_combo_box.addItem('Noise')
     classify_combo_box.addItem('Single Unit')
     classify_combo_box.addItem('Single Unit Contaminated')
     classify_combo_box.addItem('Single Unit Putative')
     classify_combo_box.addItem('Multi Unit')
-    classify_combo_box.addItem('Noise')
     classify_combo_box.addItem('Unclassified 1')
     classify_combo_box.addItem('Unclassified 2')
     classify_combo_box.addItem('Unclassified 3')
-    classify_combo_box.addItem('Unclassified 4')
-    classify_combo_box.addItem('Unclassified 5')
-    grid_layout.addWidget(classify_combo_box, 6, 2, 1, 1)
+    classify_combo_box.activated.connect(on_classify_combo_box_index_change)
+    grid_layout.addWidget(classify_combo_box, 6, 1, 1, 2)
+
 
     button_show_single_spikes = QtGui.QPushButton('Show single spikes')
     button_show_single_spikes.clicked.connect(on_show_single_spikes)
@@ -518,14 +531,26 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
     # ----------------------------
 
     # LEDs for showing if template is kept or deleted
-    label_led_marking = QtGui.QLabel('DELETED')
+    label_led_marking = QtGui.QLabel('Noise')
     grid_layout.addWidget(label_led_marking, 6, 0, 1, 1)
     label_led_marking.setAutoFillBackground(True)
-    kept_palette = QtGui.QPalette()
-    kept_palette.setColor(QtGui.QPalette.Background, QtCore.Qt.green)
-    deleted_palette = QtGui.QPalette()
-    deleted_palette.setColor(QtGui.QPalette.Background, QtCore.Qt.red)
-    label_led_marking.setPalette(deleted_palette)
+    su_palette = QtGui.QPalette()
+    su_palette.setColor(QtGui.QPalette.Background, QtCore.Qt.green)
+    suc_palette = QtGui.QPalette()
+    suc_palette.setColor(QtGui.QPalette.Background, QtCore.Qt.blue)
+    sup_palette = QtGui.QPalette()
+    sup_palette.setColor(QtGui.QPalette.Background, QtCore.Qt.darkBlue)
+    mu_palette = QtGui.QPalette()
+    mu_palette.setColor(QtGui.QPalette.Background, QtCore.Qt.magenta)
+    un1_palette = QtGui.QPalette()
+    un1_palette.setColor(QtGui.QPalette.Background, QtCore.Qt.darkGray)
+    un2_palette = QtGui.QPalette()
+    un2_palette.setColor(QtGui.QPalette.Background, QtCore.Qt.gray)
+    un3_palette = QtGui.QPalette()
+    un3_palette.setColor(QtGui.QPalette.Background, QtCore.Qt.darkGray)
+    noise_palette = QtGui.QPalette()
+    noise_palette.setColor(QtGui.QPalette.Background, QtCore.Qt.red)
+    label_led_marking.setPalette(noise_palette)
     # ----------------------------
 
     main_window.show()

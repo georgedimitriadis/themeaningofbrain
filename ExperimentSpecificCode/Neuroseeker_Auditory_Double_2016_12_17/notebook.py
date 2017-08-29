@@ -2,7 +2,7 @@
 
 import os
 import numpy as np
-from tsne_for_spikesort import spikes, t_sne, gpu
+from tsne_for_spikesort_old import spikes, t_sne, gpu
 
 
 base_folder_a = r'D:\Data\George\Projects\SpikeSorting\Neuroseeker\Neuroseeker_2016_12_17_Anesthesia_Auditory_DoubleProbes\AngledProbe\KilosortResults'
@@ -190,7 +190,7 @@ values_p = np.load(os.path.join(base_folder, r'values_p.npy'))
 # -------- creating fewer spikes matrices for debugging c++ and numba --------------
 import numpy as np
 import os
-from tsne_for_spikesort import spikes, t_sne
+from tsne_for_spikesort_old import spikes, t_sne
 from t_sne_bhcuda import bhtsne_cuda as tsne_exe
 import  matplotlib.pyplot as plt
 
@@ -303,9 +303,9 @@ tsne_exe.save_data_for_tsne(template_features_sparce_clean_probesorted,
 # -------- testing stuff --------------
 import numpy as np
 import os
-from tsne_for_spikesort import t_sne, gpu
+from tsne_for_spikesort_old import t_sne, gpu
 import matplotlib.pyplot as plt
-import tsne_for_spikesort.io_with_cpp as io
+import tsne_for_spikesort_old.io_with_cpp as io
 import matplotlib.pylab as pylab
 
 number_of_spikes = 100

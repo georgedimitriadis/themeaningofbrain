@@ -1,9 +1,10 @@
 
 
 import pyqtgraph as pg
-from pyqtgraph import QtCore
+from pyqtgraph import QtCore, QtGui
 from . import correct_pyqtgraph_roi as cpg
-
+from . import custom_viewboxmenu
+import copy
 
 class CustomViewBox(pg.ViewBox):
     def __init__(self, *args, **kwds):
@@ -14,16 +15,23 @@ class CustomViewBox(pg.ViewBox):
         self.freeform_roi_on = 0
         self.freeform_roi_positions = []
         self.roi = None
+        self.all_rois = []
         self.connect_on_roi_select = None
+        self.connect_on_roi_delete = None
+        self.number_of_rois = 1
+        self.menu = custom_viewboxmenu.ViewBoxMenu(self)
 
     def mouseClickEvent(self, ev):
         if ev.button() == QtCore.Qt.RightButton:
             if self.square_roi_on == 0 and self.freeform_roi_on == 0:
                 self.autoRange()
-            elif self.square_roi_on > 0:
-                self.delete_square_roi()
-            elif self.freeform_roi_on > 0:
-                self.delete_freeform_roi()
+            #elif self.square_roi_on > 0:
+            #    self.delete_square_roi()
+            #elif self.freeform_roi_on > 0:
+            #    self.delete_freeform_roi()
+            else:
+                if self.raiseContextMenu(ev):
+                    ev.accept()
 
         if ev.button() == QtCore.Qt.LeftButton:
             if self.freeform_roi_on > 0:
@@ -97,12 +105,14 @@ class CustomViewBox(pg.ViewBox):
         self.square_roi_on = mode
         self.removeItem(self.roi)
         self.roi = None
+        self.connect_on_roi_delete()
 
     def delete_freeform_roi(self, mode=1):
         self.freeform_roi_on = mode
         self.removeItem(self.roi)
         self.roi = None
         self.freeform_roi_positions = []
+        self.connect_on_roi_delete()
 
     def freeform_roi_handle_move(self):
         positions = [name_pos[1] for name_pos in self.roi.getLocalHandlePositions()]
