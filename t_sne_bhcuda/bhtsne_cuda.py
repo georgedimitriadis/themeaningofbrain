@@ -78,7 +78,6 @@ def _find_exe_dir():
         if isdir(path_join(current_dir, exe_dir)):
             dir_to_exe = path_join(current_dir, exe_dir)
         current_dir = dirname(current_dir)
-
     tsne_path = path_join(dir_to_exe, exe_file)
 
     return tsne_path

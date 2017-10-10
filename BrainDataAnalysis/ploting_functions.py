@@ -21,7 +21,7 @@ except:
 from os.path import join
 import matplotlib.animation as animation
 #import t_sne_bhcuda.bhtsne_cuda as TSNE
-from tsne_for_spikesort import io_with_cpp as io
+from tsne_for_spikesort_old import io_with_cpp as io
 
 
 
@@ -202,6 +202,7 @@ def scan_through_2nd_dim(data, freq=32556, timeToPlot=1, startTime=0, plot_aroun
     bprev.on_clicked(callback.prev)
 
     return (bnext, bprev)
+
 
 def scan_through_3rd_dim(data, timeAxis, timeToPlot=None, parallel_data=None, parallel_time=None, remove_channels=None, figure_id=0):
 
@@ -500,13 +501,18 @@ def generate_labels_dict_from_cluster_info_dataframe(cluster_info):
 
 def plot_tsne(tsne, labels_dict=None, cm=None, cm_remapping=None, subtitle=None, label_name='Label', label_array=None,
               legent_on=True, axes=None, unlabeled_sizes=None, labeled_sizes=None, markers=None, color=None,
-              max_screen=False):
+              max_screen=False, hide_ticklabels=False):
 
     if axes is None:
         fig = plt.figure()
         ax = fig.add_subplot(111)
+        fig.tight_layout()
     else:
         ax = axes
+
+    if hide_ticklabels:
+        ax.set_yticklabels([])
+        ax.set_xticklabels([])
 
     if max_screen:
         figManager = plt.get_current_fig_manager()
@@ -532,14 +538,12 @@ def plot_tsne(tsne, labels_dict=None, cm=None, cm_remapping=None, subtitle=None,
             cm = plt.cm.Dark2
         if cm_remapping is None:
             cm_remapping = {}
-            #for g in range(0, number_of_labels):
             for g in labels_dict.keys():
                 cm_remapping[g] = g
-        #for g in range(0, number_of_labels):
         for g in labels_dict.keys():
             alpha = 1
-            if g==2:
-                alpha = 0.1
+            #if g==2:
+            #    alpha = 0.1
             if len(markers) > 2:
                 marker = np.random.choice(markers)
             else:
@@ -634,6 +638,7 @@ def make_video_of_tsne_iterations(iterations, video_dir, data_file_name='interim
         cm = plt.cm.Dark2
     fig = plt.figure(figsize=figsize, dpi=dpi)
     ax = fig.add_subplot(111)
+    fig.tight_layout()
     with writer.saving(fig, join(video_dir, video_file_name), dpi):
         for it in iters:
             ax.cla()
@@ -641,7 +646,8 @@ def make_video_of_tsne_iterations(iterations, video_dir, data_file_name='interim
             tsne = np.transpose(tsne)
             plot_tsne(tsne, labels_dict=labels_dict, cm=cm, cm_remapping=cm_remapping, subtitle=subtitle,
                       label_name=label_name, legent_on=legent_on, label_array=label_array, axes=ax,
-                      unlabeled_sizes=None, labeled_sizes=None, markers=markers, color=color, max_screen=max_screen)
+                      unlabeled_sizes=unlabeled_sizes, labeled_sizes=labeled_sizes, markers=markers, color=color,
+                      max_screen=max_screen, hide_ticklabels=True)
             min_x = np.min(tsne[0, :])
             max_x = np.max(tsne[0, :])
             min_y = np.min(tsne[1, :])

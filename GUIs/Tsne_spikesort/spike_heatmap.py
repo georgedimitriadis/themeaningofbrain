@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import warnings
 
+
 def peaktopeak(data, window_size=60):
     """
     Generates the minima, maxima and peak to peak (p2p) numbers (in microvolts) of all the channels of all spikes
@@ -283,7 +284,6 @@ def create_heatmap_image(data, prb_file, window_size=60, bad_channels=None, num_
     return view, (x_size, y_size)
 
 
-
 def create_heatmap_on_matplotlib_widget(widget, data, prb_file, window_size=60, bad_channels=None,
                                         num_of_shanks=None, rotate_90=False, flip_ud=False, flip_lr=False):
     """
@@ -314,6 +314,7 @@ def create_heatmap_on_matplotlib_widget(widget, data, prb_file, window_size=60, 
     fig.clf(True)
     fig.set_tight_layout({'rect': [0, 0, 1, 1]})
     fig.canvas.toolbar.hide()
+    fig.patch.set_facecolor('black')
 
     channel_positions = pd.Series(probe[0]['geometry'])
     if bad_channels is not None:
@@ -326,6 +327,7 @@ def create_heatmap_on_matplotlib_widget(widget, data, prb_file, window_size=60, 
     for shank in np.arange(num_of_shanks):
         ax = fig.add_subplot(1, num_of_shanks, shank + 1)
         ax.set_axis_off()
+        ax.set_facecolor('black')
         begin_electrode = shank * electrodes_per_shank
         end_electrode = (shank + 1) * electrodes_per_shank
         if shank == num_of_shanks - 1:

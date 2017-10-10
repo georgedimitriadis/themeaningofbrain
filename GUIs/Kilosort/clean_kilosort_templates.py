@@ -8,13 +8,13 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph.widgets import MatplotlibWidget as ptl_widget
 from GUIs.Kilosort import spike_heatmap as sh
-from joblib import Parallel, delayed
 import pandas as pd
 import time
 
 
 def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, binary_data_filename, prb_file,
-                            sampling_frequency=20000):
+                            type_of_binary=np.int16, order_of_binary='F', sampling_frequency=20000,
+                            num_of_shanks_for_vis=None):
 
     spike_templates = np.load(join(base_folder, r'spike_templates.npy'))
     template_feature_ind = np.load(join(base_folder, 'template_feature_ind.npy'))
@@ -24,12 +24,12 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
 
     templates = np.load(join(base_folder, 'templates.npy'))
 
-    data_raw = np.memmap(binary_data_filename, dtype=np.int16, mode='r')
+    data_raw = np.memmap(binary_data_filename, dtype=type_of_binary, mode='r')
 
     number_of_timepoints_in_raw = int(data_raw.shape[0] / number_of_channels_in_binary_file)
     global data_raw_matrix
     data_raw_matrix = np.reshape(data_raw, (number_of_channels_in_binary_file, number_of_timepoints_in_raw),
-                                 order='F')
+                                 order=order_of_binary)
 
     global current_template_index
     current_template_index = 0
@@ -160,7 +160,6 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
 
                 single_spike_electrode_curves.append(single_spike_curves)
 
-
     def update_single_spikes_plot():
         if not single_spike_window.isVisible():
             return
@@ -278,8 +277,8 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
         connected_binary = np.in1d(np.arange(number_of_channels_in_binary_file), connected)
         bad_channels = np.squeeze(np.argwhere(connected_binary == False).astype(np.int))
         sh.create_heatmap_on_matplotlib_widget(heatmap_plot, data[current_template_index], prb_file, window_size=60,
-                                               bad_channels=bad_channels, num_of_shanks=5, rotate_90=True, flip_ud=False,
-                                               flip_lr=False)
+                                               bad_channels=bad_channels, num_of_shanks=num_of_shanks_for_vis,
+                                               rotate_90=True, flip_ud=False, flip_lr=False)
         heatmap_plot.draw()
 
     def update_autocorelogram():
@@ -292,7 +291,7 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
         autocorelogram_curve.setData(x=edges, y=hist, stepMode=True, fillLevel=0, brush=(0, 0, 255, 150))
 
         number_of_spikes = len(spike_indices_in_template)
-        num_of_kept_templates = int(np.sum(template_marking))
+        num_of_kept_templates = int(np.sum(template_marking > 0))
         plot_average_spikes_in_template.plotItem.setTitle('Average spikes in template {}.  Spike number = {}\n Kept templates = {}'.
                                                           format(current_template_index, number_of_spikes, num_of_kept_templates))
 
@@ -321,22 +320,44 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
 
     def update_marking_led():
         global current_template_index
-        if template_marking[current_template_index]:
-            label_led_marking.setText('KEPT')
-            label_led_marking.setPalette(kept_palette)
+        if template_marking[current_template_index]== 1:
+            label_led_marking.setText('Single Unit')
+            label_led_marking.setPalette(su_palette)
+        elif template_marking[current_template_index]== 2:
+            label_led_marking.setText('SU Contaminated')
+            label_led_marking.setPalette(suc_palette)
+        elif template_marking[current_template_index]== 3:
+            label_led_marking.setText('SU Putative')
+            label_led_marking.setPalette(sup_palette)
+        elif template_marking[current_template_index]== 4:
+            label_led_marking.setText('Multi Unit')
+            label_led_marking.setPalette(mu_palette)
+        elif template_marking[current_template_index]== 5:
+            label_led_marking.setText('Unclasified 1')
+            label_led_marking.setPalette(un1_palette)
+        elif template_marking[current_template_index]== 6:
+            label_led_marking.setText('Unclasified 2')
+            label_led_marking.setPalette(un2_palette)
+        elif template_marking[current_template_index]== 7:
+            label_led_marking.setText('Unclasified 3')
+            label_led_marking.setPalette(un3_palette)
         else:
-            label_led_marking.setText('DELETED')
-            label_led_marking.setPalette(deleted_palette)
+            label_led_marking.setText('Noise')
+            label_led_marking.setPalette(noise_palette)
     # ----------------------------
 
     # On_do_something functions
     def on_press_button_next():
         global current_template_index
         current_template_index += 1
+        if current_template_index > number_of_templates - 1:
+            return
         spike_indices_in_template = np.argwhere(np.in1d(spike_templates, current_template_index))
         number_of_spikes = len(spike_indices_in_template)
         while number_of_spikes == 0:
             current_template_index += 1
+            if current_template_index > number_of_templates - 1:
+                return
             spike_indices_in_template = np.argwhere(np.in1d(spike_templates, current_template_index))
             number_of_spikes = len(spike_indices_in_template)
         update_all_plots()
@@ -344,23 +365,21 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
     def on_press_button_previous():
         global current_template_index
         current_template_index -= 1
+        if current_template_index < 0:
+            return
         spike_indices_in_template = np.argwhere(np.in1d(spike_templates, current_template_index))
         number_of_spikes = len(spike_indices_in_template)
         while number_of_spikes == 0:
             current_template_index -= 1
+            if current_template_index < 0:
+                return
             spike_indices_in_template = np.argwhere(np.in1d(spike_templates, current_template_index))
             number_of_spikes = len(spike_indices_in_template)
         update_all_plots()
 
-    def on_keep():
+    def on_classify_combo_box_index_change(index):
         global current_template_index
-        template_marking[current_template_index] = 1
-        update_marking_led()
-        np.save(join(base_folder, 'template_marking.npy'), template_marking)
-
-    def on_delete():
-        global current_template_index
-        template_marking[current_template_index] = 0
+        template_marking[current_template_index] = index
         update_marking_led()
         np.save(join(base_folder, 'template_marking.npy'), template_marking)
 
@@ -455,13 +474,19 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
     button_next.clicked.connect(on_press_button_next)
     grid_layout.addWidget(button_next, 5, 2, 1, 1)
 
-    button_delete = QtGui.QPushButton('Delete')
-    button_delete.clicked.connect(on_delete)
-    grid_layout.addWidget(button_delete, 6, 1, 1, 1)
 
-    button_add = QtGui.QPushButton('Keep')
-    button_add.clicked.connect(on_keep)
-    grid_layout.addWidget(button_add, 6, 2, 1, 1)
+    classify_combo_box = QtGui.QComboBox()
+    classify_combo_box.addItem('Noise')
+    classify_combo_box.addItem('Single Unit')
+    classify_combo_box.addItem('Single Unit Contaminated')
+    classify_combo_box.addItem('Single Unit Putative')
+    classify_combo_box.addItem('Multi Unit')
+    classify_combo_box.addItem('Unclassified 1')
+    classify_combo_box.addItem('Unclassified 2')
+    classify_combo_box.addItem('Unclassified 3')
+    classify_combo_box.activated.connect(on_classify_combo_box_index_change)
+    grid_layout.addWidget(classify_combo_box, 6, 1, 1, 2)
+
 
     button_show_single_spikes = QtGui.QPushButton('Show single spikes')
     button_show_single_spikes.clicked.connect(on_show_single_spikes)
@@ -505,14 +530,26 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
     # ----------------------------
 
     # LEDs for showing if template is kept or deleted
-    label_led_marking = QtGui.QLabel('DELETED')
+    label_led_marking = QtGui.QLabel('Noise')
     grid_layout.addWidget(label_led_marking, 6, 0, 1, 1)
     label_led_marking.setAutoFillBackground(True)
-    kept_palette = QtGui.QPalette()
-    kept_palette.setColor(QtGui.QPalette.Background, QtCore.Qt.green)
-    deleted_palette = QtGui.QPalette()
-    deleted_palette.setColor(QtGui.QPalette.Background, QtCore.Qt.red)
-    label_led_marking.setPalette(deleted_palette)
+    su_palette = QtGui.QPalette()
+    su_palette.setColor(QtGui.QPalette.Background, QtCore.Qt.green)
+    suc_palette = QtGui.QPalette()
+    suc_palette.setColor(QtGui.QPalette.Background, QtCore.Qt.blue)
+    sup_palette = QtGui.QPalette()
+    sup_palette.setColor(QtGui.QPalette.Background, QtCore.Qt.darkBlue)
+    mu_palette = QtGui.QPalette()
+    mu_palette.setColor(QtGui.QPalette.Background, QtCore.Qt.magenta)
+    un1_palette = QtGui.QPalette()
+    un1_palette.setColor(QtGui.QPalette.Background, QtCore.Qt.darkGray)
+    un2_palette = QtGui.QPalette()
+    un2_palette.setColor(QtGui.QPalette.Background, QtCore.Qt.gray)
+    un3_palette = QtGui.QPalette()
+    un3_palette.setColor(QtGui.QPalette.Background, QtCore.Qt.darkGray)
+    noise_palette = QtGui.QPalette()
+    noise_palette.setColor(QtGui.QPalette.Background, QtCore.Qt.red)
+    label_led_marking.setPalette(noise_palette)
     # ----------------------------
 
     main_window.show()
@@ -522,118 +559,6 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
     if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
         sys.exit(app.exec_())
 
-
-def generate_average_over_spikes_per_template(base_folder, binary_data_filename, number_of_channels_in_binary_file,
-                                              cut_time_points_around_spike=100):
-    channel_map = np.load(join(base_folder, 'channel_map.npy'))
-    active_channel_map = np.squeeze(channel_map, axis=1)
-
-    spike_templates = np.load(join(base_folder, r'spike_templates.npy'))
-    template_feature_ind = np.load(join(base_folder, 'template_feature_ind.npy'))
-    number_of_templates = template_feature_ind.shape[0]
-
-    spike_times = np.squeeze(np.load(join(base_folder, 'spike_times.npy')).astype(np.int))
-
-    num_of_channels = active_channel_map.size
-
-    data_raw = np.memmap(binary_data_filename, dtype=np.int16, mode='r')
-
-    number_of_timepoints_in_raw = int(data_raw.shape[0] / number_of_channels_in_binary_file)
-    data_raw_matrix = np.reshape(data_raw, (number_of_channels_in_binary_file, number_of_timepoints_in_raw),
-                                 order='F')
-
-    data = np.zeros((number_of_templates, num_of_channels, cut_time_points_around_spike * 2))
-
-    for template in np.arange(number_of_templates):
-        spike_indices_in_template = np.argwhere(np.in1d(spike_templates, template))
-        spike_times_in_template = np.squeeze(spike_times[spike_indices_in_template])
-        num_of_spikes_in_template = spike_indices_in_template.shape[0]
-        y = np.zeros((num_of_channels, cut_time_points_around_spike * 2))
-        if num_of_spikes_in_template != 0:
-            # remove any spikes that don't have enough time points
-            too_early_spikes = np.squeeze(np.argwhere(spike_times_in_template < cut_time_points_around_spike), axis=1)
-            too_late_spikes = np.squeeze(np.argwhere(spike_times_in_template > number_of_timepoints_in_raw - cut_time_points_around_spike), axis=1)
-            out_of_time_spikes = np.concatenate((too_early_spikes, too_late_spikes))
-            spike_indices_in_template = np.delete(spike_indices_in_template, out_of_time_spikes)
-            num_of_spikes_in_template = spike_indices_in_template.shape[0]
-
-            for spike_in_template in spike_indices_in_template:
-                y = y + data_raw_matrix[active_channel_map,
-                                        spike_times[spike_in_template] - cut_time_points_around_spike:
-                                        spike_times[spike_in_template] + cut_time_points_around_spike]
-
-            y = y / num_of_spikes_in_template
-        data[template, :, :] = y
-        del y
-        print('Added template ' + str(template) + ' with ' + str(num_of_spikes_in_template) + ' spikes')
-
-    np.save(join(base_folder, 'avg_spike_template2.npy'), data)
-
-
-
-def _avg_of_single_template(template, 
-                               spike_times, 
-                               spike_templates,
-                               num_of_channels, 
-                               cut_time_points_around_spike, 
-                               number_of_timepoints_in_raw, 
-                               data_raw_matrix,
-                               active_channel_map):
-    spike_indices_in_template = np.argwhere(np.in1d(spike_templates, template))
-    spike_times_in_template = np.squeeze(spike_times[spike_indices_in_template])
-    num_of_spikes_in_template = spike_indices_in_template.shape[0]
-    y = np.zeros((num_of_channels, cut_time_points_around_spike * 2))
-    if num_of_spikes_in_template != 0:
-        # remove any spikes that don't have enough time points
-        too_early_spikes = np.squeeze(np.argwhere(spike_times_in_template < cut_time_points_around_spike), axis=1)
-        too_late_spikes = np.squeeze(np.argwhere(spike_times_in_template > number_of_timepoints_in_raw - cut_time_points_around_spike), axis=1)
-        out_of_time_spikes = np.concatenate((too_early_spikes, too_late_spikes))
-        spike_indices_in_template = np.delete(spike_indices_in_template, out_of_time_spikes)
-        num_of_spikes_in_template = spike_indices_in_template.shape[0]
-
-        for spike_in_template in spike_indices_in_template:
-            y = y + data_raw_matrix[active_channel_map,
-                                    spike_times[spike_in_template] - cut_time_points_around_spike:
-                                    spike_times[spike_in_template] + cut_time_points_around_spike]
-
-        y = y / num_of_spikes_in_template
-        print('Added template ' + str(template) + ' with ' + str(num_of_spikes_in_template) + ' spikes')
-    return template, y    
-
-
-
-def generate_average_over_spikes_per_template_multiprocess(base_folder, binary_data_filename, number_of_channels_in_binary_file,
-                                              cut_time_points_around_spike=100):
-    channel_map = np.load(join(base_folder, 'channel_map.npy'))
-    active_channel_map = np.squeeze(channel_map, axis=1)
-
-    spike_templates = np.load(join(base_folder, r'spike_templates.npy'))
-    template_feature_ind = np.load(join(base_folder, 'template_feature_ind.npy'))
-    number_of_templates = template_feature_ind.shape[0]
-
-    spike_times = np.squeeze(np.load(join(base_folder, 'spike_times.npy')).astype(np.int))
-
-    num_of_channels = active_channel_map.size
-
-    data_raw = np.memmap(binary_data_filename, dtype=np.int16, mode='r')
-
-    number_of_timepoints_in_raw = int(data_raw.shape[0] / number_of_channels_in_binary_file)
-    data_raw_matrix = np.reshape(data_raw, (number_of_channels_in_binary_file, number_of_timepoints_in_raw),
-                                 order='F')
-    unordered_data = Parallel(n_jobs=8)(delayed(_avg_of_single_template)(i, 
-                               spike_times, 
-                               spike_templates,
-                               num_of_channels, 
-                               cut_time_points_around_spike, 
-                               number_of_timepoints_in_raw, 
-                               data_raw_matrix,
-                               active_channel_map) 
-    for i in np.arange(number_of_templates))
-    data = np.zeros((number_of_templates, num_of_channels, cut_time_points_around_spike * 2))
-    for idx, info in unordered_data:
-      data[idx,...] = info
-
-    np.save(join(base_folder, 'avg_spike_template.npy'), data)
 
 
 

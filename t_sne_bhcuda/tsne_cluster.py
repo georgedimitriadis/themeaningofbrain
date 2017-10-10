@@ -499,6 +499,7 @@ def generate_gui(tsne, cut_extracellular_data, all_extra_spike_times, time_axis,
             # update spike plot
             avg_x = np.mean(cut_extracellular_data[:, :, currently_selected_spike_indices], axis=2)
             spike_mline_plot.data_source.data['ys'] = avg_x.tolist()
+            print('Finished avg spike plot')
 
             # update autocorelogram
             diffs, norm = crosscorrelate_spike_trains(all_extra_spike_times[currently_selected_spike_indices].astype(np.int64),
@@ -507,15 +508,17 @@ def generate_gui(tsne, cut_extracellular_data, all_extra_spike_times, time_axis,
             hist_plot.data_source.data["top"] = hist
             hist_plot.data_source.data["left"] = edges[:-1] / sampling_freq
             hist_plot.data_source.data["right"] = edges[1:] / sampling_freq
+            print('finished autocorelogram')
 
             # update heatmap
             if prb_file is not None:
+                print('Doing heatmap')
                 data = cut_extracellular_data[:, :, currently_selected_spike_indices]
                 final_image, (x_size, y_size) = spike_heatmap.create_heatmap(data, prb_file, rotate_90=True,
                                                                              flip_ud=True, flip_lr=False)
                 new_image_data = dict(image=[final_image], x=[0], y=[0], dw=[x_size], dh=[y_size])
                 heatmap_data_source.data.update(new_image_data)
-
+                print('Finished heatmap')
 
     tsne_source.on_change('selected', on_tsne_data_update)
 
