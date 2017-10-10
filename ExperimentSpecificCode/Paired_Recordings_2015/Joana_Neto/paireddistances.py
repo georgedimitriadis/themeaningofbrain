@@ -4,13 +4,15 @@ Created on Tue Mar 03 16:13:49 2015
 
 @author: kampff
 """
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.pyplot as plt
 import itertools
 import scipy
-from sklearn.decomposition import FastICA
+#from sklearn.decomposition import FastICA
 from mpl_toolkits.mplot3d import Axes3D
 
 

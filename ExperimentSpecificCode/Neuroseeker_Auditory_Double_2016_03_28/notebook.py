@@ -1,16 +1,14 @@
 
 from os.path import join
 import numpy as np
-from GUIs.Kilosort import cleaning_kilosorting_results_depricated as clean
+from GUIs.Kilosort import clean_kilosort_templates as clean
 from tsne_for_spikesort import spikes
 
 base_folder_v = r'F:\Data\George\Projects\SpikeSorting\Neuroseeker\\' + \
                 r'Neuroseeker_2017_03_28_Anesthesia_Auditory_DoubleProbes\Vertical\\' + \
                 r'Experiment_2_T18_48_25_And_Experiment_3_T19_41_07\Kilosort'
 
-base_folder_a = r'F:\Data\George\Projects\SpikeSorting\Neuroseeker\\' + \
-                r'Neuroseeker_2017_03_28_Anesthesia_Auditory_DoubleProbes\Angled\\' + \
-                r'Experiment_2_T18_48_25_And_Experiment_3_T19_41_07\Kilosort'
+base_folder_a = r'Z:\n\Neuroseeker Probe Recordings\Neuroseeker_2017_03_28_Anesthesia_Auditory_DoubleProbes\Angled\Analysis\Experiment_2_T18_48_25_And_Experiment_3_T19_41_07\Kilosort'
 
 binary_v = r'Exp2and3_2017_03_28T18_48_25_Amp_S16_LP3p5KHz_mV.bin'
 binary_a = r'Exp2and3_2017_03_28T18_48_25_Amp_S16_LP3p5KHz_mV.bin'
@@ -23,9 +21,7 @@ clean.cleanup_kilosorted_data(base_folder_v, number_of_channels_in_binary_file=n
 
 
 clean.cleanup_kilosorted_data(base_folder_a, number_of_channels_in_binary_file=number_of_channels_in_binary_file,
-                              binary_data_filename=binary_a, generate_all=False,
-                              overwrite_avg_spike_template_file=False, overwrite_template_marking_file=False, freq=20000,
-                              time_points=100)
+                              binary_data_filename=binary_a, sampling_frequency=20000)
 
 
 template_markings_v = np.load(join(base_folder_v, 'template_marking.npy'))
