@@ -280,18 +280,22 @@ def plot_video_topoplot_with_juxta(data, juxtaData, time_axis, channel_positions
     plt.show()
 
 
-rootDir=r'E:\Data\2014-03-20'
-videoFilename = "2015_03_20_Pair3.avi"
 
-#voltage_step_size = 0.195e-6
-#scale_uV = 1000000
+
+
+
+rootDir=r'E:\Data\2014-11-13'
+videoFilename = "2015_11_13_Pair1.avi"
+
+voltage_step_size = 0.195e-6
+scale_uV = 1000000
 scale_mV = 1000
 
-alignamplifier=all_cells_ivm_filtered_data['3']
-juxtaData = all_cells_patch_data['3']
+alignamplifier=all_cells_ivm_filtered_data['1']
+juxtaData = all_cells_patch_data['1']
 juxtaData = np.average(juxtaData,axis=-1) * scale_mV
 data = np.mean(alignamplifier,axis=2)
-# data = data * scale_uV * voltage_step_size
+data = data * scale_uV * voltage_step_size
 time_axis = np.arange(-(np.shape(data)[1]/30000.0)/2, (np.shape(data)[1]/30000.0)/2,1/30000.0 )
 
 plot_video_topoplot_with_juxta(data,juxtaData, time_axis, polytrode_channels(),
@@ -407,6 +411,8 @@ def plot_topoplot128(axis, channel_positions, data, show=True, **kwargs):
         warnings.warn('The data passed to gdft_plot_topo contain NaN values. \
         These will create unexpected results in the interpolation. \
         Deal with them.')
+
+     channel_positions = polytrode_channels128(bad_channels=[])
 
     channel_positions = channel_positions.sort_index(ascending=[1])
     channel_positions = np.array([[x, y] for x, y in channel_positions.values])
@@ -542,8 +548,8 @@ def plot_video_topoplot_with_juxta128(data, juxtaData, time_axis, channel_positi
     plt.show()
 
 
-rootDir=r'D:\Protocols\PairedRecordings\Neuroseeker128\Data\2015-08-21\Movies'
-videoFilename = "2015_08_21_Pair3.3.avi"
+rootDir=r'D:\Protocols\PairedRecordings\Neuroseeker128\Data\2015-09-09'
+videoFilename = "2015_09_09_Pair6.0.avi"
 
 voltage_step_size = 0.195e-6
 scale_uV = 1000000
@@ -551,8 +557,8 @@ scale_mV = 1000
 #sampling_freq = 30000
 #low_pass_freq = 5000
 
-alignamplifier=all_cells_ivm_filtered_data['3']
-juxtaData = all_cells_patch_data['3']
+alignamplifier=all_cells_ivm_filtered_data['6']
+juxtaData = all_cells_patch_data['6']
 juxtaData = np.average(juxtaData,axis=-1) * scale_mV
 #iir_params = {'order': 3, 'ftype': 'butter', 'padlen': 0}
 #juxtaData = filters.low_pass_filter(juxtaData, sampling_freq, low_pass_freq, method='iir', iir_params=iir_params)

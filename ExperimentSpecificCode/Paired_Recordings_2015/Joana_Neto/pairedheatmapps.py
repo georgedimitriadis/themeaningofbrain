@@ -109,9 +109,9 @@ def peaktopeak(all_cells_ivm_filtered_data, windowSize=60):
 
 # Value of amplitudes, ERROR (NO ORDER)
 
-filename = r'D:\Protocols\PairedRecordings\Neuroseeker128\Data\2015-08-21\Analysis'
-amplitudes = np.load(os.path.join(filename + '\p2p_EXTRA_cell3.npy'))
-error = np.load(os.path.join(filename +  '\error_EXTRA_cell3.npy'))
+filename = r'E:\Data\2014-11-25\Analysis'
+amplitudes = np.load(os.path.join(filename + '\p2p_EXTRA_cell4.npy'))
+error = np.load(os.path.join(filename +  '\error_EXTRA_cell4.npy'))
 
 min_ampl= amplitudes.min()
 max_ampl= amplitudes.max()
@@ -120,13 +120,14 @@ print(min_ampl)
 print(max_ampl)
 print(channel)
 
-closest_channel = 117
+closest_channel = 2
 print(amplitudes[closest_channel])
 print(error[closest_channel])
 
 
 
 # Heatmapp 32channels for p2p amplitudes
+
 
 def polytrode_channels(bad_channels=[]):
     '''
@@ -179,7 +180,6 @@ def polytrode_channels(bad_channels=[]):
     b = np.delete(a, bad_channels)
     channel_positions = channel_positions[b]
     return channel_positions
-
 
 def plot_topoplot(axis, channel_positions, data, show=True, **kwargs):
     '''
@@ -497,6 +497,28 @@ def plot_topoplot128(axis, channel_positions, data, show=True, **kwargs):
     return image, scat
 
 # How to plot heatmapp?
+
+
+
+
+
+# Value of amplitudes, ERROR (NO ORDER)
+
+filename = r'D:\Protocols\PairedRecordings\Neuroseeker128\Data\2015-08-26\Analysis'
+amplitudes = np.load(os.path.join(filename + '\p2p_EXTRA_cell1.npy'))
+error = np.load(os.path.join(filename +  '\error_EXTRA_cell1.npy'))
+
+min_ampl= amplitudes.min()
+max_ampl= amplitudes.max()
+channel = amplitudes.argmax()
+print(min_ampl)
+print(max_ampl)
+print(channel)
+
+
+
+
+
 #Method1
 
 fig = plt.figure()

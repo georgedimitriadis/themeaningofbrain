@@ -30,6 +30,7 @@ def create_128channels_imec_prb(filename=None, bad_channels=None):
     electrode_amplifier_name_on_grid = np.array(["Int"+str(x) for x in electrode_amplifier_index_on_grid])
     indices_arrays = [electrode_amplifier_index_on_grid.tolist(), electrode_amplifier_name_on_grid.tolist()]
     indices_tuples = list(zip(*indices_arrays))
+
     channel_position_indices = pd.MultiIndex.from_tuples(indices_tuples, names=['Numbers', 'Strings'])
     channel_positions = pd.Series(electrode_coordinate_grid, index = channel_position_indices)
     channel_positions.columns=['Positions']
