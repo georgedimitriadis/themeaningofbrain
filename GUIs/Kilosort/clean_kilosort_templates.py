@@ -13,7 +13,8 @@ import time
 
 
 def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, binary_data_filename, prb_file,
-                            sampling_frequency=20000):
+                            type_of_binary=np.int16, order_of_binary='F', sampling_frequency=20000,
+                            num_of_shanks_for_vis=None):
 
     spike_templates = np.load(join(base_folder, r'spike_templates.npy'))
     template_feature_ind = np.load(join(base_folder, 'template_feature_ind.npy'))
@@ -23,12 +24,12 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
 
     templates = np.load(join(base_folder, 'templates.npy'))
 
-    data_raw = np.memmap(binary_data_filename, dtype=np.int16, mode='r')
+    data_raw = np.memmap(binary_data_filename, dtype=type_of_binary, mode='r')
 
     number_of_timepoints_in_raw = int(data_raw.shape[0] / number_of_channels_in_binary_file)
     global data_raw_matrix
     data_raw_matrix = np.reshape(data_raw, (number_of_channels_in_binary_file, number_of_timepoints_in_raw),
-                                 order='F')
+                                 order=order_of_binary)
 
     global current_template_index
     current_template_index = 0
@@ -159,7 +160,6 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
 
                 single_spike_electrode_curves.append(single_spike_curves)
 
-
     def update_single_spikes_plot():
         if not single_spike_window.isVisible():
             return
@@ -277,8 +277,8 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
         connected_binary = np.in1d(np.arange(number_of_channels_in_binary_file), connected)
         bad_channels = np.squeeze(np.argwhere(connected_binary == False).astype(np.int))
         sh.create_heatmap_on_matplotlib_widget(heatmap_plot, data[current_template_index], prb_file, window_size=60,
-                                               bad_channels=bad_channels, num_of_shanks=5, rotate_90=True, flip_ud=False,
-                                               flip_lr=False)
+                                               bad_channels=bad_channels, num_of_shanks=num_of_shanks_for_vis,
+                                               rotate_90=True, flip_ud=False, flip_lr=False)
         heatmap_plot.draw()
 
     def update_autocorelogram():
@@ -317,7 +317,6 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
             differences = -differences
         norm = np.sqrt(spike_times_train_1.size * spike_times_train_2.size)
         return differences, norm
-
 
     def update_marking_led():
         global current_template_index

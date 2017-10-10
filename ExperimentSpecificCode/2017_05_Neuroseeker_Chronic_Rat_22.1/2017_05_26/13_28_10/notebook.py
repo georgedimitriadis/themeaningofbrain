@@ -16,7 +16,7 @@ number_of_channels_in_binary_file = 1440
 
 
 clean.cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, binary_data_filename, prb_file,
-                              sampling_frequency=20000)
+                              type_of_binary=np.int16, sampling_frequency=20000,num_of_shanks_for_vis=5)
 
 
 import matplotlib.pyplot as plt

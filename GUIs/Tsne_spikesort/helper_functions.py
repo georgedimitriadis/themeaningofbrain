@@ -2,6 +2,12 @@
 import numpy as np
 from os.path import join
 from joblib import Parallel, delayed
+from struct import calcsize, unpack
+import pandas as pd
+
+
+template_types = {0: 'Noise', 1: 'SS', 2: 'SS_Contaminated', 3: 'SS_Putative', 4: 'MUA', 5: 'Unspesified_1',
+                  6: 'Unspecified_2', 7: 'Unspecified_3'}
 
 
 def load_extracellular_data_cube(data_cube_filename,
@@ -12,6 +18,52 @@ def load_extracellular_data_cube(data_cube_filename,
                                        mode='r',
                                        shape=shape_of_spike_trig_avg)
     return cut_extracellular_data
+
+
+def _read_unpack(fmt, fh):
+    return unpack(fmt, fh.read(calcsize(fmt)))
+
+
+def load_tsne_result(files_dir, filename='result.dat'):
+    # Read and pass on the results
+    with open(join(files_dir, filename), 'rb') as output_file:
+        # The first two integers are the number of samples and the dimensionality
+        result_samples, result_dims = _read_unpack('ii', output_file)
+        # Collect the results, but they may be out of order
+        results = [_read_unpack('{}d'.format(result_dims), output_file) for _ in range(result_samples)]
+
+        return np.array(results)
+
+
+def generate_spike_info(base_folder, files_dir):
+    spikes_used = np.load(join(files_dir, 'indices_of_spikes_used.npy'))
+    template_marking = np.load(join(base_folder, 'template_marking.npy'))
+    spike_templates = np.load(join(base_folder, 'spike_templates.npy'))[spikes_used]
+    spike_times = np.load(join(base_folder, 'spike_times.npy'))[spikes_used]
+    indices_of_small_templates = np.load(join(files_dir, 'indices_of_small_templates.npy'))
+    tsne = load_tsne_result(join(base_folder, files_dir))
+
+
+    columns = ['original_index', 'times', 'template_after_cleaning', 'type_after_cleaning', 'template_after_sorting',
+               'type_after_sorting', 'template_with_all_spikes_present', 'tsne_x', 'tsne_y', 'probe_position_x',
+               'probe_position_z']
+
+    spike_info = pd.DataFrame(index=np.arange(spikes_used.size), columns=columns)
+
+    spike_info['original_index'] = spikes_used
+    spike_info['times'] = spike_times
+    spike_info['template_after_cleaning'] = spike_templates
+    spike_info['type_after_cleaning'] = [template_types[int(template_marking[i])] for i in spike_templates]
+    spike_info['template_after_sorting'] = spike_info['template_after_cleaning']
+    spike_info['type_after_sorting'] = spike_info['type_after_cleaning']
+    spike_info['template_with_all_spikes_present'] = [bool(np.in1d(spike_template, indices_of_small_templates))
+                                                      for spike_template in spike_templates]
+    spike_info['tsne_x'] = tsne[:, 0]
+    spike_info['tsne_y'] = tsne[:, 1]
+
+    spike_info.to_pickle(join(files_dir, 'spike_info.df'))
+
+    return spike_info
 
 
 def generate_average_over_selected_spikes_multiprocess(base_folder,
@@ -149,24 +201,25 @@ def symbol_from_type(type_to_find):
 
 
 def get_templates_with_spike_indices_from_spike_info(spike_info):
-    templates = np.unique(spike_info['template_after_cleaning'])
+    templates = np.unique(spike_info['template_after_sorting'])
     templates_with_spike_indices = dict()
     for template in templates:
-        spike_indices = np.argwhere(np.in1d(spike_info['template_after_cleaning'], template))
+        spike_indices = np.argwhere(np.in1d(spike_info['template_after_sorting'], template))
         templates_with_spike_indices[template] = spike_indices
 
     return templates_with_spike_indices
 
 
 def get_templates_with_number_of_spikes_from_spike_info(spike_info):
-    templates = np.unique(spike_info['template_after_cleaning'])
+    templates = np.unique(spike_info['template_after_sorting'])
     templates_with_number_of_spikes = np.empty((len(templates), 2)).astype(np.int)
     for t in np.arange(len(templates)):
-        spike_indices = np.argwhere(np.in1d(spike_info['template_after_cleaning'], templates[t]))
+        spike_indices = np.argwhere(np.in1d(spike_info['template_after_sorting'], templates[t]))
         templates_with_number_of_spikes[t] = [templates[t], len(spike_indices)]
 
     return templates_with_number_of_spikes
 
 
 def find_templates_of_spikes(spike_info, spikes_indices):
-    return np.unique(spike_info['template_after_cleaning'][spikes_indices])
+    return np.unique(spike_info['template_after_sorting'][spikes_indices])
+

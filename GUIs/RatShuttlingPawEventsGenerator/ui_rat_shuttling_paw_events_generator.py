@@ -687,4 +687,3 @@ class Ui_RatShuttlingPawEventsGenerator(object):
 
 from qled import QLed
 from mplgraphwidget import MplGraphWidget
-import PlayButtons_rc

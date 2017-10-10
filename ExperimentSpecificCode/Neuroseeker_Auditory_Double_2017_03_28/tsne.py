@@ -88,9 +88,11 @@ from tsne_for_spikesort_old import io_with_cpp as io
 
 base_folder = r'F:\Neuroseeker\\' + \
               r'Neuroseeker_2017_03_28_Anesthesia_Auditory_DoubleProbes\Angled\Analysis\\' + \
-              r'Experiment_2_T18_48_25_And_Experiment_3_T19_41_07\Kilosort' # Desktop
+              r'Experiment_2_T18_48_25_And_Experiment_3_T19_41_07\Kilosort'  # Desktop
 
-files_dir = join(base_folder, 'Tsne_Results', '2017_08_26_all1M_579templates')
+files_dir = join(base_folder, 'Tsne_Results', '2017_08_20_dis700K_579templates')
+
+
 
 total_spikes_required = 700000
 full_inclusion_threshold = 15000  # number of spikes or fewer for a template to have to be fully included
@@ -101,26 +103,36 @@ spikes_used, small_clean_templates_with_spike_indices, large_clean_templates_wit
                                                          threshold=full_inclusion_threshold,
                                                          total_spikes_required=total_spikes_required)
 
-spikes_used = None
+spikes_used = None  # Use this to load all spikes for tsne
 template_features_sparse_clean = \
     preproc.calculate_template_features_matrix_for_tsne(base_folder, save_to_folder=files_dir,
                                                         spikes_used_with_original_indexing=spikes_used)
 
+# OR Load it
+template_features_sparse_clean = np.load(join(files_dir, 'data_to_tsne_(1091229, 579).npy'))
+
 
 exe_dir = r'E:\Software\Develop\Source\Repos\spikesorting_tsne_bhpart\Barnes_Hut\x64\Release'
-theta = 0.3
+theta = 0.4
 eta = 200.0
-num_dims = 3
+exageration = 20
+num_dims = 2
 perplexity = 100
 iterations = 4000
 random_seed = 1
 verbose = 3
 tsne = TSNE.t_sne(samples=template_features_sparse_clean, files_dir=files_dir, exe_dir=exe_dir, num_dims=num_dims,
-                  perplexity=perplexity, theta=theta, eta=eta, iterations=iterations, random_seed=random_seed,
-                  verbose=verbose)
+                  perplexity=perplexity, theta=theta, eta=eta, exageration=exageration, iterations=iterations,
+                  random_seed=random_seed, verbose=verbose)
 
 # OR
 tsne = io.load_tsne_result(join(base_folder, files_dir))
+
+# OR
+tsne = TSNE.t_sne_from_existing_distances(files_dir=files_dir, exe_dir=exe_dir, num_dims=num_dims,
+                                          perplexity=perplexity, theta=theta, eta=eta, exageration=exageration,
+                                          iterations=iterations, random_seed=random_seed, verbose=verbose)
+
 spikes_used = np.load(join(files_dir, 'indices_of_spikes_used.npy'))
 
 spike_templates = np.load(join(base_folder, 'spike_templates.npy'))
@@ -133,7 +145,13 @@ labels_dict = pf.generate_labels_dict_from_cluster_info_dataframe(cluster_info=c
 markers = ['.', '*', 'o', '>', '<', '_', ',']
 labeled_sizes = range(20, 100, 20)
 
-pf.plot_tsne(tsne.T, cm=plt.cm.prism, labels_dict=labels_dict, legent_on=False, markers=markers, labeled_sizes=None)
+pf.plot_tsne(tsne.T, cm=plt.cm.prism, labels_dict=labels_dict, legent_on=False, markers=None, labeled_sizes=None)
+
+
+from mpl_toolkits.mplot3d import Axes3D
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(tsne[:, 0], tsne[:, 1], tsne[:, 2], zdir='z', s=20, c='b', depthshade=True)
 
 
 pf.make_video_of_tsne_iterations(iterations=3000, video_dir=files_dir, data_file_name='interim_{:0>6}.dat',

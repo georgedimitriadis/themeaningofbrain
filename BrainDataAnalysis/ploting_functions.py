@@ -203,6 +203,7 @@ def scan_through_2nd_dim(data, freq=32556, timeToPlot=1, startTime=0, plot_aroun
 
     return (bnext, bprev)
 
+
 def scan_through_3rd_dim(data, timeAxis, timeToPlot=None, parallel_data=None, parallel_time=None, remove_channels=None, figure_id=0):
 
     fig = plt.figure(figure_id)
@@ -513,7 +514,6 @@ def plot_tsne(tsne, labels_dict=None, cm=None, cm_remapping=None, subtitle=None,
         ax.set_yticklabels([])
         ax.set_xticklabels([])
 
-
     if max_screen:
         figManager = plt.get_current_fig_manager()
         figManager.window.showMaximized()
@@ -538,14 +538,12 @@ def plot_tsne(tsne, labels_dict=None, cm=None, cm_remapping=None, subtitle=None,
             cm = plt.cm.Dark2
         if cm_remapping is None:
             cm_remapping = {}
-            #for g in range(0, number_of_labels):
             for g in labels_dict.keys():
                 cm_remapping[g] = g
-        #for g in range(0, number_of_labels):
         for g in labels_dict.keys():
             alpha = 1
-            if g==2:
-                alpha = 0.1
+            #if g==2:
+            #    alpha = 0.1
             if len(markers) > 2:
                 marker = np.random.choice(markers)
             else:
