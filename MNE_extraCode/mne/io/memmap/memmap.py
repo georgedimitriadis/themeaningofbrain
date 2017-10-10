@@ -5,7 +5,7 @@ __author__ = 'George Dimitriadis'
 
 import numpy as np
 
-from ..constants import FIFF
+from ...constants import FIFF
 from ..meas_info import Info
 from ..base import _BaseRaw
 from ...utils import verbose, logger

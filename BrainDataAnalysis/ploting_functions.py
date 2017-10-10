@@ -10,13 +10,18 @@ import scipy.interpolate as interpolate
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 import pandas as pd
-import itertools
 import warnings
 import BrainDataAnalysis.Utilities as ut
-import BrainDataAnalysis.timelocked_analysis_functions as tlf
-import matplotlib.animation as animation
 from matplotlib.widgets import Button
-from mpldatacursor import datacursor
+try:
+    from mpldatacursor import datacursor
+except:
+    datacursor = None
+
+from os.path import join
+import matplotlib.animation as animation
+#import t_sne_bhcuda.bhtsne_cuda as TSNE
+from tsne_for_spikesort_old import io_with_cpp as io
 
 
 
@@ -61,7 +66,7 @@ def plot_avg_time_locked_data(timeLockedData, timeAxis, subplot=None, timeToPlot
     else:
         lines = ax.plot(timeAxis[samplesToPlot[0]:samplesToPlot[1]], timeLockedData[samplesToPlot[0]:samplesToPlot[1]], picker=picker)
 
-    if labels:
+    if labels and datacursor is not None:
         datacursor(hover=True)
         for i in np.arange(0,len(lines)):
             lines[i].set_label(str(i))
@@ -197,6 +202,7 @@ def scan_through_2nd_dim(data, freq=32556, timeToPlot=1, startTime=0, plot_aroun
     bprev.on_clicked(callback.prev)
 
     return (bnext, bprev)
+
 
 def scan_through_3rd_dim(data, timeAxis, timeToPlot=None, parallel_data=None, parallel_time=None, remove_channels=None, figure_id=0):
 
@@ -355,38 +361,31 @@ def spread_data(data, electrode_structure, col_spacing=3, row_spacing=0.5):
 
 
 def plot_topoplot(channel_positions, data, show=True, **kwargs):
-    if not kwargs.get('hpos'):
-        hpos = 0
-    else:
-        hpos = kwargs['hpos']
-    if not kwargs.get('vpos'):
-        vpos = 0
-    else:
-        vpos = kwargs['vpos']   
-    if not kwargs.get('width'):
-        width = None
-    else:
-        width = kwargs['width']    
-    if not kwargs.get('height'):
-        height = None
-    else:
-        height = kwargs['height']
-    if not kwargs.get('gridscale'):
-        gridscale = 10
-    else:
-        gridscale = kwargs['gridscale']
-    if not kwargs.get('interpolation_method'):
-        interpolation_method = "bicubic"  # ‘none’, ‘nearest’, ‘bilinear’, ‘bicubic’, ‘spline16’, ‘spline36’, ‘hanning’, ‘hamming’, ‘hermite’, ‘kaiser’, ‘quadric’, ‘catrom’, ‘gaussian’, ‘bessel’, ‘mitchell’, ‘sinc’, ‘lanczos’
-    else:
-        interpolation_method = kwargs['interpolation_method']
-    if not kwargs.get('zlimits'):
-        zlimits = None
-    else:
-        zlimits = kwargs['zlimits']
-    if not kwargs.get('outline'):
-        outline = None
-    else:
-        outline = kwargs['outline']   
+    hpos = 0
+    vpos = 0
+    width = None
+    height = None
+    gridscale = 1
+    interpolation_method = "bicubic"
+    zlimits = None
+    outline = None
+    if kwargs is not None:
+        if 'hpos' in kwargs:
+            hpos = kwargs['hpos']
+        if 'vpos' in kwargs:
+            vpos = kwargs['vpos']
+        if 'width' in kwargs:
+            width = kwargs['width']
+        if 'height' in kwargs:
+            height = kwargs['height']
+        if 'gridscale' in kwargs:
+            gridscale = kwargs['gridscale']
+        if 'interpolation_method' in kwargs:
+            interpolation_method = kwargs['interpolation_method']
+        if 'zlimits' in kwargs:
+            zlimits = kwargs['zlimits']
+        if 'outline' in kwargs:
+            outline = kwargs['outline']
     
     if np.isnan(data).any():
         warnings.warn('The data passed to plot_topoplot contain NaN values. These will create unexpected results in the interpolation. Deal with them.')
@@ -420,7 +419,8 @@ def plot_topoplot(channel_positions, data, show=True, **kwargs):
     vlim = [np.min(chanY), np.max(chanY)]
 
     if interpolation_method is not 'none':
-        xi, yi = np.mgrid[hlim[0]:hlim[1]:complex(0, gridscale)*(hlim[1]-hlim[0]), vlim[0]:vlim[1]:complex(0, gridscale)*(vlim[1]-vlim[0])]
+        xi, yi = np.mgrid[hlim[0]:hlim[1]:complex(0, gridscale)*(hlim[1]-hlim[0]), vlim[0]:vlim[1]:complex(0, gridscale)
+                                                                                                   * (vlim[1]-vlim[0])]
     else:
         xi, yi = np.mgrid[hlim[0]:hlim[1]+1, vlim[0]:vlim[1]+1] #for no interpolation show one pixel per data point
 
@@ -436,13 +436,14 @@ def plot_topoplot(channel_positions, data, show=True, **kwargs):
 
     if not outline:
         expansion = 0.05*np.max([hlim, vlim])
-        outline = pd.DataFrame(np.array([[hlim[0]-expansion, vlim[0]-expansion], [hlim[1]+expansion, vlim[0]-expansion],\
-                                         [hlim[1]+expansion, vlim[1]+expansion], [hlim[0]-expansion, vlim[1]+expansion],\
+        outline = pd.DataFrame(np.array([[hlim[0]-expansion, vlim[0]-expansion], [hlim[1]+expansion, vlim[0]-expansion],
+                                         [hlim[1]+expansion, vlim[1]+expansion], [hlim[0]-expansion, vlim[1]+expansion],
                                          [hlim[0]-expansion, vlim[0]-expansion]]))
 
     ml = MultipleLocator(1)
     cmap = plt.get_cmap("seismic")
-    image = plt.imshow(Zi.T, cmap=cmap, aspect='equal', origin='upper',  extent=[hlim[0], hlim[1], vlim[1], vlim[0]], vmin=vmin, vmax=vmax, interpolation=interpolation_method)
+    image = plt.imshow(Zi.T, cmap=cmap, aspect='equal', origin='upper',  extent=[hlim[0], hlim[1], vlim[1], vlim[0]],
+                       vmin=vmin, vmax=vmax, interpolation=interpolation_method)
     plt.axes().yaxis.set_minor_locator(ml)
     plt.axes().xaxis.set_minor_locator(ml)
 
@@ -454,11 +455,12 @@ def plot_topoplot(channel_positions, data, show=True, **kwargs):
     return image, scat
 
 
-
-def plot_video_topoplot(data, time_axis, channel_positions, times_to_plot=[-0.1, 0.2], time_window = 0.002, time_step = 0.002, sampling_freq = 1000, zlimits = None,filename=None):
+def plot_video_topoplot(data, time_axis, channel_positions, times_to_plot=[-0.1, 0.2], time_window=0.002,
+                        time_step=0.002, sampling_freq=1000, zlimits=None, filename=None):
     fig = plt.figure()
     sample_step = int(time_step * sampling_freq)
-    sub_time_indices = np.arange(ut.find_closest(time_axis, times_to_plot[0]), ut.find_closest(time_axis, times_to_plot[1]))
+    sub_time_indices = np.arange(ut.find_closest(time_axis, times_to_plot[0]), ut.find_closest(time_axis,
+                                                                                               times_to_plot[1]))
     sub_time_indices = sub_time_indices[0::sample_step]
     if np.shape(channel_positions)[0] <= 64:
         text_y = 8.3
@@ -469,7 +471,8 @@ def plot_video_topoplot(data, time_axis, channel_positions, times_to_plot=[-0.1,
     for t in sub_time_indices:
         samples = [t, t + (time_window*sampling_freq)]
         data_to_plot = np.mean(data[:, int(samples[0]):int(samples[1])], 1)
-        image, scat = plot_topoplot(channel_positions, data_to_plot, show=False, interpmethod="quadric", gridscale=5, zlimits = zlimits)
+        image, scat = plot_topoplot(channel_positions, data_to_plot, show=False, interpmethod="quadric", gridscale=5,
+                                    zlimits = zlimits)
         txt = plt.text(x=text_x, y=text_y, s=str(time_axis[t])+' secs')
         images.append([image, scat, txt])
     FFwriter = animation.FFMpegWriter()
@@ -477,8 +480,184 @@ def plot_video_topoplot(data, time_axis, channel_positions, times_to_plot=[-0.1,
     plt.colorbar(mappable=image)
     if filename is not None:
         plt.rcParams['animation.ffmpeg_path'] = r"C:\George\Development\PythonProjects\AnalysisDevelopment\Code\ExtraRequirements\ffmpeg-20140618-git-7f52960-win64-static\bin\ffmpeg.exe"
-        ani.save(filename, writer = FFwriter, fps=1, bitrate=5000, dpi=300, extra_args=['h264'])
+        ani.save(filename, writer=FFwriter, fps=1, bitrate=5000, dpi=300, extra_args=['h264'])
     plt.show()
 
 
+def generate_labels_dict_from_cluster_info_dataframe(cluster_info):
+
+    if isinstance(cluster_info, str):
+        cluster_info = pd.read_pickle(cluster_info)
+    num_of_clusters = cluster_info.shape[0]
+    indices_list_of_lists = cluster_info['Spike_Indices'].tolist()
+    cluster_indices = np.arange(num_of_clusters)
+
+    labels_dict = {}
+    for c in np.arange(num_of_clusters):
+        labels_dict[c] = indices_list_of_lists[c]
+
+    return labels_dict
+
+
+def plot_tsne(tsne, labels_dict=None, cm=None, cm_remapping=None, subtitle=None, label_name='Label', label_array=None,
+              legent_on=True, axes=None, unlabeled_sizes=None, labeled_sizes=None, markers=None, color=None,
+              max_screen=False, hide_ticklabels=False):
+
+    if axes is None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        fig.tight_layout()
+    else:
+        ax = axes
+
+    if hide_ticklabels:
+        ax.set_yticklabels([])
+        ax.set_xticklabels([])
+
+    if max_screen:
+        figManager = plt.get_current_fig_manager()
+        figManager.window.showMaximized()
+    labeled_scatters = []
+    if unlabeled_sizes is None:
+        unlabeled_sizes = [3, 10]
+    if markers is None:
+        markers = ['.', 'o']
+    if color is None:
+        color = 'k'
+    ax.scatter(tsne[0], tsne[1], s=unlabeled_sizes[0], marker=markers[0], color=color, alpha=1)
+
+    if subtitle is None and ax is None:
+            fig.suptitle('T-SNE')
+    elif ax is None:
+            fig.suptitle(subtitle)
+
+    if labels_dict is not None:
+        number_of_labels = labels_dict.__len__()
+        color_indices = plt.Normalize(0, number_of_labels)
+        if cm is None:
+            cm = plt.cm.Dark2
+        if cm_remapping is None:
+            cm_remapping = {}
+            for g in labels_dict.keys():
+                cm_remapping[g] = g
+        for g in labels_dict.keys():
+            alpha = 1
+            #if g==2:
+            #    alpha = 0.1
+            if len(markers) > 2:
+                marker = np.random.choice(markers)
+            else:
+                marker = markers[1]
+            if labeled_sizes is not None:
+                size = np.random.choice(labeled_sizes)
+            else:
+                size = unlabeled_sizes[1]
+            labeled_scatters.append(ax.scatter(tsne[0][labels_dict[g]],
+                                               tsne[1][labels_dict[g]],
+                                               s=size, color=cm(color_indices(cm_remapping[g])),
+                                               marker=marker, alpha=alpha))
+        if legent_on:
+            ncol = int(number_of_labels / 40)
+            box = ax.get_position()
+            ax.set_position([0.03, 0.03, box.width * (1 - 0.04 * ncol), 0.93])
+            if label_array is None:
+                label_array = np.array(range(number_of_labels))
+            if label_array.dtype == int:
+                threshold_legend = np.char.mod('{} %i'.format(label_name), label_array)
+            if label_array.dtype == float:
+                threshold_legend = np.char.mod('{} %f'.format(label_name), label_array)
+            else:
+                threshold_legend = label_array
+            plt.legend(labeled_scatters, threshold_legend, scatterpoints=1, ncol=ncol, loc='center left', bbox_to_anchor=(1.0, 0.5))
+        else:
+            plt.tight_layout(rect=[0, 0, 1, 1])
+
+    if axes is None:
+        return fig, ax
+    else:
+        pass
+
+
+def show_clustered_tsne(dbscan_result, X, juxta_cluster_indices_grouped=None, threshold_legend=None):
+    core_samples_mask = np.zeros_like(dbscan_result.labels_, dtype=bool)
+    core_samples_mask[dbscan_result.core_sample_indices_] = True
+    labels = dbscan_result.labels_
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    unique_labels = set(labels)
+    colors = plt.cm.nipy_spectral(np.linspace(0, 1, len(unique_labels)))
+    for k, col in zip(unique_labels, colors):
+        ms = 6
+        marker = 'o'
+        if k == -1:
+            # Black used for noise.
+            col = 'k'
+            ms = 3
+            marker = '^'
+
+        class_member_mask = (labels == k)
+
+        xy = X[class_member_mask & core_samples_mask]
+        ax.plot(xy[:, 0], xy[:, 1], marker, markerfacecolor=col,
+                markeredgecolor='k', markersize=8)
+
+        xy = X[class_member_mask & ~core_samples_mask]
+        ax.plot(xy[:, 0], xy[:, 1], marker, markerfacecolor=col,
+                markeredgecolor='k', markersize=ms)
+
+    if juxta_cluster_indices_grouped is not None:
+        c = ['r', 'g', 'c', 'm', 'y', 'k', 'w', 'b']
+        juxta_scatters = []
+        for g in range(1, len(juxta_cluster_indices_grouped)+1):
+            line, = ax.plot(X[juxta_cluster_indices_grouped[g], 0], X[juxta_cluster_indices_grouped[g], 1], '*',
+                            markersize=4.5, markerfacecolor=c[g-1], markeredgecolor=c[g-1])
+            juxta_scatters.append(line)
+        if threshold_legend is not None:
+            ax.legend(juxta_scatters, threshold_legend)
+
+    plt.tight_layout(rect=[0,0,1,1])
+
+    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+    plt.title('DBSCAN clustering of T-sne with {} estimated number of clusters'.format(n_clusters_))
+    plt.show()
+
+
+def make_video_of_tsne_iterations(iterations, video_dir, data_file_name='interim_{:0>6}.dat',
+                                  video_file_name='tsne_video.mp4', figsize=(15, 15), dpi=200, fps=30,
+                                  movie_metadata=None, labels_dict=None, cm=None, cm_remapping=None, subtitle=None,
+                                  label_name='Label', legent_on=True, label_array=None, labeled_sizes=None,
+                                  unlabeled_sizes=None, markers=None, color=None, max_screen=False):
+    iters = np.arange(iterations)
+    FFMpegWriter = animation.writers['ffmpeg']
+    metadata = None
+    if movie_metadata:
+        metadata = movie_metadata
+    writer = FFMpegWriter(fps=fps, bitrate=-1, metadata=metadata)
+    if cm is None:
+        cm = plt.cm.Dark2
+    fig = plt.figure(figsize=figsize, dpi=dpi)
+    ax = fig.add_subplot(111)
+    fig.tight_layout()
+    with writer.saving(fig, join(video_dir, video_file_name), dpi):
+        for it in iters:
+            ax.cla()
+            tsne = io.load_tsne_result(video_dir, data_file_name.format(it))
+            tsne = np.transpose(tsne)
+            plot_tsne(tsne, labels_dict=labels_dict, cm=cm, cm_remapping=cm_remapping, subtitle=subtitle,
+                      label_name=label_name, legent_on=legent_on, label_array=label_array, axes=ax,
+                      unlabeled_sizes=unlabeled_sizes, labeled_sizes=labeled_sizes, markers=markers, color=color,
+                      max_screen=max_screen, hide_ticklabels=True)
+            min_x = np.min(tsne[0, :])
+            max_x = np.max(tsne[0, :])
+            min_y = np.min(tsne[1, :])
+            max_y = np.max(tsne[1, :])
+            range_x = np.max(np.abs([min_x, max_x]))
+            range_y = np.max(np.abs([min_y, max_y]))
+
+            plt.ylim([-range_y, range_y])
+            plt.xlim([-range_x, range_x])
+            writer.grab_frame()
+            if it%100 == 0:
+                print('Done '+str(it) + ' frames')
 
