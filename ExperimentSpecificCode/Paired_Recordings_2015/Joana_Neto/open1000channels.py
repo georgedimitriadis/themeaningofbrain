@@ -1,6 +1,3 @@
-__author__ = 'George Dimitriadis'
-
-
 
 import os
 import numpy as np
@@ -119,8 +116,12 @@ num_adc_channels_used = 1
 adc_dtype = np.uint16
 inter_spike_time_distance = 30
 amp_gain = 50
-num_ivm_channels = 128
-amp_dtype = np.uint16
+
+
+
+
+num_ivm_channels = 440
+amp_dtype = np.int16
 
 sampling_freq = 30000
 high_pass_freq = 100
@@ -163,10 +164,12 @@ def highpass(data,BUTTER_ORDER=3, F_HIGH=5000, sampleFreq=30000.0, passFreq=100.
 # Generate the (channels x time_points x spikes) high passed extracellular recordings datasets for all cells
 all_cells_ivm_filtered_data = {}
 data_to_load = 't'
-for i in np.arange(0, len(good_cells)):
-    raw_data_file_ivm = os.path.join(data_folder, 'amplifier'+date+'T'+cell_capture_times[good_cells[i]]+'.bin')
+num_ivm_channels = 440
+amp_dtype = np.int16
 
-    raw_data_ivm = ephys.load_raw_data(raw_data_file_ivm, numchannels=num_ivm_channels, dtype=amp_dtype)
+raw_data_file_ivm = os.path.join(data_folder, 'amplifier'+date+'T'+cell_capture_times[good_cells[i]]+'.bin')
+
+raw_data_ivm = ephys.load_raw_data(raw_data_file_ivm, numchannels=num_ivm_channels, dtype=amp_dtype)
 
     num_of_spikes = len(all_cells_spike_triggers[good_cells[i]])
 

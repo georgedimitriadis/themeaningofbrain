@@ -81,7 +81,7 @@ def create_spike_triggered_events(data_raw_spikes, threshold, inter_spike_time_d
 
 
 
-def spikedetect(data_raw_spikes, threshold_multiplier=4, single_max_threshold=True, inter_spike_time_distance=0.01,
+def spikedetect(data_raw_spikes, threshold_multiplier=4, single_max_threshold=False, inter_spike_time_distance=0.01,
                 sampling_freq=32556, bad_channels=None):
     bad_channels = np.array(bad_channels)
     num_of_channels = np.shape(data_raw_spikes)[0]

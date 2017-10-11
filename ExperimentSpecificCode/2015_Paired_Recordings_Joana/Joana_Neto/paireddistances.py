@@ -117,17 +117,24 @@ def eval_dist(referencecoordinates, IVM, juxta):
 
 #How to get the distances values?
 
-cellname = '2015_08_28_pair9.0'
+cellname = '2015_09_04_pair7.1'
 
 # extraPos and juxtaPos have to be numpy arrays
 # I had to add a decimal place in all axes
 # The Z axis has to be flipped
 
-extraPos = np.array([299.1, -119.4, -4588.2])*np.array([1, 1, -1])
-juxtaPos = np.array([347.4, -119.4, -4451.7])*np.array([1, 1, -1])
 
-#referencecoordinates = (-310, 37.5) #ref point in extra probe is the Tip (z,y)
-referencecoordinates = (0, 37.5) #ref point in extra probe is bottom center (z,y)
+
+
+
+150.6720766	-41.59289885	-4426.736869	339.6	-12.8	-4307.8
+
+
+extraPos = np.array([150.6720766,	-41.59289885,	-4426.736869])*np.array([1, 1, -1])
+juxtaPos = np.array([339.6,	-12.8,	-4307.8])*np.array([1, 1, -1])
+
+referencecoordinates = (-310, 37.5) #ref point in extra probe is the Tip (z,y)
+#referencecoordinates = (0, 37.5) #ref point in extra probe is bottom center (z,y)
 refSite = referencecoordinates
 
 pos, dist = eval_dist(refSite, extraPos, juxtaPos)
@@ -137,14 +144,14 @@ min_dist = dist.min()
 channel_min_dist = electrode_coordinate_grid[dist.argmin()]
 channel_intan = all_electrodes[(channel_min_dist[0])-1][(channel_min_dist[1])-1]
 print(min_dist)
-print(channel_min_dist)
+#print(channel_min_dist)
 print(channel_intan)
 
 # Save distances and positions for the cell
 
-analysis_folder ='D:\\Protocols\\PairedRecordings\\Neuroseeker128\\Data\\2015-09-03\\Analysis'
+analysis_folder ='D:\\Protocols\\PairedRecordings\\Neuroseeker128\\Data\\2015-08-21\\Analysis'
 
-i=2
+i=1
 np.save(os.path.join(analysis_folder,'distances_Cell'+ good_cells[i] + '.npy'), dist)
 np.save(os.path.join(analysis_folder,'positions_Cell'+ good_cells[i] + '.npy'), pos)
 
@@ -233,14 +240,21 @@ def eval_dist(referenceSite, IVM, juxta, sitesPositionsFN='E:\Data\probeconfigur
     return spikesPositions, spikesDistances
 
 ######################
-cellname = '2014_11_25_pair3.0'
+cellname = '2014_11_13_pair7.0'
 # extraPos and juxtaPos have to be numpy arrays
 # I had to add a decimal place in all axes
 # The Z axis has to be flipped
 
-extraPos = np.array([-184.7221, -200.8656, -3312.021])*np.array([1, 1, -1])
-juxtaPos = np.array([-112.3, -200.9, -3310.6])*np.array([1, 1, -1])
+
+-163.2410881	-194.9309165	-3298.073118
+	252	104.7	-2397.8
+
+extraPos = np.array([-334.6634074,	99.71486382,	-2467.206884	])*np.array([1, 1, -1])
+juxtaPos = np.array([	252,	104.7,	-2397.8])*np.array([1, 1, -1])
 refSite = 17
+
+
+pos, dist = eval_dist(refSite, extraPos, juxtaPos)
 
 min_dist = dist.min()
 channel_min_dist = dist.argmin()
@@ -257,3 +271,51 @@ ax.set_aspect('equal')
 plt.draw()
 plt.show()
 
+####3D
+
+spikesPositions =pos
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(spikesPositions[:,0],spikesPositions[:,1],spikesPositions[:,2])
+ax.scatter(0,0,0,c='g')
+
+####Plot distance versus amplitude p2p per channel
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib import rc
+rc('mathtext', default='regular')
+
+
+
+p2pfilename=r'E:\Data\2014-10-17\Analysis\Analysis_100Hz_4ms\p2p_EXTRA_Cell1.npy'
+stdvp2pfilename= r'E:\Data\2014-10-17\Analysis\Analysis_100Hz_4ms\error_EXTRA_Cell1.npy'
+
+distancesfilename= r'E:\Data\2014-10-17\Analysis\Analysis_100Hz_4ms\distances_EXTRA_Cell1.npy'
+
+
+p2p = np.load(p2pfilename) # from ch0 to ch31
+stdvp2p = np.load(stdvp2pfilename)
+
+distances = np.load(distancesfilename)# from ch0 to ch31
+stdvdistances = 30
+
+
+channel_order= [22, 2, 29, 9,3,28,23,13,18,8,4,27,17,12,19,14,5,26,16,11,20,15,6,25,30,10,21,1,7,24,31,0]
+
+fig = plt.figure()
+ax = fig.add_subplot(111)
+ax.plot(p2p[channel_order], '-', label = 'P2P', color='m',linewidth=2.0)
+ax.fill_between(np.arange(32), p2p[channel_order]-stdvp2p[channel_order], p2p[channel_order]+stdvp2p[channel_order], color = 'm', alpha=0.5 )
+ax2 = ax.twinx()
+ax2.plot(distances[channel_order], '-', label = 'Distance', color='b',linewidth=2.0)
+ax2.fill_between(np.arange(32), distances[channel_order] - 30.0, distances[channel_order] + 30.0,color = 'b', alpha=0.2 )
+ax.grid()
+ax.set_xlabel('Channel number', fontsize=20)
+ax.set_ylabel('Peak-Peak Amplitude (\u00B5V)', fontsize=20)
+ax2.set_ylabel('Distance (\u00B5m)', fontsize=20)
+ax.set_ylim(0, 40)
+ax2.set_ylim(0, 300)
+ax.set_xlim(0, 31)
+plt.xticks(range(32), [channel_order[i] for i in np.arange(0,len(channel_order))], fontsize=15)
+plt.show()
