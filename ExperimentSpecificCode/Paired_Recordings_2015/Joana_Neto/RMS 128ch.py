@@ -1,32 +1,12 @@
-import matplotlib.pyplot as plt
-import mne.filter as filters
-import numpy as np
-import scipy.signal as signal
-import scipy.stats as stats
-from matplotlib import mlab
 import os
-import scipy.integrate as integrate
 
-import IO.ephys as ephys
-import itertools
-import os
-import warnings
-
-import matplotlib.cm as cmx
-import matplotlib.colors as colors
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-import scipy.interpolate as interpolate
 import scipy.signal as signal
 import scipy.stats as stats
 
 import IO.ephys as ephys
-import os
-import numpy as np
-import BrainDataAnalysis.timelocked_analysis_functions as tf
-import IO.ephys as ephys
-import scipy.signal as signal
 
 #------------------------------------------------------------------------------------------------------------------------
 
@@ -49,8 +29,10 @@ raw_data_file_ivm = os.path.join(analysis_folder + '\\' + '128ch_new_RMS_saline.
 
 #CCU data brain 2015-08-28
 
-analysis_folder = r'E:\Paper Impedance\128chNeuroseeker\CCU\2015_08_28\pair2.2'
-raw_data_file_ivm = os.path.join(analysis_folder + '\\' + 'amplifier2015-08-28T20_15_45.bin')
+analysis_folder = r'Z:\j\Joana Neto\Backup_2017_28_06\PCDisk\Paper Impedance\128chNeuroseeker\CCU\2015_08_28\pair2.2'
+#raw_data_file_ivm = os.path.join(analysis_folder + '\\' + 'amplifier2015-08-28T20_15_45.bin')
+raw_data_file_ivm = r"Z:\j\Joana Neto\Backup_2017_28_06\PCDisk\Data_128ch\2015-08-28\Data\amplifier2015-08-28T23_28_20.bin"
+
 
 #CCU data brain 2015-09-23
 
@@ -77,13 +59,15 @@ raw_data_ivm = ephys.load_raw_data(raw_data_file_ivm, numchannels=num_ivm_channe
 temp_unfiltered = raw_data_ivm.dataMatrix
 temp_unfiltered = temp_unfiltered.astype(filtered_data_type)
 temp_unfiltered_uV = (temp_unfiltered - Probe_y_digitization) * scale_uV * voltage_step_size
-high_pass_freq = 250
+high_pass_freq = 500
 
 def highpass(data,BUTTER_ORDER=3, F_HIGH=14250,sampleFreq=30000.0,passFreq=100.0):
     b, a = signal.butter(BUTTER_ORDER,(passFreq/(sampleFreq/2), F_HIGH/(sampleFreq/2)),'pass')
     return signal.filtfilt(b,a,data)
 
-tfinal = np.ceil((temp_unfiltered_uV.shape[1])/2)
+#tfinal = np.ceil((temp_unfiltered_uV.shape[1])/2)
+tfinal= 100000
+#temp_filtered_uV = highpass(temp_unfiltered_uV[:,0:tfinal], F_HIGH = (sampling_freq/2)*0.95, sampleFreq = sampling_freq, passFreq = high_pass_freq)
 temp_filtered_uV = highpass(temp_unfiltered_uV[:,0:tfinal], F_HIGH = (sampling_freq/2)*0.95, sampleFreq = sampling_freq, passFreq = high_pass_freq)
 
 
@@ -180,7 +164,7 @@ bottom = [103,	101, 99,	97,	95,	93,	91,	89,	87,	70,	66,	84,	82,	80,	108,110,106,
 
 plt.figure()
 for i in np.arange(len(top)):
-    Pxx_dens,f = mlab.psd((temp_unfiltered[top[i],:])*scale_uV * voltage_step_size, sampling_freq, sampling_freq)
+    Pxx_dens,f = matplotlib.mlab.psd((temp_unfiltered[top[i], :]) * scale_uV * voltage_step_size, sampling_freq, sampling_freq)
     plt. semilogy(f, Pxx_dens,color='r',linewidth=1)
     plt.semilogx()
     plt.ylim([1e-5,1000000])
@@ -191,7 +175,7 @@ for i in np.arange(len(top)):
     plt.ylabel('PSD (uV^2/Hz)')
 
 for i in np.arange(len(bottom)):
-    Pxx_dens,f = mlab.psd(temp_unfiltered[bottom[i],:]* scale_uV * voltage_step_size, sampling_freq, sampling_freq)
+    Pxx_dens,f = matplotlib.mlab.psd(temp_unfiltered[bottom[i], :] * scale_uV * voltage_step_size, sampling_freq, sampling_freq)
     plt. semilogy(f, Pxx_dens,color='b',linewidth=1)
     plt.semilogx()
     plt.ylim([1e-5,1000000])
@@ -206,7 +190,7 @@ plt.figure()
 power=[]
 for i in np.arange(num_ivm_channels):
     temp_filtered_uV = temp_unfiltered[i,:] * scale_uV *voltage_step_size
-    Pxx_dens,f = mlab.psd(temp_unfiltered[i,:], sampling_freq, sampling_freq)
+    Pxx_dens,f = matplotlib.mlab.psd(temp_unfiltered[i, :], sampling_freq, sampling_freq)
     plt. semilogy(f, Pxx_dens,color='b',linewidth=1)
     plt.semilogx()
     plt.ylim([1e-5,1000000])
