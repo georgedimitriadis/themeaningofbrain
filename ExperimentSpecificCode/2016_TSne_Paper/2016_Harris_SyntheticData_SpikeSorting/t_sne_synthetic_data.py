@@ -215,3 +215,97 @@ pf.make_video_of_tsne_iterations(iterations, video_dir, data_file_name='interim_
                                  video_file_name='tsne_video.mp4', figsize=(15, 15), dpi=200, fps=30,
                                  labels_dict=spikes_labeled_dict, cm=cm, sizes=sizes, markers=markers)
 #------------------------------------------------------------------------
+
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+from os.path import join
+import scipy.io as sio
+
+
+
+def savitzky_golay(y, window_size, order, deriv=0, rate=1):
+    r"""Smooth (and optionally differentiate) data with a Savitzky-Golay filter.
+    The Savitzky-Golay filter removes high frequency noise from data.
+    It has the advantage of preserving the original shape and
+    features of the signal better than other types of filtering
+    approaches, such as moving averages techniques.
+    Parameters
+    ----------
+    y : array_like, shape (N,)
+        the values of the time history of the signal.
+    window_size : int
+        the length of the window. Must be an odd integer number.
+    order : int
+        the order of the polynomial used in the filtering.
+        Must be less then `window_size` - 1.
+    deriv: int
+        the order of the derivative to compute (default = 0 means only smoothing)
+    Returns
+    -------
+    ys : ndarray, shape (N)
+        the smoothed signal (or it's n-th derivative).
+    Notes
+    -----
+    The Savitzky-Golay is a type of low-pass filter, particularly
+    suited for smoothing noisy data. The main idea behind this
+    approach is to make for each point a least-square fit with a
+    polynomial of high order over a odd-sized window centered at
+    the point.
+
+    """
+    import numpy as np
+    from math import factorial
+
+    window_size = np.abs(np.int(window_size))
+    order = np.abs(np.int(order))
+    if window_size % 2 != 1 or window_size < 1:
+        raise TypeError("window_size size must be a positive odd number")
+    if window_size < order + 2:
+        raise TypeError("window_size is too small for the polynomials order")
+    order_range = range(order + 1)
+    half_window = (window_size - 1) // 2
+    # precompute coefficients
+    b = np.mat([[k ** i for i in order_range] for k in range(-half_window, half_window + 1)])
+    m = np.linalg.pinv(b).A[deriv] * rate ** deriv * factorial(deriv)
+    # pad the signal at the extremes with
+    # values taken from the signal itself
+    firstvals = y[0] - np.abs(y[1:half_window + 1][::-1] - y[0])
+    lastvals = y[-1] + np.abs(y[-half_window - 1:-1][::-1] - y[-1])
+    y = np.concatenate((firstvals, y, lastvals))
+    return np.convolve(m[::-1], y, mode='valid')
+
+# Synthetic Data
+folder = r'D:\Data\George\Projects\spyking_circus'
+data_file = join(folder, r'data.dat')
+data = np.memmap(data_file, dtype=np.int16, mode='r', order='C')
+data = data.reshape((129, int(data.shape[0]/129)), order='F')
+time_points = data.shape[1]
+
+spike_mat_file = join(folder, r'20150924_1_e_gtTimes.mat')
+mat_dict = sio.loadmat(spike_mat_file)
+labeled_spike_times = mat_dict['gtTimes'][0]
+used_juxta_times = labeled_spike_times[6]
+
+spike_template = np.random.random_sample(100) * 100
+spike_template[45:50] = -100*np.arange(1,10,2)
+spike_template[50:57] = -100*np.arange(14,0,-2)
+
+spike_template = savitzky_golay(spike_template, 21, 3)
+
+plt.plot(spike_template)
+
+
+
+
+juxta_file = join(folder, 'data', r'data.juxta.dat')
+juxta_data = np.memmap(juxta_file, dtype=np.float32, mode='w+', shape=(time_points))
+for i in range(time_points):
+    juxta_data[i] = int(100 * np.random.random_sample())
+
+for i in used_juxta_times:
+    i = int(i)
+    juxta_data[i-50:i+50] = spike_template
+
+plt.plot(juxta_data[int(used_juxta_times[10])-25000:int(used_juxta_times[10])+25000])
