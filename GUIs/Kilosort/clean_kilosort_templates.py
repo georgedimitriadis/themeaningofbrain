@@ -276,6 +276,7 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
         connected = np.squeeze(np.load(join(base_folder, 'channel_map.npy')))
         connected_binary = np.in1d(np.arange(number_of_channels_in_binary_file), connected)
         bad_channels = np.squeeze(np.argwhere(connected_binary == False).astype(np.int))
+        #bad_channels = None
         sh.create_heatmap_on_matplotlib_widget(heatmap_plot, data[current_template_index], prb_file, window_size=60,
                                                bad_channels=bad_channels, num_of_shanks=num_of_shanks_for_vis,
                                                rotate_90=True, flip_ud=False, flip_lr=False)

@@ -1,5 +1,5 @@
 
-from ExperimentSpecificCode.Neuroseeker_Auditory_Double_2017_03_28.Stimulus import arnes_basic_analysis as ba
+from ExperimentSpecificCode._2017_03_28_Neuroseeker_Auditory_Double.Stimulus import arnes_basic_analysis as ba
 
 data_path = r'F:\Neuroseeker\Neuroseeker_2017_03_28_Anesthesia_Auditory_DoubleProbes'
 
