@@ -1,15 +1,14 @@
 
 from bokeh.client import push_session
-from bokeh.layouts import column, row, layout
-from bokeh.models import BoxSelectTool, LassoSelectTool, ColumnDataSource, TextInput, Paragraph, VBox, HBox, Circle, \
+from bokeh.layouts import column, row
+from bokeh.models import BoxSelectTool, LassoSelectTool, ColumnDataSource, TextInput, Circle, \
 CustomJS
-from bokeh.plotting import curdoc, figure, reset_output
-from bokeh.models.widgets import DataTable, TableColumn, Button, Select, Toggle, CheckboxGroup, Slider
+from bokeh.plotting import curdoc, figure
+from bokeh.models.widgets import DataTable, TableColumn, Button, Select, Toggle, Slider
 import numpy as np
 import pandas as pd
-from t_sne_bhcuda import spike_heatmap
+from ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda import spike_heatmap
 from itertools import chain
-import copy
 
 # globals
 previous_tsne_source_selected = None

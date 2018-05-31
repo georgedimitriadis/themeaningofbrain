@@ -8,8 +8,7 @@ from tsne_for_spikesort import io_with_cpp as io
 from os.path import join
 from BrainDataAnalysis import ploting_functions as pf
 import matplotlib.pyplot as plt
-from t_sne_bhcuda import tsne_cluster as tsne_cl
-
+from ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda import tsne_cluster as tsne_cl
 
 base_folder = r'Z:\n\Neuroseeker Probe Recordings\Neuroseeker_2017_03_28_Anesthesia_Auditory_DoubleProbes\Angled\Analysis\Experiment_2_T18_48_25_And_Experiment_3_T19_41_07\Kilosort' # Desktop
 

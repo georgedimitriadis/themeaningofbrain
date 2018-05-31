@@ -5,15 +5,13 @@ from os.path import dirname, exists, join
 from os import makedirs
 from shutil import copyfile
 from Layouts.Probes import probes_imec as pi
-import t_sne_bhcuda.t_sne_spikes as tsne_spikes
+import ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda.t_sne_spikes as tsne_spikes
 import BrainDataAnalysis.ploting_functions as pf
 import BrainDataAnalysis.tsne_analysis_functions as taf
 import matplotlib.pyplot as plt
 import h5py as h5
 import BrainDataAnalysis.Utilities as ut
 import pandas as pd
-import pickle
-
 
 raw_juxta_data_file = r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Data\adc2015-09-03T21_18_47.bin'
 raw_data_file = r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Data\amplifier2015-09-03T21_18_47.bin'

@@ -191,7 +191,7 @@ values_p = np.load(os.path.join(base_folder, r'values_p.npy'))
 import numpy as np
 import os
 from tsne_for_spikesort_old import spikes, t_sne
-from t_sne_bhcuda import bhtsne_cuda as tsne_exe
+from ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda import bhtsne_cuda as tsne_exe
 import  matplotlib.pyplot as plt
 
 def get_some_data(number_of_spikes):
@@ -392,7 +392,7 @@ plt.scatter(y[:, 0], y[:, 1])
 
 
 
-from struct import pack, unpack, calcsize
+from struct import unpack, calcsize
 def _read_unpack(fmt, fh):
     return unpack(fmt, fh.read(calcsize(fmt)))
 

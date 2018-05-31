@@ -11,7 +11,7 @@ import BrainDataAnalysis.timelocked_analysis_functions as tf
 import BrainDataAnalysis.ploting_functions as pf
 import matplotlib.pyplot as plt
 import IO.ephys as ephys
-import t_sne_bhcuda.t_sne_spikes as tsne_spikes
+import ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda.t_sne_spikes as tsne_spikes
 from sklearn.cluster import DBSCAN
 from sklearn import metrics
 import BrainDataAnalysis.tsne_analysis_functions as taf

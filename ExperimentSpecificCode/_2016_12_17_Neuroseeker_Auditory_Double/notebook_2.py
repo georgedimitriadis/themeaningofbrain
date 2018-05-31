@@ -1,16 +1,12 @@
-
-import numpy as np
 from tsne_for_spikesort_old import spikes
 import matplotlib.pylab as pylab
-from tsne_for_spikesort_old import t_sne, gpu
-from tsne_for_spikesort_old import io_with_cpp as io
-from os.path import join
+from tsne_for_spikesort_old import gpu
 from struct import calcsize, unpack
 import matplotlib.pyplot as plt
 from scipy.spatial.distance import cdist
 from numba import cuda
-from t_sne_bhcuda import tsne_cluster as tsne_cl
-from t_sne_bhcuda import bhtsne_cuda as tsne_exe
+from ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda import bhtsne_cuda as tsne_exe, tsne_cluster as tsne_cl, \
+    tsne_cluster
 from BrainDataAnalysis import ploting_functions as pl
 
 
@@ -211,7 +207,6 @@ from t_sne_bhcuda import tsne_cluster as tsne_cl
 from os.path import join
 from BrainDataAnalysis import ploting_functions as pl
 import matplotlib.pyplot as plt
-import random
 
 base_folder = r'D:\Data\Brain\Neuroseeker_2016_12_17_Anesthesia_Auditory_DoubleProbes\AngledProbe\Kilosort results'
 binary_data_filename = r'AngledProbe_BinaryAmplifier_12Regions_Penetration1_2016-12-17T19_02_12.bin'
@@ -279,9 +274,6 @@ markers = ['.', '*', 'o', '>', '<', '_', ',']
 labeled_sizes = range(20, 100, 20)
 pl.plot_tsne(tsne, cm=plt.cm.prism, labels_dict=labels_dict, markers=markers, labeled_sizes=labeled_sizes)
 
-
-from t_sne_bhcuda import tsne_cluster
-
 spike_times = np.load(join(base_folder, 'spike_times.npy'))[spikes_clean_index]
 channel_positions = np.load(join(base_folder, 'channel_positions.npy'))
 num_of_electrodes = 1440
@@ -293,9 +285,9 @@ channel_map = np.squeeze(np.load(join(base_folder, 'channel_map.npy')))
 
 # Make cube
 data_cube = tsne_cluster.create_data_cube_from_raw_extra_data(raw_extracellular_data, data_cube_filename,
-                                     num_of_points_in_spike_trig=80, cube_type=np.int16, extra_spike_times=spike_times,
-                                     num_of_electrodes=None, used_electrodes=channel_map,
-                                     num_of_points_for_baseline=15)
+                                                              num_of_points_in_spike_trig=80, cube_type=np.int16, extra_spike_times=spike_times,
+                                                              num_of_electrodes=None, used_electrodes=channel_map,
+                                                              num_of_points_for_baseline=15)
 # Or load it if already made
 data_cube = np.memmap(data_cube_filename, dtype=np.int16, shape=(channel_map.shape[0], 80, len(spike_times)))
 

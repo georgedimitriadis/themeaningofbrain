@@ -5,8 +5,7 @@ import numpy as np
 from os.path import join
 from IO import ephys as ioep
 from IO import klustakwik as iokl
-import t_sne_bhcuda.t_sne_spikes as tsne_spikes
-import t_sne_bhcuda.bhtsne_cuda as bhtsne
+import ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda.t_sne_spikes as tsne_spikes
 import BrainDataAnalysis.ploting_functions as pf
 
 

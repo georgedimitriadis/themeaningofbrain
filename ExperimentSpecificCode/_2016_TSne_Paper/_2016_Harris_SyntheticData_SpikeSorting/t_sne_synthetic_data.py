@@ -1,9 +1,8 @@
 __author__ = 'George Dimitriadis'
 
 from os.path import join
-from os import rename
-import t_sne_bhcuda.t_sne_spikes as tsne_spikes
-import t_sne_bhcuda.bhtsne_cuda as TSNE
+import ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda.t_sne_spikes as tsne_spikes
+import ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda.bhtsne_cuda as TSNE
 import BrainDataAnalysis.Utilities as ut
 import BrainDataAnalysis.ploting_functions as pf
 import matplotlib.pyplot as plt

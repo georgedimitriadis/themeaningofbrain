@@ -81,7 +81,7 @@ from spikesorting_tsne import tsne as TSNE
 from os.path import join
 from BrainDataAnalysis import ploting_functions as pf
 import numpy as np
-from t_sne_bhcuda import tsne_cluster as tsne_cl
+from ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda import tsne_cluster as tsne_cl
 import matplotlib.pyplot as plt
 from tsne_for_spikesort_old import io_with_cpp as io
 
@@ -147,8 +147,6 @@ labeled_sizes = range(20, 100, 20)
 
 pf.plot_tsne(tsne.T, cm=plt.cm.prism, labels_dict=labels_dict, legent_on=False, markers=None, labeled_sizes=None)
 
-
-from mpl_toolkits.mplot3d import Axes3D
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 ax.scatter(tsne[:, 0], tsne[:, 1], tsne[:, 2], zdir='z', s=20, c='b', depthshade=True)

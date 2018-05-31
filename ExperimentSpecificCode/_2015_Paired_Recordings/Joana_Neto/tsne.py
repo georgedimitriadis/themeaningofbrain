@@ -4,7 +4,7 @@ from spikesorting_tsne import tsne as TSNE
 from os.path import join
 from BrainDataAnalysis import ploting_functions as pf
 import numpy as np
-from t_sne_bhcuda import tsne_cluster as tsne_cl
+from ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda import tsne_cluster as tsne_cl
 import matplotlib.pyplot as plt
 from spikesorting_tsne import io_with_cpp as io
 

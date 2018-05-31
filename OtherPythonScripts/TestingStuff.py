@@ -5,8 +5,6 @@ import numpy as np
 import pandas as pd
 import os.path as ospath
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from phy.cluster.algorithms.klustakwik import cluster
 
 main_path = r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\klustakwik\threshold_6_5std'
 cluster_filename = ospath.join(main_path, 'cluster_info.pkl')
@@ -101,15 +99,9 @@ for t in range(len(array)):
     colored_array[t, 3:] = colors[types[t]-1]
 colored_array.tofile(r'E:\George\Temporary\cell_positions.bin')
 
-
-
-
-
-
-
-import os
 import glob
-import t_sne_bhcuda as TSNE
+
+
 # Plot TSNE pciture(s)
 def plot_interim_tsne_results(folder_path):
     os.chdir(folder_path)
@@ -188,8 +180,7 @@ def plot_interim_tsne_results_with_labels(folder_path):
 import numpy as np
 import h5py as h5
 import os
-from t_sne_bhcuda import bhtsne_cuda as TSNE
-from t_sne_bhcuda import tsne_cluster
+from ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda import bhtsne_cuda as TSNE, tsne_cluster
 
 filename = r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\klustakwik\threshold_6_5std\threshold_6_5std.kwik'
 h5file = h5.File(filename, mode='r')
@@ -504,7 +495,7 @@ selected_spikes_data_cube = tsne_cluster.create_data_cube_from_raw_extra_data(ra
                                                                               num_ivm_channels,
                                                                               num_of_points_in_spike_trig,
                                                                               cube_type, spike_times_of_indices_all,
-                                                                              num_of_points_in_spike_trig-1)
+                                                                              num_of_points_in_spike_trig - 1)
 
 selected_spikes_concatenated = np.reshape(selected_spikes_data_cube, ((num_ivm_channels *
                                                                       num_of_points_in_spike_trig),

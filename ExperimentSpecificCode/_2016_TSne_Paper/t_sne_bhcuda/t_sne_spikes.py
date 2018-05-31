@@ -2,7 +2,7 @@
 from os.path import dirname, join
 import h5py as h5
 import numpy as np
-import t_sne_bhcuda.bhtsne_cuda as TSNE
+import ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda.bhtsne_cuda as TSNE
 import time
 
 

@@ -16,7 +16,7 @@ import BrainDataAnalysis.timelocked_analysis_functions as tf
 import IO.ephys as ephys
 import IO.klustakwik as klusta
 import Layouts.Probes.probes_imec as pr_imec
-from t_sne_bhcuda import bhtsne_cuda
+from ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda import bhtsne_cuda
 
 #
 
