@@ -11,8 +11,6 @@ TRIAL_END_BIT = 2
 BEAM_BREAK_BIT = 4
 SOUND_BIT = 8
 
-CAMERA_TTL_PULSES_TIMEPOINT_PERIOD = 153
-
 
 def find_nearest(array, value):
     idx = (numpy.abs(array-value)).argmin()
@@ -28,7 +26,7 @@ def _generate_camera_pulses(sync_file, clean=False, cam_ttl_pulse_period=158):
     camera_pulses = ones_up
 
     # Correcting for extra pulses appearing between camera pulses sometimes (for data set recorded with the
-    # Arduino for voltage shifting plugged into the main computer (up until the 3rd of May 2018)
+    # Arduino for voltage shifting plugged into the main computer)
     if clean:
         camera_pulses = list()
         camera_pulses.append(ones_up[0])
