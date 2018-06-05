@@ -11,6 +11,9 @@ from GUIs.Kilosort import spike_heatmap as sh
 import pandas as pd
 import time
 
+# If the spike trains have more spikes than this value then downsample them to this value by picking that many values
+# randomly
+MAX_SPIKES_TO_AUTOCORRELATE = 10000
 
 def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, binary_data_filename, prb_file,
                             type_of_binary=np.int16, order_of_binary='F', sampling_frequency=20000,
@@ -285,8 +288,11 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
     def update_autocorelogram():
         global current_template_index
         spike_indices_in_template = np.argwhere(np.in1d(spike_templates, current_template_index))
-        diffs, norm = crosscorrelate_spike_trains(spike_times[spike_indices_in_template].astype(np.int64),
-                                                  spike_times[spike_indices_in_template].astype(np.int64),
+        spike_indices_to_autocorrelate = np.squeeze(spike_indices_in_template)
+        if spike_indices_to_autocorrelate.size > MAX_SPIKES_TO_AUTOCORRELATE:
+            spike_indices_to_autocorrelate = np.random.choice(spike_indices_to_autocorrelate, MAX_SPIKES_TO_AUTOCORRELATE)
+        diffs, norm = crosscorrelate_spike_trains(spike_times[spike_indices_to_autocorrelate].astype(np.int64),
+                                                  spike_times[spike_indices_to_autocorrelate].astype(np.int64),
                                                   lag=3000)
         hist, edges = np.histogram(diffs, bins=100)
         autocorelogram_curve.setData(x=edges, y=hist, stepMode=True, fillLevel=0, brush=(0, 0, 255, 150))
@@ -378,11 +384,41 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
             number_of_spikes = len(spike_indices_in_template)
         update_all_plots()
 
-    def on_classify_combo_box_index_change(index):
+    #def on_classify_combo_box_index_change(index):
+    #    global current_template_index
+    #    template_marking[current_template_index] = index
+    #    update_marking_led()
+    #    np.save(join(base_folder, 'template_marking.npy'), template_marking)
+
+    def _classify_template(index):
         global current_template_index
         template_marking[current_template_index] = index
         update_marking_led()
         np.save(join(base_folder, 'template_marking.npy'), template_marking)
+
+    def on_press_classify_button_su():
+        _classify_template(1)
+
+    def on_press_classify_button_suc():
+        _classify_template(2)
+
+    def on_press_classify_button_sup():
+        _classify_template(3)
+
+    def on_press_classify_button_mu():
+        _classify_template(4)
+
+    def on_press_classify_button_noise():
+        _classify_template(0)
+
+    def on_press_classify_button_unc1():
+        _classify_template(5)
+
+    def on_press_classify_button_unc2():
+        _classify_template(6)
+
+    def on_press_classify_button_unc3():
+        _classify_template(7)
 
     def on_visible_electrodes_slider_update():
         global visibility_threshold
@@ -420,7 +456,7 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
 
     # Average spikes per template plot
     plot_average_spikes_in_template = pg.PlotWidget(title='Average spikes in template')
-    grid_layout.addWidget(plot_average_spikes_in_template, 0, 0, 2, 3)
+    grid_layout.addWidget(plot_average_spikes_in_template, 0, 0, 2, 5)
 
     electrodes = data.shape[1]
     avg_electrode_curves = []
@@ -432,12 +468,12 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
 
     # Heatmap plot ---------------
     heatmap_plot = ptl_widget.MatplotlibWidget()
-    grid_layout.addWidget(heatmap_plot, 0, 4, 5, 2)
+    grid_layout.addWidget(heatmap_plot, 0, 5, 11, 3)
     # ----------------------------
 
     # Autocorelogram plot --------
     autocorelogram_plot = pg.PlotWidget(title='Autocorrelogram')
-    grid_layout.addWidget(autocorelogram_plot, 3, 0, 2, 3)
+    grid_layout.addWidget(autocorelogram_plot, 3, 0, 2, 5)
     autocorelogram_curve = pg.PlotCurveItem()
     autocorelogram_plot.addItem(autocorelogram_curve)
     # ----------------------------
@@ -469,29 +505,79 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
     # Buttons --------------------
     button_previous = QtGui.QPushButton('Previous')
     button_previous.clicked.connect(on_press_button_previous)
-    grid_layout.addWidget(button_previous, 5, 1, 1, 1)
+    button_previous.setMaximumHeight(500)
+    grid_layout.addWidget(button_previous, 5, 1, 2, 1)
 
     button_next = QtGui.QPushButton('Next')
     button_next.clicked.connect(on_press_button_next)
-    grid_layout.addWidget(button_next, 5, 2, 1, 1)
+    button_next.setMaximumHeight(500)
+    grid_layout.addWidget(button_next, 5, 2, 2, 1)
 
+    button_su = QtGui.QPushButton('Single Unit')
+    button_su.clicked.connect(on_press_classify_button_su)
+    button_su.setStyleSheet("background-color: green")
+    button_su.setMaximumHeight(500)
+    grid_layout.addWidget(button_su, 7, 1, 2, 1)
 
-    classify_combo_box = QtGui.QComboBox()
-    classify_combo_box.addItem('Noise')
-    classify_combo_box.addItem('Single Unit')
-    classify_combo_box.addItem('Single Unit Contaminated')
-    classify_combo_box.addItem('Single Unit Putative')
-    classify_combo_box.addItem('Multi Unit')
-    classify_combo_box.addItem('Unclassified 1')
-    classify_combo_box.addItem('Unclassified 2')
-    classify_combo_box.addItem('Unclassified 3')
-    classify_combo_box.activated.connect(on_classify_combo_box_index_change)
-    grid_layout.addWidget(classify_combo_box, 6, 1, 1, 2)
+    button_suc = QtGui.QPushButton('S.U. Contaminated')
+    button_suc.clicked.connect(on_press_classify_button_suc)
+    button_suc.setStyleSheet("background-color: blue")
+    button_suc.setMaximumHeight(500)
+    grid_layout.addWidget(button_suc, 7, 2, 2, 1)
+
+    button_sup = QtGui.QPushButton('S.U. Putative')
+    button_sup.clicked.connect(on_press_classify_button_sup)
+    button_sup.setStyleSheet("background-color: darkBlue")
+    button_sup.setMaximumHeight(500)
+    grid_layout.addWidget(button_sup, 7, 3, 2, 1)
+
+    button_mu = QtGui.QPushButton('Multi Unit')
+    button_mu.clicked.connect(on_press_classify_button_mu)
+    button_mu.setStyleSheet("background-color: magenta")
+    button_mu.setMaximumHeight(500)
+    grid_layout.addWidget(button_mu, 7, 4, 2, 1)
+
+    button_noise = QtGui.QPushButton('NOISE')
+    button_noise.clicked.connect(on_press_classify_button_noise)
+    button_noise.setStyleSheet("background-color: red")
+    button_noise.setMaximumHeight(500)
+    grid_layout.addWidget(button_noise, 9, 1, 2, 1)
+
+    button_unc1 = QtGui.QPushButton('Unclassified 1')
+    button_unc1.clicked.connect(on_press_classify_button_unc1)
+    button_unc1.setStyleSheet("background-color: darkGray")
+    button_unc1.setMaximumHeight(500)
+    grid_layout.addWidget(button_unc1, 9, 2, 2, 1)
+
+    button_unc2 = QtGui.QPushButton('Unclassified 2')
+    button_unc2.clicked.connect(on_press_classify_button_unc2)
+    button_unc2.setStyleSheet("background-color: gray")
+    button_unc2.setMaximumHeight(500)
+    grid_layout.addWidget(button_unc2, 9, 3, 2, 1)
+
+    button_unc3 = QtGui.QPushButton('Unclassified 3')
+    button_unc3.clicked.connect(on_press_classify_button_unc3)
+    button_unc3.setStyleSheet("background-color: darkGray")
+    button_unc3.setMaximumHeight(500)
+    grid_layout.addWidget(button_unc3, 9, 4, 2, 1)
+
+    #classify_combo_box = QtGui.QComboBox()
+    #classify_combo_box.addItem('Noise')
+    #classify_combo_box.addItem('Single Unit')
+    #classify_combo_box.addItem('Single Unit Contaminated')
+    #classify_combo_box.addItem('Single Unit Putative')
+    #classify_combo_box.addItem('Multi Unit')
+    #classify_combo_box.addItem('Unclassified 1')
+    #classify_combo_box.addItem('Unclassified 2')
+    #classify_combo_box.addItem('Unclassified 3')
+    #classify_combo_box.activated.connect(on_classify_combo_box_index_change)
+    #grid_layout.addWidget(classify_combo_box, 6, 1, 1, 2)
 
 
     button_show_single_spikes = QtGui.QPushButton('Show single spikes')
     button_show_single_spikes.clicked.connect(on_show_single_spikes)
-    grid_layout.addWidget(button_show_single_spikes, 5, 4, 1, 1)
+    button_show_single_spikes.setMaximumHeight(500)
+    grid_layout.addWidget(button_show_single_spikes, 5, 4, 2, 1)
     # ----------------------------
 
     # Slider for electrode visibility threshold
@@ -520,9 +606,9 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
 
     # List for selecting a template
     template_dropdown_list = QtGui.QListWidget()
-    template_dropdown_list.setMaximumHeight(100)
+    template_dropdown_list.setMaximumHeight(1000)
     template_dropdown_list.setMaximumWidth(300)
-    grid_layout.addWidget(template_dropdown_list, 5, 0, 1, 1)
+    grid_layout.addWidget(template_dropdown_list, 5, 0, 5, 1)
     template_dropdown_list.SingleSelection
     for t in range(number_of_templates):
         item = QtGui.QListWidgetItem('Template number ' + str(t))
@@ -532,7 +618,8 @@ def cleanup_kilosorted_data(base_folder, number_of_channels_in_binary_file, bina
 
     # LEDs for showing if template is kept or deleted
     label_led_marking = QtGui.QLabel('Noise')
-    grid_layout.addWidget(label_led_marking, 6, 0, 1, 1)
+    grid_layout.addWidget(label_led_marking, 5, 3, 2, 1)
+    label_led_marking.setMaximumHeight(500)
     label_led_marking.setAutoFillBackground(True)
     su_palette = QtGui.QPalette()
     su_palette.setColor(QtGui.QPalette.Background, QtCore.Qt.green)
