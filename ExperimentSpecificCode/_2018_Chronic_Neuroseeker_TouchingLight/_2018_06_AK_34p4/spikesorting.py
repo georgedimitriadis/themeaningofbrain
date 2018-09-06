@@ -3,10 +3,10 @@
 import numpy as np
 import pandas as pd
 from os.path import join
-from spikesorting_tsne_guis import clean_kilosort_templates as clean
+from GUIs.Kilosort import clean_kilosort_templates as clean
 from GUIs.Kilosort import create_data_cubes as c_cubes
 from Layouts.Probes.Neuroseeker import probes_neuroseeker as ps
-from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_33p1 import constants as const
+from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_06_AK_34p4 import constants as const
 from spikesorting_tsne import tsne, visualization as viz, preprocessing_kilosort_results as preproc_kilo, \
      io_with_cpp as tsne_io
 
@@ -16,7 +16,7 @@ from spikesorting_tsne import tsne, visualization as viz, preprocessing_kilosort
 # ----------------------------------------------------------------
 
 # FOLDERS NAMES --------------------------------------------------
-date = 8
+date = 1
 kilosort_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date],
                        'Analysis', 'Kilosort')
 binary_data_filename = join(const.base_save_folder, const.rat_folder, const.date_folders[date],
@@ -32,7 +32,6 @@ tsne_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[
 # Create once the data cube of the average template spike
 c_cubes.generate_average_over_spikes_per_template_multiprocess(kilosort_folder,
                                                                binary_data_filename,
-                                                               const.BINARY_FILE_ENCODING,
                                                                const.NUMBER_OF_CHANNELS_IN_BINARY_FILE,
                                                                cut_time_points_around_spike=100)
 '''
@@ -42,7 +41,7 @@ clean.cleanup_kilosorted_data(kilosort_folder,
                               number_of_channels_in_binary_file=const.NUMBER_OF_CHANNELS_IN_BINARY_FILE,
                               binary_data_filename=binary_data_filename,
                               prb_file=const.prb_file,
-                              type_of_binary=const.BINARY_FILE_ENCODING,
+                              type_of_binary=np.float16,
                               order_of_binary='F',
                               sampling_frequency=20000,
                               num_of_shanks_for_vis=5)
@@ -112,4 +111,8 @@ spike_info = pd.read_pickle(join(tsne_folder, 'spike_info.df'))
 viz.plot_tsne_of_spikes(spike_info=spike_info, legent_on=False)
 
 
-# Run GUI on t-sne to sort manually
+# ------------------------------------------
+# Now run the T-Sne Gui to manual sort
+# ------------------------------------------
+
+
