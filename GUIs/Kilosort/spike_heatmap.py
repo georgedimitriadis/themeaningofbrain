@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import warnings
 
+
 def peaktopeak(data, window_size=60):
     """
     Generates the minima, maxima and peak to peak (p2p) numbers (in microvolts) of all the channels of all spikes
