@@ -3,7 +3,8 @@
 import numpy as np
 import pandas as pd
 from os.path import join
-from GUIs.Kilosort import clean_kilosort_templates as clean
+#from GUIs.Kilosort import clean_kilosort_templates as clean
+from spikesorting_tsne_guis import clean_kilosort_templates as clean
 from GUIs.Kilosort import create_data_cubes as c_cubes
 from Layouts.Probes.Neuroseeker import probes_neuroseeker as ps
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_06_AK_34p4 import constants as const
@@ -41,7 +42,7 @@ clean.cleanup_kilosorted_data(kilosort_folder,
                               number_of_channels_in_binary_file=const.NUMBER_OF_CHANNELS_IN_BINARY_FILE,
                               binary_data_filename=binary_data_filename,
                               prb_file=const.prb_file,
-                              type_of_binary=np.float16,
+                              type_of_binary=const.BINARY_FILE_ENCODING,
                               order_of_binary='F',
                               sampling_frequency=20000,
                               num_of_shanks_for_vis=5)

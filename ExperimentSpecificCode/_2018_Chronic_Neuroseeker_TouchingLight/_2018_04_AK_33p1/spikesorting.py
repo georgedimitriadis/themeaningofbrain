@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 from os.path import join
+#from GUIs.Kilosort import clean_kilosort_templates as clean
 from spikesorting_tsne_guis import clean_kilosort_templates as clean
 from GUIs.Kilosort import create_data_cubes as c_cubes
 from Layouts.Probes.Neuroseeker import probes_neuroseeker as ps
