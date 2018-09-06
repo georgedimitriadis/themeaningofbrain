@@ -6,7 +6,7 @@ probe_layout_folder = r'E:\Software\Develop\Source\Repos\Python35Projects\TheMea
 prb_file = path.join(probe_layout_folder, 'ap_only_prb.txt')
 
 
-base_save_folder = r'Z:\g\George\DataAndResults\Experiments\Awake\NeuroSeeker'
+base_save_folder = r'D:\Data\George'
 rat_folder = r'AK_33.1'
 
 

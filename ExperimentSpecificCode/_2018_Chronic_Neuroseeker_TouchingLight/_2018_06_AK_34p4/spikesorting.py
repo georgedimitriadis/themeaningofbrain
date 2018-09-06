@@ -6,7 +6,7 @@ from os.path import join
 from GUIs.Kilosort import clean_kilosort_templates as clean
 from GUIs.Kilosort import create_data_cubes as c_cubes
 from Layouts.Probes.Neuroseeker import probes_neuroseeker as ps
-from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_33p1 import constants as const
+from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_06_AK_34p4 import constants as const
 from spikesorting_tsne import tsne, visualization as viz, preprocessing_kilosort_results as preproc_kilo, \
      io_with_cpp as tsne_io
 
@@ -16,7 +16,7 @@ from spikesorting_tsne import tsne, visualization as viz, preprocessing_kilosort
 # ----------------------------------------------------------------
 
 # FOLDERS NAMES --------------------------------------------------
-date = 8
+date = 1
 kilosort_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date],
                        'Analysis', 'Kilosort')
 binary_data_filename = join(const.base_save_folder, const.rat_folder, const.date_folders[date],
