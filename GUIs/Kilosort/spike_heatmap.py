@@ -334,6 +334,3 @@ def create_heatmap_on_matplotlib_widget(widget, data, prb_file, window_size=60, 
         data = p2p[channel_positions_shank.index]
         image, channels_grid = plot_topoplot(ax, channel_positions_shank, data, show=False, rotate_90=rotate_90,
                                              flip_ud=flip_ud, flip_lr=flip_lr, zlimits=zlimits)
-
-
-
