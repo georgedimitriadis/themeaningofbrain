@@ -5,8 +5,6 @@ import numpy as np
 import pandas as pd
 import os.path as ospath
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from phy.cluster.algorithms.klustakwik import cluster
 
 main_path = r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\klustakwik\threshold_6_5std'
 cluster_filename = ospath.join(main_path, 'cluster_info.pkl')
@@ -101,15 +99,9 @@ for t in range(len(array)):
     colored_array[t, 3:] = colors[types[t]-1]
 colored_array.tofile(r'E:\George\Temporary\cell_positions.bin')
 
-
-
-
-
-
-
-import os
 import glob
-import t_sne_bhcuda as TSNE
+
+
 # Plot TSNE pciture(s)
 def plot_interim_tsne_results(folder_path):
     os.chdir(folder_path)
@@ -188,8 +180,7 @@ def plot_interim_tsne_results_with_labels(folder_path):
 import numpy as np
 import h5py as h5
 import os
-from t_sne_bhcuda import bhtsne_cuda as TSNE
-from t_sne_bhcuda import tsne_cluster
+from ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda import bhtsne_cuda as TSNE, tsne_cluster
 
 filename = r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch\2015-09-03\Analysis\klustakwik\threshold_6_5std\threshold_6_5std.kwik'
 h5file = h5.File(filename, mode='r')
@@ -504,7 +495,7 @@ selected_spikes_data_cube = tsne_cluster.create_data_cube_from_raw_extra_data(ra
                                                                               num_ivm_channels,
                                                                               num_of_points_in_spike_trig,
                                                                               cube_type, spike_times_of_indices_all,
-                                                                              num_of_points_in_spike_trig-1)
+                                                                              num_of_points_in_spike_trig - 1)
 
 selected_spikes_concatenated = np.reshape(selected_spikes_data_cube, ((num_ivm_channels *
                                                                       num_of_points_in_spike_trig),
@@ -587,4 +578,100 @@ pf.plot_tsne(np.transpose(template_features_tsne), labels_dict, sizes=[1, 3], ma
 
 
 
+
+
+
+
+
+
+
+
+
+import numpy as np
+import psutil
+import time
+
+debug_matrix_file = r'D:\Data\George\temp\debug_matrix.dat'
+debug_matrix_dimensions = (10**4, 10**4)
+
+debug_matrix_mm = np.memmap(debug_matrix_file, np.float32, mode='w+', shape=debug_matrix_dimensions)
+
+for i in range(debug_matrix_mm.shape[0]):
+    debug_matrix_mm[i, :] = np.random.random(debug_matrix_mm.shape[1])
+print('Finished making matrix')
+
+t = time.clock()
+np_cov = np.cov(debug_matrix_mm)
+print('Full numpy covariance took ' + str(time.clock() - t) + ' secs')
+
+
+def calculate_number_of_elements_fitting_in_ram():
+    remaining_memory = psutil.virtual_memory()[1]
+    mem_to_use = 0.7 * remaining_memory
+
+    total_elements_to_load_to_ram = int(mem_to_use / np.dtype(np.float32).itemsize)
+
+    # Use this to simulate smaller ram than what is in the computer for debugging
+    total_elements_to_load_to_ram = 1000
+
+    elements_of_matrix_to_ram = int(total_elements_to_load_to_ram / 2)
+
+    return elements_of_matrix_to_ram
+
+
+def get_number_of_iterations(matrix, num_of_elements):
+    total_rows = matrix.shape[0]
+    return int(np.ceil(total_rows / num_of_elements))
+
+
+def load_part_of_memmaped_matrix(matrix, num_of_elements_to_load, iteration_number):
+    starting_index = iteration_number * num_of_elements_to_load
+    ending_index = (iteration_number + 1) * num_of_elements_to_load
+    if ending_index > matrix.shape[0]:
+        ending_index = matrix.shape[0]
+
+    return matrix[starting_index:ending_index, :]
+
+
+def fill_in_covariance_mm(covariance, part_matrix1, part_matrix2, it1, it2, elements1, elements2):
+    start_index1 = elements1 * it1
+    end_index1 = elements1 * (it1 + 1)
+    if end_index1 > covariance.shape[0]:
+        end_index1 = covariance.shape[0]
+    start_index2 = elements2 * it2
+    end_index2 = elements2 * (it2 + 1)
+    if end_index2 > covariance.shape[0]:
+        end_index2 = covariance.shape[0]
+
+    full_covariance = np.cov(part_matrix1, part_matrix2)
+    cov_shape = full_covariance.shape
+    covariance[start_index1:end_index1, start_index2:end_index2] = full_covariance[int(cov_shape[0]/2):int(cov_shape[0])
+                                                                                   , 0:int(cov_shape[1]/2)]
+    covariance[start_index2:end_index2, start_index1:end_index1] = full_covariance[0:int(cov_shape[0]/2),
+                                                                                   int(cov_shape[1]/2):int(cov_shape[1])]
+
+
+def covariance_mm(matrix1, matrix2, result_file):
+
+    covariance = np.memmap(result_file, np.float32, mode='w+', shape=(matrix1.shape[0], matrix2.shape[0]))
+
+    elements_of_matrix_to_ram = calculate_number_of_elements_fitting_in_ram()
+
+    for it1 in range(get_number_of_iterations(matrix1, elements_of_matrix_to_ram)):
+        for it2 in range(get_number_of_iterations(matrix2, elements_of_matrix_to_ram)):
+            part_matrix1 = load_part_of_memmaped_matrix(matrix1, elements_of_matrix_to_ram, it1)
+            part_matrix2 = load_part_of_memmaped_matrix(matrix2, elements_of_matrix_to_ram, it2)
+            fill_in_covariance_mm(covariance, part_matrix1, part_matrix2, it1, it2, elements_of_matrix_to_ram,
+                                  elements_of_matrix_to_ram)
+            print(it1, it2)
+
+    return covariance
+
+t = time.clock()
+result = covariance_mm(debug_matrix_mm, debug_matrix_mm, r'D:\Data\George\temp\result_debug.dat')
+print('Partial numpy covariance took ' + str(time.clock() - t) + ' secs')
+
+
+dif = np.mean(np.power(result - np_cov,2))
+print(dif)
 

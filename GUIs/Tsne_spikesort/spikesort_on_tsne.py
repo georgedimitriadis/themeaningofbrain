@@ -437,8 +437,8 @@ def spikesort_gui(load_previous_dataset=True):
         global spike_info
 
         spike_times = spike_info['times'].iloc[currently_selected_spikes].as_matrix().astype(np.int64)
-        diffs, norm = hf.crosscorrelate_spike_trains(spike_times, spike_times, lag=3000)
-        hist, edges = np.histogram(diffs, bins=100)
+        diffs, norm = hf.crosscorrelate_spike_trains(spike_times, spike_times, lag=1000)
+        hist, edges = np.histogram(diffs, bins=50)
         autocorelogram_curve.setData(x=edges, y=hist, stepMode=True, fillLevel=0, brush=(0, 0, 255, 150))
 
     # On press button functions ---------
@@ -736,5 +736,5 @@ def spikesort_gui(load_previous_dataset=True):
         sys.exit(app.exec_())
 
 
-spikesort_gui(load_previous_dataset=False)
+spikesort_gui(load_previous_dataset=True)
 
