@@ -1,42 +1,16 @@
-
-import os
-import IO.ephys as ephys
-import mne.filter as filters
-import matplotlib.pyplot as plt
-import random
-from matplotlib import colors
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-import itertools
-import warnings
-import numpy as np
 import Layouts.Probes.klustakwik_prb_generator as prb_gen
-import pandas as pd
-import itertools
-import numpy as np
-import matplotlib as mpl
-from scipy import stats
-import matplotlib.colors as colors
-import matplotlib.cm as cmx
 import os
-import scipy.signal as signal
-import matplotlib.colors as mcolors
-import math
+import warnings
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import scipy.interpolate as interpolate
 import scipy.stats as stats
 
-import numpy as np
-import scipy.interpolate as interpolate
-import matplotlib.pyplot as plt
-from matplotlib.pyplot import sca
-from matplotlib.ticker import MultipleLocator
-import pandas as pd
-import itertools
-import warnings
+import Layouts.Probes.klustakwik_prb_generator as prb_gen
+
 # import Utilities as ut
-import matplotlib.animation as animation
-from matplotlib.widgets import Button
-import mne.filter as filters
 
 # P2P, MIN and MAX 128channels and 32channels
 
@@ -580,3 +554,6 @@ im = ax.imshow(Bmod, cmap=plt.get_cmap('jet'),vmin = np.min(B),vmax= np.max(B))
 cb = fig.colorbar(im,ticks = [np.min(B), 0,np.max(B)])
 cb.ax.tick_params(labelsize = 20)
 plt.show()
+
+
+
