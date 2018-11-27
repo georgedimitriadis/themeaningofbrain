@@ -8,8 +8,7 @@ from GUIs.Kilosort import create_data_cubes as c_cubes
 from Layouts.Probes.Neuroseeker import probes_neuroseeker as ps
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_33p1 import constants as const
 from spikesorting_tsne import tsne, visualization as viz, preprocessing_kilosort_results as preproc_kilo, \
-     io_with_cpp as tsne_io
-
+     io_with_cpp as tsne_io, spike_positioning_on_probe as sp_pos
 
 # This is to create the correct prb file with only the AP channels in (1368). It should never be run again
 # ps.create_1368channels_neuroseeker_prb(const.probe_layout_folder, const.prb_file)
@@ -116,3 +115,7 @@ viz.plot_tsne_of_spikes(spike_info=spike_info, legent_on=False)
 # ------------------------------------------
 
 
+
+# ------------------------------------------
+# Get the positions of the templates and have a look
+sp_pos.view_grouped_templates_positions(kilosort_folder, const.BRAIN_REGIONS, const.PROBE_DIMENSIONS, const.POSITION_MULT)

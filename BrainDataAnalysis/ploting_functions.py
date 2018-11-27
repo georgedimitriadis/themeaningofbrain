@@ -21,7 +21,7 @@ except:
 from os.path import join
 import matplotlib.animation as animation
 #import t_sne_bhcuda.bhtsne_cuda as TSNE
-from tsne_for_spikesort_old import io_with_cpp as io
+from spikesorting_tsne import io_with_cpp as io
 
 
 

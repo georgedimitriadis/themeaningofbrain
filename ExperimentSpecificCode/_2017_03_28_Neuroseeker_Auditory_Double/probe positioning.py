@@ -69,7 +69,7 @@ pos.view_spike_positions(template_positions_a_cor,brain_regions=brain_regions_a,
 
 
 # ADDENTUM
-# Plotting positions on probe acolor coded acording to the type of the unit (red: su, green: suc, blue: sup,
+# Plotting positions on probe a color coded according to the type of the unit (red: su, green: suc, blue: sup,
 # black: mu, grey: unclassified
 
 import matplotlib.pyplot as plt

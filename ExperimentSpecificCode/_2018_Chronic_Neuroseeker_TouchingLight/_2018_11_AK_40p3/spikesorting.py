@@ -6,7 +6,7 @@ from os.path import join
 from GUIs.Kilosort import clean_kilosort_templates as clean
 from GUIs.Kilosort import create_data_cubes as c_cubes
 from Layouts.Probes.Neuroseeker import probes_neuroseeker as ps
-from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_06_AK_34p4 import constants as const
+from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_11_AK_40p3 import constants as const
 from spikesorting_tsne import tsne, visualization as viz, preprocessing_kilosort_results as preproc_kilo, \
      io_with_cpp as tsne_io, spike_positioning_on_probe as sp_pos
 
@@ -16,25 +16,25 @@ from spikesorting_tsne import tsne, visualization as viz, preprocessing_kilosort
 # ----------------------------------------------------------------
 
 # FOLDERS NAMES --------------------------------------------------
-date = 2
-kilosort_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date],
+experiment = 1
+kilosort_folder = join(const.base_save_folder, const.experiment_folders[experiment],
                        'Analysis', 'Kilosort')
-binary_data_filename = join(const.base_save_folder, const.rat_folder, const.date_folders[date],
+binary_data_filename = join(const.base_save_folder, const.experiment_folders[experiment],
                             'Data', 'Amplifier_APs.bin')
-tsne_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date],
+tsne_folder = join(const.base_save_folder, const.experiment_folders[experiment],
                    'Analysis', 'Tsne')
 # ----------------------------------------------------------------
 
 
 # CLEANING THE KILOSORT RESULTS ----------------------------------
 
-'''
+
 # Create once the data cube of the average template spike
 c_cubes.generate_average_over_spikes_per_template_multiprocess(kilosort_folder,
                                                                binary_data_filename,
                                                                const.NUMBER_OF_CHANNELS_IN_BINARY_FILE,
                                                                cut_time_points_around_spike=100)
-'''
+
 
 # Run the GUI that helps clean the templates
 clean.cleanup_kilosorted_data(kilosort_folder,

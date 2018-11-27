@@ -32,3 +32,13 @@ date_folders = {1: r'2018_04_23-11_49',
 NUMBER_OF_CHANNELS_IN_BINARY_FILE = 1368
 CAMERA_TTL_PULSES_TIMEPOINT_PERIOD = 158
 
+PROBE_DIMENSIONS = [100, 8100]
+POSITION_MULT = 2.25
+
+#BRAIN_REGIONS = {'Cortex MPA': 8070, 'Corpus Calosum': 6600, 'CA1': 6210, 'CA3': 4950,
+#                 'Thalamus LPMR': 4440, 'Thalamus Po': 3550, 'Thalamus VPM': 1950,
+#                 'Zona Incerta': 1250, 'Subthalamic Nucleus': 750, 'Internal Capsule': 300}
+
+BRAIN_REGIONS = {'Cortex MPA': 8070, 'CA1': 6400, 'CA3': 4950,
+                 'Thalamus LPMR': 4440, 'Thalamus Po': 3550, 'Thalamus VPM': 1950,
+                 'Zona Incerta': 1250, 'Subthalamic Nucleus': 750, 'Internal Capsule': 300}
