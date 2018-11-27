@@ -1,7 +1,7 @@
 
 import csv
 from os import path
-import pandas
+import pandas as pd
 
 
 def find_number_of_frames_from_video_csv(video_csv_file):
@@ -27,6 +27,13 @@ def create_events_from_events_csv(csv_folder):
             date_time.append(row[0])
             event_name.append(row[1])
             event_info.append(row[2])
+
+
+
+def get_rat_positions_from_bonsai_image_processing(csvfile):
+
+    positions_df = pd.read_csv(csvfile, delim_whitespace=True )
+    positions_df.columns = ['Frame', 'Brother XY', 'Recorded XY']
 
 
 

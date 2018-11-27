@@ -8,6 +8,12 @@ from spikesorting_tsne_guis import clean_kilosort_templates as clean
 from GUIs.Kilosort import create_data_cubes as c_cubes
 from Layouts.Probes.Neuroseeker import probes_neuroseeker as ps
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_06_AK_34p4 import constants as const
+
+# Before importing pyculib with cudatoolkit >7.5 you need to tell python where the bin of the cudatoolkit files of your
+# CUDA are
+import os
+os.environ['NUMBAPRO_CUDALIB']=r'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\bin'
+
 from spikesorting_tsne import tsne, visualization as viz, preprocessing_kilosort_results as preproc_kilo, \
      io_with_cpp as tsne_io
 
@@ -17,7 +23,7 @@ from spikesorting_tsne import tsne, visualization as viz, preprocessing_kilosort
 # ----------------------------------------------------------------
 
 # FOLDERS NAMES --------------------------------------------------
-date = 1
+date = 2
 kilosort_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date],
                        'Analysis', 'Kilosort')
 binary_data_filename = join(const.base_save_folder, const.rat_folder, const.date_folders[date],
@@ -57,7 +63,7 @@ number_of_raw_spikes = len(templates_of_spikes)
 template_markings = preproc_kilo.get_template_marking(kilosort_folder)
 clean_templates = np.argwhere(template_markings > 0)
 number_of_clean_templates = len(clean_templates)
-clean_spikes = np.argwhere(np.in1d(templates_of_spikes, clean_templates) > 0)
+clean_spikes = np.squeeze(np.argwhere(np.in1d(templates_of_spikes, clean_templates) > 0))
 number_of_clean_spikes = len(clean_spikes)
 
 
@@ -70,8 +76,15 @@ representative_indices, small_templates, large_templates = \
 template_features_matrix = preproc_kilo.calculate_template_features_matrix_for_tsne(kilosort_folder, tsne_folder,
                                                                                     spikes_used_with_original_indexing=
                                                                                     representative_indices)
-
 template_features_matrix = np.load(join(tsne_folder, 'data_to_tsne_(699959, 645).npy'))
+
+# OR
+template_features_matrix = preproc_kilo.calculate_template_features_matrix_for_tsne(kilosort_folder, tsne_folder,
+                                                                                    spikes_used_with_original_indexing=
+                                                                                    clean_spikes)
+template_features_matrix = np.load(join(tsne_folder, 'data_to_tsne_(85271, 286).npy'))
+
+
 
 
 # First run of t-sne

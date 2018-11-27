@@ -591,7 +591,7 @@ import numpy as np
 import psutil
 import time
 
-debug_matrix_file = r'D:\Data\George\temp\debug_matrix.dat'
+debug_matrix_file = r'E:\Data\debug_matrix.dat'
 debug_matrix_dimensions = (10**4, 10**4)
 
 debug_matrix_mm = np.memmap(debug_matrix_file, np.float32, mode='w+', shape=debug_matrix_dimensions)
@@ -675,3 +675,94 @@ print('Partial numpy covariance took ' + str(time.clock() - t) + ' secs')
 dif = np.mean(np.power(result - np_cov,2))
 print(dif)
 
+
+import numpy as np
+debug_matrix_dimensions = (3, 3)
+
+m1 = np.random.random(debug_matrix_dimensions)
+m2 = np.random.random(debug_matrix_dimensions)
+
+t = np.cov(m1, m2)
+t1 = np.cov(m1, m1)
+t2 = np.cov(m2, m2)
+
+
+
+#-------------------------------------------------
+
+
+
+import numpy as np
+import pandas as pd
+import os.path as path
+
+base_folder = r'E:\Code\Mine\pystarters_scientific_computing'
+events_file = path.join(base_folder, 'Events.csv')
+video_file = path.join(base_folder, 'Video.csv')
+
+
+events_df = pd.read_csv(events_file, sep="\+01:00| |\(|\)|,", engine='python', header=None,
+                        names=['Time','Type', 'X', 'Y'], usecols=[0,2,4,6], parse_dates=[0], infer_datetime_format=True)
+
+video_df = pd.read_csv(video_file, sep='\+01:00', engine='python', header=None, names=['Time', 'Frame'],
+                       usecols=[0, 1], parse_dates=[0], infer_datetime_format=True)
+
+
+
+
+
+events_df = events_df.set_index('Time')
+video_df = video_df.set_index(('Time'))
+
+partial_video_reindexed = video_df.reindex(events_df.index, method='nearest')
+
+events_with_frame_df = pd.merge(partial_video_reindexed, events_df, left_index =True, right_index=True)
+
+events_df.reset_index(level=0, inplace=True)
+video_df.reset_index(level=0, inplace=True)
+events_with_frame_df.reset_index(level=0, inplace=True)
+
+
+
+import matplotlib.pyplot as plt
+plt.scatter(events_df['X'], events_df['Y'])
+
+
+
+from os.path import join
+
+
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+wires = {1952:1, 1983:4, 1990:8}
+passive = {1995:16, 2005:32, 2013:64, 2014:204}
+active_electrodes = {1986:8, 2011:752, 2016:966, 2017:1356, 2022:8000}
+active_channels = {1986:8, 2011:16, 2016:384, 2017:1356, 2022:1024}
+
+plt.plot(wires.keys(), wires.values(), passive.keys(), passive.values(), active_channels.keys(), active_channels.values(), active_electrodes.keys(), active_electrodes.values())
+
+
+
+
+
+from GUIs.Kilosort import clean_kilosort_templates as clean
+from os.path import join
+
+
+data_folder = r'E:\Data\Neuroseeker_2017_03_28_Anesthesia_Auditory_DoubleProbes\Angled\Data\Experiment_Bach_1_2017-03-28T18_10_41'
+kilosort_folder = r'E:\Data\Neuroseeker_2017_03_28_Anesthesia_Auditory_DoubleProbes\Angled\Analysis\Experiment_Bach_1_2017-03-28T18_10_41\Kilosort'
+binary_filename = join(data_folder, 'Amplifier_APs.bin')66
+number_of_channels = 1368
+prb_file = join(kilosort_folder, 'ap_only_prb.txt')
+
+clean.cleanup_kilosorted_data(kilosort_folder,
+                              number_of_channels_in_binary_file=number_of_channels,
+                              binary_data_filename=binary_filename,
+                              prb_file=prb_file,
+                              type_of_binary=np.int16,
+                              order_of_binary='F',
+                              sampling_frequency=20000,
+                              num_of_shanks_for_vis=5)
