@@ -3,96 +3,48 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.signal as signal
 
-#256ch probe recording 2017-02-08
-#cortex
-raw_data_file_ivm = r'Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-08\Datakilosort\Nfilt_Test\nfilt512\amplifier2017-02-08T15_34_04\amplifier2017-02-08T15_34_04_int16.bin'
-#raw_data_file_ivm = r'Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-08\Datakilosort\Nfilt_Test\nfilt512\amplifier2017-02-08T15_34_04\amplifier2017-02-08T15_34_04_int16_lowpass3500Hz.bin'
+#File names-------------------------------------------------------------------------------------------------------------
+#256ch probe recording 2017-02-08 thalmus
+raw_data_file_ivm = r"Z:\labs2\kampff\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\Jesse\2017-02-08\Datakilosort\nfilt512\amplifier2017-02-08T21_38_55\amplifier2017-02-08T21_38_55_int16.bin"
+#256ch probe recording 2017-02-16 cerebelum
+raw_data_file_ivm = r"Z:\labs2\kampff\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-16\Datakilosort\amplifier2017-02-16T15_37_59\amplifier2017-02-16T15_37_59_int16.bin"
+#256ch probe recording 2017-02-22 striatum and
+raw_data_file_ivm = r"Z:\labs2\kampff\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-22\Datakilosort\amplifier2017-02-23T17_29_48\amplifier2017-02-23T17_29_48_int16.bin"
+#insertion perpedincular to cortex
+raw_data_file_ivm = r"Z:\labs2\kampff\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-22\Datakilosort\amplifier2017-02-23T19_36_39\amplifier2017-02-23T19_36_39_int16.bin"
 
 
-
-#hipocampus
-
-raw_data_file_ivm = r"Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\Jesse\2017-02-08\Datakilosort\nfilt512\amplifier2017-02-08T18_06_19\amplifier2017-02-08T18_06_19_int16.bin"
-
-raw_data_file_ivm = r"Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\Jesse\2017-02-08\Datakilosort\nfilt512\amplifier2017-02-08T18_38_09\amplifier2017-02-08T18_38_09_int16.bin"
-
-
-
-raw_data_file_ivm = r"Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\Jesse\2017-02-08\Datakilosort\nfilt512\amplifier2017-02-08T20_04_54\amplifier2017-02-08T20_04_54_int16.bin"
-
-#thalmus
-raw_data_file_ivm = r"Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\Jesse\2017-02-08\Datakilosort\nfilt512\amplifier2017-02-08T21_38_55\amplifier2017-02-08T21_38_55_int16.bin"
-
-#-------------------------------------------------------------
-
-#256ch probe recording 2017-02-16
-#cerebelum
-raw_data_file_ivm = r'Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-16\Datakilosort\amplifier2017-02-16T15_37_59\amplifier2017-02-16T15_37_59_int16.bin'
-
-raw_data_file_ivm =r'Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-16\Datakilosort\amplifier2017-02-16T16_14_15\amplifier2017-02-16T16_14_15_int16.bin'
-
-raw_data_file_ivm =r'Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-16\Datakilosort\amplifier2017-02-16T16_58_01\amplifier2017-02-16T16_58_01_int16.bin'
-
-#Dorsal subc
-raw_data_file_ivm =r'Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-16\Datakilosort\amplifier2017-02-16T20_17_09\amplifier2017-02-16T20_17_09_int16.bin'
-
-#pga
-raw_data_file_ivm =r'Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-16\Datakilosort\amplifier2017-02-16T21_27_04\amplifier2017-02-16T21_27_04_int16.bin'
-
-#------------------------------------------------------------
-
-##256ch probe recording 2017-02-22
-#cortex layer5
-raw_data_file_ivm = r'Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-22\Datakilosort\amplifier2017-02-23T14_38_33\amplifier2017-02-23T14_38_33_int16.bin'
-
-
-#striatum
-raw_data_file_ivm = r"Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-22\Datakilosort\amplifier2017-02-23T17_29_48\amplifier2017-02-23T17_29_48_int16.bin"
-
-#insertion perpedincular
-raw_data_file_ivm = r"Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-22\Datakilosort\amplifier2017-02-23T19_36_39\amplifier2017-02-23T19_36_39_int16.bin"
-
-
-#probetype2
-raw_data_file_ivm = r"Z:\j\Joana Neto\Neuroseeker256ch\Type2_Probe2\2017-02-22\Datakilosort\amplifier2017-02-23T21_20_31\amplifier2017-02-23T21_20_31_int16.bin"
-
-#---------------------------------------------------------
-
-
+#Open data--------------------------------------------------------------------------------------------------------------
 num_ivm_channels = 256
 amp_dtype = np.int16
-
 sampling_freq = 20000
 filtered_data_type = np.float64
 voltage_step_size = 0.195e-6
 scale_uV = 1000000
-samples=500000
+samples = 500000
 high_pass_freq = 500
-
-
 raw_data_ivm = ephys.load_raw_data(raw_data_file_ivm, numchannels=num_ivm_channels, dtype=amp_dtype)
 temp_unfiltered = raw_data_ivm.dataMatrix [:, 0:samples]
 temp_unfiltered = temp_unfiltered.astype(filtered_data_type)
 
+
+#High pass filter-------------------------------------------------------------------------------------------------------
 def highpass(data,BUTTER_ORDER=3, F_HIGH=14250,sampleFreq=30000.0,passFreq=100.0):
     b, a = signal.butter(BUTTER_ORDER,(passFreq/(sampleFreq/2), F_HIGH/(sampleFreq/2)),'pass')
     return signal.filtfilt(b,a,data)
-
-
 temp_filtered = highpass(temp_unfiltered, F_HIGH = (sampling_freq/2)*0.95, sampleFreq = sampling_freq, passFreq = high_pass_freq)
 temp_filtered_uV = temp_filtered * scale_uV * voltage_step_size
 
 
-
-
-#plot tip down #
-
+# 5 seconds
 time_samples = 100000.0
-#index1 = np.int(temp_filtered_uV.shape[1]/10*5)
-#index2 = np.int(index1 + time_samples)
-index1=100000
-index2=200000
+index1 = np.int(temp_filtered_uV.shape[1]/10*5) #index1 for T2
+index2 = np.int(index1 + time_samples)  #index2 for T2
+#index1 = 100000   #index1 for CR1, St2, CoP3
+#index2 = 200000   #index2 for CR1, St2, CoP3
 
+
+# Electrodes number
 linha_17 = np.array([163,232,236,240,249,199,193,220,36,61,1,8,12,47,41])
 linha_16 = np.array([162,212,206,244,202,198,229,222,29,25,2,5,16,46,42])
 linha_15 = np.array([217,211,207,245,251,255,228,225,35,60,55,9,17,20,95])
@@ -110,16 +62,75 @@ linha_4 = np.array([171,177,180,146,187,190,132,126,121,66,112,107,76,98,86])
 linha_3 = np.array([174,155,150,184,141,136,165,91,88,116,70,73,102,80,83])
 linha_2 = np.array([158,178,149,144,188,135,130,124,64,115,110,74,101,96,87])
 linha_1 = np.array([214,208,243,250,254,230,226,34,62,56,52,15,19,23,92])
+concatenate = np.concatenate((linha_17,linha_16,linha_15,linha_14,linha_13,linha_12,linha_11,linha_10,linha_9,linha_8,linha_7,linha_6,linha_5,linha_4,linha_3,linha_2,linha_1),axis=0)
 
-teste = np.concatenate((linha_17,linha_16,linha_15,linha_14,linha_13,linha_12,linha_11,linha_10,linha_9,linha_8,linha_7,linha_6,linha_5,linha_4,linha_3,linha_2,linha_1),axis=0)
 
+#Plot 200 ms traces in 2D position
+#Figure 4 Supplementary material
 plt.figure()
-for i in np.arange(np.shape(teste)[0]):
+for i in np.arange(np.shape(concatenate)[0]):
     plt.subplot(17, 15, i+1)
-    plt.plot(temp_filtered_uV[teste[i], index1:index2].T , color = 'k')
+    plt.plot(temp_filtered_uV[concatenate[i], index1:index2].T , color = 'k')
+    plt.ylim(-100, 100)
+    # striatum
+    #plt.xlim(18000,22000)
+    # perpendicular
+    #plt.xlim(5000,9000)
+    # cerebellum
+    #plt.xlim(12000,16000)
+    # thalamus
+    plt.xlim(90000,94000)
+    plt.axis("OFF")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#code not in use
+
+#Plot
+plt.figure()
+for i in np.arange(np.shape(concatenate)[0]):
+    plt.subplot(17, 15, i+1)
+    plt.plot(temp_filtered_uV[concatenate[i], index1:index2].T , color = 'k')
     plt.ylim(-100, 100)
     # cortexlayer5
-    plt.xlim(25000,29000)
+    #plt.xlim(25000,29000)
     # plt.xlim(65000,72000)
     # plt.xlim(70000,72000)
     # striatum
@@ -127,8 +138,7 @@ for i in np.arange(np.shape(teste)[0]):
     #plt.xlim(18000,22000)
     #plt.xlim(53000,57000)
     # perpendicular
-    ## plt.xlim(0,4000)
-    #plt.xlim(5000,9000)
+    plt.xlim(5000,9000)
     # cerebellum
     #plt.xlim(12000,16000)
     ##plt.xlim(12000,20000)
@@ -150,10 +160,7 @@ for i in np.arange(np.shape(teste)[0]):
     ##plt.xlim(93000, 94000)
     plt.axis("OFF")
 
-
-
 #Plot traces previous code
-
 time_samples = 100000.0
 #index1 = np.int(temp_filtered_uV.shape[1]/10*5)
 #index2 = np.int(index1 + time_samples)
@@ -203,10 +210,10 @@ for linha in np.arange(np.shape(teste)[0]):
         #plt.xlim(18000,22000)
         #plt.xlim(53000,57000)
         #perpendicular
-        #plt.xlim(0,4000)
+        plt.xlim(0,4000)
         #plt.xlim(5000,9000)
         #cerebellum
-        plt.xlim(12000,16000)
+        #plt.xlim(12000,16000)
         #plt.xlim(12000,20000)
         #cerebellum2
         #plt.xlim(46000,50000)

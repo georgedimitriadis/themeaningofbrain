@@ -15,18 +15,16 @@ import BrainDataAnalysis.ploting_functions as pf
 import IO.ephys as ephys
 import Layouts.Probes.klustakwik_prb_generator as prb_gen
 
-#----------------------------------------------------------------------------------------------------------------
-#32ch probe
 
+#File names-------------------------------------------------------------------------------------------------------------
 
-# Neuronexus 5
+#Neuronexus 5
 #recording 2014-11-25  Pair3.0
 analysis_folder = r'E:\Paper Impedance\Neuronexus5\Noise\Recording_2014_11_25\pair3.0'
 raw_data_file_ivm = os.path.join(analysis_folder + '\\' + 'amplifier2014-11-25T23_00_08.bin')
 
 
-# Neuronexus 5
-#recording 2014-11-25  Pair3.0
+#recording 2014-11-25  Pair3.0 after applying CAR
 analysis_folder = r'E:\Paper Impedance\Neuronexus5\Noise\Recording_2014_11_25\pair3.0'
 raw_data_file_ivm = os.path.join(analysis_folder + '\\' + 'amplifier2014-11-25T23_00_08_bonsaiCAR0Hz_allchs.bin')
 amp_dtype = np.int16
@@ -41,6 +39,7 @@ raw_data_file_ivm = os.path.join(analysis_folder + '\\' + 'amplifier2014-11-25T2
 analysis_folder = r'E:\Paper Impedance\Neuronexus5\Noise\Recording_2014_11_25\pair1.0'
 raw_data_file_ivm = os.path.join(analysis_folder + '\\' + 'amplifier2014-11-25T21_27_13.bin')
 
+
 #recording 2014-11-13  Pair1.0
 analysis_folder = r'E:\Paper Impedance\Neuronexus5\Noise\Recording_2014_11_13\Pair1.0'
 raw_data_file_ivm = os.path.join(analysis_folder + '\\' + 'amplifier2014-11-13T19_01_55.bin')
@@ -51,8 +50,7 @@ analysis_folder = r'E:\Paper Impedance\Neuronexus5\Noise\Recording_2014_11_13\pa
 raw_data_file_ivm = os.path.join(analysis_folder + '\\' + 'amplifier2014-11-13T18_48_11.bin')
 
 
-# Neuronexus 6 recording 2017-02-02  rec3
-
+#Neuronexus 6 recording 2017-02-02  rec3
 analysis_folder = r'E:\Paper Impedance\Neuronexus6\Noise\rec3'
 raw_data_file_ivm = os.path.join(analysis_folder + '\\' + 'amplifier2017-02-02T15_49_35.bin')
 
@@ -76,16 +74,21 @@ raw_data_file_ivm = os.path.join(analysis_folder + '\\' + 'amplifier2017-02-02T1
 analysis_folder = r'E:\Paper Impedance\Neuronexus6\Noise\rec5'
 raw_data_file_ivm = os.path.join(analysis_folder + '\\' + 'amplifier2017-02-02T17_18_46.bin')
 
+
 #LoriProbe in vivo
 analysis_folder = r'F:\DataKilosort\32chprobe\loriprobe\2016_11_05-12_46'
 raw_data_file_ivm = os.path.join(analysis_folder + '\\' + 'amplifier_s162016-11-07T16_18_02.bin')
 
 
-#take proper timespikes for the data
+
+
+#Figure2: cluster 147 and 8 examples from recording 23_00_08 and 15_49_35, respectively---------------------------------
+
+#Time spikes for each cluster-------------------------------------------------------------------------------------------
 #times=spike_times[kilosort_units[147][:]]
 times = spike_times[kilosort_units[8][:]]
-#------------------------------
 
+#Plot spike times in a window-------------------------------------------------------------------------------------------
 start = int(times.shape[0]/2)
 #start = int(times.shape[0]/7)
 windowstart = times[start]
@@ -111,7 +114,7 @@ for arg in args[:,0]:
 
 
 
-
+#Open Data--------------------------------------------------------------------------------------------------------------
 amp_dtype = np.uint16
 Probe_y_digitization = 32768
 num_ivm_channels = 32
@@ -119,12 +122,15 @@ voltage_step_size = 0.195e-6
 scale_uV = 1000000
 scale_ms = 1000
 
+
+#High pass filter-------------------------------------------------------------------------------------------------------
 def highpass(data, BUTTER_ORDER=3, F_HIGH=14250, sampleFreq=30000.0, passFreq=100.0):
     b, a = signal.butter(BUTTER_ORDER, (passFreq / (sampleFreq / 2), F_HIGH / (sampleFreq / 2)), 'pass')
     return signal.filtfilt(b, a, data)
 
 
-# Get the high passed data for the current time window
+
+#Get the high passed data for the current time window------------------------------------------------------------------
 raw_data_ivm = ephys.load_raw_data(raw_data_file_ivm, numchannels=num_ivm_channels, dtype=amp_dtype)
 #temp_unfiltered = raw_data_ivm.dataMatrix[ :, window * window_size : (window + 1) * window_size ]
 temp_unfiltered = raw_data_ivm.dataMatrix[ :, windowstart - window_size/2 : windowstart + window_size/2 ]
@@ -135,8 +141,9 @@ temp_filtered = highpass(temp_unfiltered, F_HIGH=(sampling_freq / 2) * 0.95, sam
 
 temp_filtered_uV = temp_filtered * scale_uV * voltage_step_size
 
-#Or plot LFP-------------------------------------------------------------
 
+
+#Get the raw data for the current time window---------------------------------------------------------------------------
 def baseline_correct_basis(data, beginSample=0, endSample=-1):
     if np.size(np.shape(data)) > 1:
         baseline = np.mean(data[:, [beginSample, endSample]], 1)
@@ -149,10 +156,9 @@ temp_unfiltered_uV = temp_unfiltered * scale_uV * voltage_step_size
 
 temp_unfiltered_uV_baseline = baseline_correct_basis(temp_unfiltered_uV, beginSample=0, endSample=-1)
 
-#---------------------------------------------------------------------
 
-# ----------------------------------------------------------------
-# Label line with line2D label data
+
+#Label channels in the plot --------------------------------------------------------------------------------------------
 def labelLine(line, x, label=None, align=True, **kwargs):
     ax = line.get_axes()
     xdata = line.get_xdata()
@@ -230,17 +236,15 @@ def labelLines(lines, align=True, xvals=None, **kwargs):
 
 
 # Plot a line at time x------------------------------------------------------------------------------------------------
-
 def triggerline(x, **kwargs):
     if x is not None:
         ylim = plt.ylim()
         plt.vlines(x,ylim[0],ylim[1],colors='b', alpha=0.4)
 
-# PLOT figure paper
 
 
+# Plot figure 2 E,F-----------------------------------------------------------------------------------------------------
 def plot_average_extra(data, yoffset=1):
-
     #sites_order_geometry= [16,26,5,14]
     #sites_order_geometry = [15, 11, 16, 5]
     sites_order_geometry = [15, 20, 26, 16, 11, 5]
@@ -256,22 +260,18 @@ def plot_average_extra(data, yoffset=1):
         plt.yticks(fontsize=15)
     labelLines(plt.gca().get_lines(), align=False, fontsize=10)
 
-
+#plot high-pass filtered data
 plt.figure(1)
 plot_average_extra(temp_filtered_uV, yoffset=500)
-
 for arg in args[:,0]:
     if arg > int(times.shape[0]/2):
         triggerline(window_size_secs*1000/2 + dif[arg][0]/ms_scale, alpha=0.05,color= 'b')
     else:
         triggerline(window_size_secs*1000/2 - dif[arg][0]/ms_scale, alpha=0.05,color='b')
 
-
-
-
+#plot raw data
 plt.figure(2)
 plot_average_extra(temp_unfiltered_uV_baseline, yoffset=1000)
-
 for arg in args[:,0]:
     if arg > int(times.shape[0]/2):
         triggerline(window_size_secs*1000/2 + dif[arg][0]/ms_scale, alpha=0.05,colors= 'r')
@@ -282,9 +282,21 @@ for arg in args[:,0]:
 
 
 
-# Plot the spread out h.p. data
-#my method 1
 
+
+
+
+
+
+
+
+
+
+
+#Code not in use--------------------------------------------------------------------------------------------------------
+
+# Plot the spread out h.p. data-----------------------------------------------------------------------------------------
+#my method 1
 def plot_average_extra(data, yoffset=1):
 
     origin_cmap= plt.get_cmap('hsv')
@@ -355,6 +367,9 @@ time_axis= sample_axis/sampling_freq
 for i in np.arange(num_ivm_channels):
     plt.plot(time_axis*scale_ms, new_data[i,:].T, label =str([i]))
 labelLines(plt.gca().get_lines(), align=False, fontsize=14)
+
+
+
 
 # Plot the spread out h.p. data
 #George method
@@ -552,10 +567,6 @@ plt.xticks(fontsize=15)
 plt.yticks(fontsize=15)
 plt.legend(frameon=False)
 
-
-
-#functions that we need
-#-----------------------------------------------------------------------------------
 
 
 # Colormap from Pylyb
@@ -783,124 +794,4 @@ def labelLines(lines, align=True, xvals=None, **kwargs):
 
     for line, x, label in zip(labLines, xvals, labels):
         labelLine(line, x, label, align, **kwargs)
-
-
-# -------------------------------------------------------------------
-#128ch probe
-
-
-#CCU data brain 2015-08-28
-
-analysis_folder = r'E:\Paper Impedance\128chNeuroseeker\CCU\2015_08_28\pair2.2'
-raw_data_file_ivm = os.path.join(analysis_folder + '\\' + 'amplifier2015-08-28T20_15_45.bin')
-
-#CCU data brain 2015-09-23
-
-analysis_folder = r'E:\Paper Impedance\128chNeuroseeker\CCU\2015_09_03\pair9.0'
-raw_data_file_ivm = os.path.join(analysis_folder + '\\' + 'amplifier2015-09-03T21_18_47.bin')
-
-#SWC mice head fixed
-
-analysis_folder = r'E:\Paper Impedance\128chNeuroseeker\SWC\2016_08_12\16_53_27'
-raw_data_file_ivm = os.path.join(analysis_folder + '\\' + 'amplifier2016-08-12T16_53_27.bin')
-
-#SWC data brain 2016-08-17 not correct
-
-analysis_folder = r'E:\Paper Impedance\128chNeuroseeker\SWC\2016_08_17\Rec1'
-raw_data_file_ivm = os.path.join(analysis_folder + '\\' + 'amplifier2016-08-17T13_26_10.bin')
-
-
-analysis_folder = r'E:\Paper Impedance\128chNeuroseeker\SWC\2016_08_17\Rec2'
-raw_data_file_ivm = os.path.join(analysis_folder + '\\' + 'amplifier2016-08-17T16_07_34.bin')
-
-
-#SWC saline this is not correct
-analysis_folder = r'E:\Paper Impedance\128chNeuroseeker\Noise\2016_08_26'
-raw_data_file_ivm = os.path.join(analysis_folder + '\\' + '128ch_new_RMS_saline.bin')
-
-
-
-window = 0
-window_size_secs = 10
-filtered_data_type = np.float64
-sampling_freq = 30000
-high_pass_freq = 500
-window_size = int(window_size_secs * sampling_freq)
-
-amp_dtype = np.uint16
-Probe_y_digitization = 32768
-num_ivm_channels = 128
-voltage_step_size = 0.195e-6
-scale_uV = 1000000
-scale_ms = 1000
-
-def highpass(data, BUTTER_ORDER=3, F_HIGH=14250, sampleFreq=30000.0, passFreq=100.0):
-    b, a = signal.butter(BUTTER_ORDER, (passFreq / (sampleFreq / 2), F_HIGH / (sampleFreq / 2)), 'pass')
-    return signal.filtfilt(b, a, data)
-
-
-# Get the high passed data for the current time window
-raw_data_ivm = ephys.load_raw_data(raw_data_file_ivm, numchannels=num_ivm_channels, dtype=amp_dtype)
-temp_unfiltered = raw_data_ivm.dataMatrix[ :, window * window_size:(window + 1) * window_size ]
-temp_unfiltered = temp_unfiltered.astype(filtered_data_type)
-temp_filtered = highpass(temp_unfiltered, F_HIGH=(sampling_freq / 2) * 0.95, sampleFreq=sampling_freq,
-                         passFreq=high_pass_freq)
-
-# temp_filtered = filters.high_pass_filter(temp_unfiltered,sampling_freq, high_pass_freq, method='iir',iir_params=iir_params)
-
-temp_filtered_uV = temp_filtered * scale_uV * voltage_step_size
-temp_unfiltered_uV = temp_unfiltered *  scale_uV * voltage_step_size
-
-def create_128channels_imec_prb(filename=None, bad_channels=None):
-
-    r1 = np.array([103,	101, 99,	97,	95,	93,	91,	89,	87,	70,	66,	84,	82,	80,	108,	110,	47,	45,	43,	41,	1,61,	57,
-                   36,	34,	32,	30,	28,	26,	24,	22,	20])
-    r2 = np.array([106, 104, 115, 117, 119, 121, 123, 125, 127, 71, 67, 74, 76, 78, 114, 112,
-                   49, 51, 53, 55, 2, 62, 58, 4, 6, 8, 10, 12, 14, 21, 19, 16])
-    r3 = np.array([102, 100, 98, 96, 94, 92, 90, 88, 86, 72, 68, 65, 85, 83, 81, 111, 46, 44, 42, 40, 38, 63, 59,
-                   39, 37, 35, 33, 31, 29, 27, 25, 23])
-    r4 = np.array([109, 107, 105, 116, 118, 120, 122, 124, 126, 73, 69, 64, 75, 77, 79, 113,
-                   48, 50, 52, 54, 56, 0, 60, 3, 5, 7, 9, 11, 13, 15, 18,-1])
-
-    all_electrodes_concat = np.concatenate((r1, r2, r3, r4))
-    all_electrodes = all_electrodes_concat.reshape((4, 32))
-    all_electrodes = np.flipud(all_electrodes.T)
-
-    if filename is not None:
-        prb_gen.generate_prb_file(filename=filename, all_electrodes_array=all_electrodes)
-
-    return all_electrodes
-
-
-
-# Plot 128channels averages overlaid
-
-electrode_structure = create_128channels_imec_prb()
-voltage_step_size = 0.195e-6
-scale_uV = 1000000
-scale_ms = 1000
-
-def plot_average_extra(temp_filtered_uV, yoffset=1):
-
-    origin_cmap= plt.get_cmap('hsv')
-    shrunk_cmap = shiftedColorMap(origin_cmap, start=0.6, midpoint=0.7, stop=1, name='shrunk')
-    cm=shrunk_cmap
-    cNorm=colors.Normalize(vmin=0,vmax=128)
-    scalarMap= cmx.ScalarMappable(norm=cNorm,cmap=cm)
-    subplot_number_array = electrode_structure.reshape(1,128)
-    num_samples=temp_filtered_uV.shape[1]
-    sample_axis= np.arange(0,num_samples)
-    time_axis= sample_axis/sampling_freq
-    for m in np.arange(np.shape(temp_filtered_uV)[0]):
-        colorVal=scalarMap.to_rgba(np.shape(temp_filtered_uV)[0]-m)
-        plt.plot(time_axis*scale_ms, temp_filtered_uV[subplot_number_array[0,m],:].T + m*yoffset, color=colorVal, label =str(subplot_number_array[0,m]))
-        plt.ylabel('Voltage (\u00B5V)', fontsize=20)
-        plt.xlabel('Time (ms)',fontsize=20)
-        plt.xticks(fontsize=15)
-        plt.yticks(fontsize=15)
-    labelLines(plt.gca().get_lines(), align=False, fontsize=14)
-
-
-plt.figure(2)
-plot_average_extra(temp_filtered_uV, yoffset=200)
 

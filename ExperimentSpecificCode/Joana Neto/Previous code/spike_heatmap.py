@@ -13,7 +13,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import warnings
 
-
 def peaktopeak(data, window_size=60):
     """
     Generates the minima, maxima and peak to peak (p2p) numbers (in microvolts) of all the channels of all spikes
@@ -211,6 +210,12 @@ def plot_topoplot(axis, channel_positions, data, show=True, rotate_90=False, fli
     return image, channels_grid
 
 
+
+
+
+prb_file = r"C:\Users\KAMPFF-LAB-ANALYSIS3\Downloads\prb.txt"
+data =r"Z:\n\Neuroseeker Probe Recordings\Neuroseeker_2017_11_27_Probe_Testing\1110\probe1110_20_21_07noise_MedianAllGroups_1440chs.npy"
+
 def create_heatmap_image(data, prb_file, window_size=60, bad_channels=None, num_of_shanks=None,
                          rotate_90=False, flip_ud=False, flip_lr=False):
     """
@@ -231,7 +236,8 @@ def create_heatmap_image(data, prb_file, window_size=60, bad_channels=None, num_
     x_size: the pixel number of the heatmap's x axis
     y_size: the pixel number of the heatmap's y axis
     """
-    _, _, _, _, p2p = peaktopeak(data, window_size=window_size)
+    #_, _, _, _, p2p = peaktopeak(data, window_size=window_size)
+    p2p=np.load(data)
     zlimits = np.zeros(2)
     zlimits[0] = p2p.min()
     zlimits[1] = p2p.max()
@@ -286,7 +292,7 @@ def create_heatmap_image(data, prb_file, window_size=60, bad_channels=None, num_
 
 
 def create_heatmap_on_matplotlib_widget(widget, data, prb_file, window_size=60, bad_channels=None,
-                                        num_of_shanks=None, rotate_90=False, flip_ud=False, flip_lr=False):
+                                        num_of_shanks=4 rotate_90=False, flip_ud=False, flip_lr=False):
     """
 
     Parameters
@@ -303,7 +309,8 @@ def create_heatmap_on_matplotlib_widget(widget, data, prb_file, window_size=60, 
     -------
     Nothing. Just fills the widget with the image generated
     """
-    _, _, _, _, p2p = peaktopeak(data, window_size=window_size)
+   # _, _, _, _, p2p = peaktopeak(data, window_size=window_size)
+    p2p=np.load(data)
     zlimits = [p2p.min(), p2p.max()]
 
     probe = get_probe_geometry_from_prb_file(prb_file)
@@ -311,7 +318,8 @@ def create_heatmap_on_matplotlib_widget(widget, data, prb_file, window_size=60, 
     if num_of_shanks is None:
         num_of_shanks = len(list(probe.keys()))
 
-    fig = widget.getFigure()
+    #fig = widget.getFigure()
+    fig = plt.figure()
     fig.clf(True)
     fig.set_tight_layout({'rect': [0, 0, 1, 1]})
     fig.canvas.toolbar.hide()
@@ -335,3 +343,50 @@ def create_heatmap_on_matplotlib_widget(widget, data, prb_file, window_size=60, 
         data = p2p[channel_positions_shank.index]
         image, channels_grid = plot_topoplot(ax, channel_positions_shank, data, show=False, rotate_90=rotate_90,
                                              flip_ud=flip_ud, flip_lr=flip_lr, zlimits=zlimits)
+
+
+
+
+#plot
+
+
+
+    prb_file_neuroseeker = r"C:\Users\KAMPFF-LAB-ANALYSIS3\Downloads\prb.txt"
+    rawdata = r"Z:\n\Neuroseeker Probe Recordings\Neuroseeker_2017_11_27_Probe_Testing\1110\probe1110_20_21_07noise_MedianAllGroups_1440chs.npy"
+
+    num_of_shanks=3
+    bad_channels = None
+
+    p2p = np.load(rawdata)
+    zlimits = [p2p.min(), p2p.max()]
+
+    probe = get_probe_geometry_from_prb_file(prb_file_neuroseeker)
+
+    if num_of_shanks is None:
+        num_of_shanks = len(list(probe.keys()))
+
+    #fig = widget.getFigure()
+    fig = plt.figure()
+    fig.clf(True)
+    fig.set_tight_layout({'rect': [0, 0, 1, 1]})
+    fig.canvas.toolbar.hide()
+
+    channel_positions = pd.Series(probe[0]['geometry'])
+    if bad_channels is not None:
+        channel_positions = channel_positions.drop(bad_channels)
+        channel_positions.index = np.arange(len(channel_positions))
+
+    total_electrodes = len(channel_positions)
+    electrodes_per_shank = int(total_electrodes / num_of_shanks)
+
+for shank in np.arange(num_of_shanks):
+    ax = fig.add_subplot(1, num_of_shanks, shank + 1)
+    ax.set_axis_off()
+    begin_electrode = shank * electrodes_per_shank
+    end_electrode = (shank + 1) * electrodes_per_shank
+    if shank == num_of_shanks - 1:
+        end_electrode = total_electrodes
+    channel_positions_shank = channel_positions[begin_electrode:end_electrode]
+    data = p2p[channel_positions_shank.index]
+    image, channels_grid = plot_topoplot(ax, channel_positions_shank, data, show=False, rotate_90=True,
+                                         flip_ud=True, flip_lr=True, zlimits=zlimits)
