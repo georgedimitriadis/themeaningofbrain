@@ -19,7 +19,7 @@ import scipy.signal as signal
 
 def create_128channels_imec_prb(filename=None, bad_channels=None):
 
-    r1 = np.array([103,	101, 99,	97,	95,	93,	91,	89,	87,	70,	66,	84,	82,	80,	108,	110,	47,	45,	43,	41,	1,61,	57,
+    r1 = np.array([103,	101, 99, 97,	95,	93,	91,	89,	87,	70,	66,	84,	82,	80,	108,	110,	47,	45,	43,	41,	1,61,	57,
                    36,	34,	32,	30,	28,	26,	24,	22,	20])
     r2 = np.array([106, 104, 115, 117, 119, 121, 123, 125, 127, 71, 67, 74, 76, 78, 114, 112,
                    49, 51, 53, 55, 2, 62, 58, 4, 6, 8, 10, 12, 14, 21, 19, 16])
@@ -187,8 +187,8 @@ def plot_average_extra_geometry(all_cells_ivm_filtered_data, yoffset=1):
             plt.xlim(-2, 2)
             plt.axis("OFF")
 
-# Plot 128channels averages overlaid
 
+# Plot 128channels averages overlaid
 all_electrodes = create_128channels_imec_prb()
 voltage_step_size = 0.195e-6
 scale_uV = 1000000
@@ -221,7 +221,6 @@ def plot_average_extra(all_cells_ivm_filtered_data, electrode_structure=all_elec
             triggerline(0)
 
 # Plot 128channels averages in space
-
 voltage_step_size = 0.195e-6
 scale_uV = 1000000
 scale_ms = 1000

@@ -1,6 +1,5 @@
 import math
 import os
-
 import matplotlib.cm as cmx
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
@@ -8,16 +7,12 @@ import numpy as np
 import pandas as pd
 import scipy.signal as signal
 import scipy.stats as stats
-# import Utilities as ut
 from scipy import io
-
 import IO.ephys as ephys
-
 # import Utilities as ut
-
 plt.rcParams['animation.ffmpeg_path'] ="C:\\Users\\KAMPFF-LAB_ANALYSIS4\\Downloads\\ffmpeg-20160116-git-d7c75a5-win64-static\\ffmpeg-20160116-git-d7c75a5-win64-static\\bin\\ffmpeg.exe"
 
-
+#structure of folders and data files------------------------------------------------------------------------------------
 base_folder = r'Z:\j\Joana Neto\Neuronexus32ch_clusters'
 
 date = {1: '2014-11-13', 2: '2014-11-25', 3: '2017-02-02', 4: '2014-10-17'}
@@ -27,7 +22,7 @@ all_recordings_capture_times = {1: {'1': '19_01_55', '2': '18_48_11', '3': '14_5
                                 3: {'1': '14_38_11', '2': '15_03_44', '3': '15_49_35', '4': '16_57_16', '5': '17_18_46'},
                                 4: {'1': '16_46_02', '2': '18_19_09'}}
 
-recordings_cluster = {1: ['1', '2', '3', '4', '5'],
+recordings_cluster = {1: [ '3', '4', '5'],
                       2: ['1', '2', '3', '4'],
                       3: ['1', '2', '3', '4', '5'],
                       4: ['1', '2']}
@@ -36,25 +31,24 @@ recordings_cluster = {1: ['1', '2', '3', '4', '5'],
                         #2:{'1': [], '2': []}}
 
 
-
+#channel numbers for pedot and pristine electrodes----------------------------------------------------------------------
 pedot_all= [22,29,3,23,18,4,17,19,5,16,20,6,30,21,7,31]
 pristine_all= np.array([2,9,28,13,8,27,12,14,26,11,15,25,10,1,24,0])
-#-------------------------------------------
-surgery = 3
-pick_recording = '3' #we need to select the recording
 
+
+#choose one recording for analysis--------------------------------------------------------------------------------------
+surgery = 3
+pick_recording = '1' #we need to select the recording
 
 recordings = recordings_cluster[surgery]
 #clusterSelected = cluster_indices_good[surgery][pick_recording]
-
 date = date[surgery]
 data_folder = os.path.join(base_folder + '\\' + date, 'Data')
 analysis_folder = os.path.join(base_folder + '\\' + date, 'Analysis')
-
 recordings_capture_times = all_recordings_capture_times[surgery]
-#---------------------------------------------------------------------------------------------------------------------
 
 
+#variables to open data-------------------------------------------------------------------------------------------------
 num_of_points_in_spike_trig_ivm = 128
 num_of_points_for_padding = 2 * num_of_points_in_spike_trig_ivm
 
@@ -65,6 +59,7 @@ amp_dtype = np.uint16
 
 sampling_freq = 20000#neuronexus6
 #sampling_freq = 30000#neuronexus5
+
 high_pass_freq = 250
 filtered_data_type = np.float64
 
@@ -74,18 +69,20 @@ types_of_data_to_load = {'t': 'ivm_data_filtered_cell{}.dat',
                          'k': 'ivm_data_filtered_klusta_spikes_cell{}.dat',
                          'm': 'ivm_data_raw_cell{}.dat',
                          }
-
 types_of_sorting = {'s': 'goodcluster_{}_'}
 
 
-#Filter for extracellular recording
+
+#filter for extracellular recording-------------------------------------------------------------------------------------
 def highpass(data,BUTTER_ORDER=3, F_HIGH=14250,sampleFreq=20000.0,passFreq=100.0):
     b, a = signal.butter(BUTTER_ORDER,(passFreq/(sampleFreq/2), F_HIGH/(sampleFreq/2)),'pass')
     return signal.filtfilt(b, a, data)
 
-#kilosort units
 
-spike_template_folder = os.path.join(base_folder + '\\' + date + '\\' + 'Datakilosort' + '\\' + 'amplifier' + date + 'T' + all_recordings_capture_times[surgery][pick_recording])
+
+#import all kilosort clusters [cluster index, number of spikes, spike times]--------------------------------------------
+spike_template_folder = os.path.join(base_folder + '\\' + date + '\\' + 'Datakilosort' + '\\' + 'amplifier' + date + 'T'
+                                     + all_recordings_capture_times[surgery][pick_recording])
 spike_templates = np.load(os.path.join(spike_template_folder + '\\' + 'spike_clusters.npy'))
 spike_templates = np.reshape(spike_templates, ((len(spike_templates)),1))
 spike_times = np.load(os.path.join(spike_template_folder + '\\' + 'spike_times.npy'))
@@ -111,7 +108,7 @@ for g in kilosort_units.keys():
     cluster_info.set_value(cluster_name, 'Spike_Indices', kilosort_units[g])
 
 
-
+#get index of good clusters---------------------------------------------------------------------------------------------
 def find_good_clusters(spike_template_folder):
     # look at which clusters are marked as 'good' in phy GUI
     clust_file_name = os.path.join(spike_template_folder,"cluster_groups.csv")
@@ -152,7 +149,7 @@ total = n_good_clusters + n_mua_clusters + n_noise_clusters
 clusterSelected = good_clusters
 
 
-# Generate the (channels x time_points x spikes) high passed extracellular recordings datasets for all cells
+# Generate the (channels x time_points x spikes) high passed extracellular recordings datasets for good clusters--------
 all_cells_ivm_filtered_data = {}
 data_to_load = 't'
 cluster_to_load = 's'
@@ -189,8 +186,7 @@ for clus in np.arange(0, len(clusterSelected)):
 del ivm_data_filtered
 
 
-# Load the extracellular recording cut data from the .dat files on hard disk onto memmaped arrays
-
+# Load the extracellular recording cut data from the .dat files on hard disk onto memmaped arrays-----------------------
 all_cells_ivm_filtered_data = {}
 data_to_load = 't'
 cluster_to_load = 's'
@@ -217,7 +213,6 @@ for clus in np.arange(0, len(clusterSelected)):
 #----------------------------------------------------------------------------------------------------------------------
 
 # create folder to save figures ---------------------------------------------------------------------------------------
-
 fig_folder = os.path.join(analysis_folder+ '\\'+ 'figures' +  '\\' + 'amplifier' + date + 'T' +
   all_recordings_capture_times[surgery][pick_recording])
 
@@ -247,7 +242,7 @@ def crosscorrelate_spike_trains(spike_times_train_1, spike_times_train_2, lag=No
     norm = np.sqrt(spike_times_train_1.size * spike_times_train_2.size)
     return differences, norm
 
-
+#save plots, spike times during one recording and autocorrelogram-------------------------------------------------------
 lag = 50
 for pick_cluster in clusterSelected:
     times_cluster = np.reshape(spike_times[kilosort_units[pick_cluster]], (spike_times[kilosort_units[pick_cluster]].shape[0]))
@@ -272,7 +267,6 @@ for pick_cluster in clusterSelected:
 
 
 # Colormap from Pylyb--------------------------------------------------------------------------------------------------
-
 def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
     '''
     Function to offset the "center" of a colormap. Useful for
@@ -324,9 +318,9 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 
     return newcmap
 
+
+
 # Plot a line at time x------------------------------------------------------------------------------------------------
-
-
 def triggerline(x, **kwargs):
     if x is not None:
         ylim = plt.ylim()
@@ -334,27 +328,7 @@ def triggerline(x, **kwargs):
 
 
 
-def _generate_adjacency_graph(all_electrodes):
-    graph_dict = {}
-    for r in np.arange(all_electrodes.shape[0]):
-        for c in np.arange(all_electrodes.shape[1]):
-            electrode = all_electrodes[r, c]
-            if electrode != -1:
-                graph_dict[electrode] = []
-                for step_r in np.arange(-1, 2):
-                    if -1 < r + step_r < all_electrodes.shape[0]:
-                        for step_c in np.arange(-1, 2):
-                            if -1 < c + step_c < all_electrodes.shape[1] and not (step_r ==0 and step_c == 0):
-                                neighbour = all_electrodes[r + step_r, c + step_c]
-                                if neighbour != -1:
-                                    graph_dict[electrode].append(all_electrodes[r + step_r, c + step_c])
-                if len(graph_dict[electrode]) == 0:
-                    graph_dict.pop(electrode)
-
-    return graph_dict
-
-
-# Plot 32channel averages overlaid
+# Plot 32channel averages overlaid color coded--------------------------------------------------------------------------
 voltage_step_size = 0.195e-6
 scale_uV = 1000000
 scale_ms = 1000
@@ -395,7 +369,7 @@ def plot_average_extra(all_cells_ivm_filtered_data, yoffset=0):
 plot_average_extra(all_cells_ivm_filtered_data, yoffset=0)
 
 
-# Plot 32channels averages in space
+# Plot 32channel averages in space color coded--------------------------------------------------------------------------
 
 voltage_step_size = 0.195e-6
 scale_uV = 1000000
@@ -434,9 +408,11 @@ def plot_average_extra_geometry(all_cells_ivm_filtered_data, yoffset=0):
 
 
 plot_average_extra_geometry(all_cells_ivm_filtered_data, yoffset=0)
-#--------------------------------------------------------------------------------------------------------------------
-# Each cluster P2P, MIN, MAX 32channels
 
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# For each cluster, for the averages of the 32channels compute: P2P, MIN, MAX
 
 voltage_step_size = 0.195e-6
 scale_uV = 1000000
@@ -479,8 +455,8 @@ def peaktopeak(all_cells_ivm_filtered_data, windowSize=60):
         stdv = stdv * voltage_step_size * scale_uV
 
         for b in range(NumSites):
-           stdv_minimos[b] = stdv[b, argminima[b]]
-           stdv_maximos[b] = stdv[b, argmaxima[b]]
+           stdv_minimos[b] = stdv[b, argminima[b].astype(int)]
+           stdv_maximos[b] = stdv[b, argmaxima[b].astype(int)]
 
         error = np.sqrt((stdv_minimos * stdv_minimos) + (stdv_maximos*stdv_maximos))
 
@@ -501,11 +477,13 @@ def peaktopeak(all_cells_ivm_filtered_data, windowSize=60):
 peaktopeak(all_cells_ivm_filtered_data, windowSize=60)
 
 
-#Print the P2P. MIN, MAX------------------------------------------------------------------------------------------------
 
 
+#For each cluster print the minP2P, maxP2P, channel w the maxP2P, biggestP2Pchannels, pedot and pristine channels, ....
 
-os.path.join(spike_template_folder, "spike_count_for_each_good_cluster.csv")
+#os.path.join(spike_template_folder, "spike_count_for_each_good_cluster.csv")
+
+
 f = open(os.path.join(spike_template_folder, "P2P_MIN_MAX_good_cluster.txt"),"w")
 
 fig = plt.figure()
@@ -540,16 +518,26 @@ for pick_cluster in clusterSelected:
     select_pristine = np.intersect1d (select_indices_biggestAmp, pristine_all)
     f.write('atleasthalfofmaxp2p_channels_PEDOT ' + str(select_pedot)+'\n')
     f.write('atleasthalfofmaxp2p_channels_Pristine ' + str(select_pristine)+'\n')
+    if select_pristine.any():
+        min_biggestchannel_pristine = amplitudes[select_pristine].min()
+        channel_pristine_min_thebiggestchannels = select_pristine[amplitudes[select_pristine].argmin()]
+    if select_pedot.any():
+        min_biggestchannel_pedot = amplitudes[select_pedot].min()
+        channel_pedot_min_thebiggestchannels = select_pedot[amplitudes[select_pedot].argmin()]
+    f.write('min_atleasthalfofmaxp2p_channels_PEDOT ' + str(min_biggestchannel_pedot) + '\n')
+    f.write('min_atleasthalfofmaxp2p_channels_Pristine ' + str(min_biggestchannel_pristine) + '\n')
+    f.write('channel_min_atleasthalfofmaxp2p_channels_PEDOT ' + str(channel_pedot_min_thebiggestchannels) + '\n')
+    f.write('channel_min_atleasthalfofmaxp2p_channels_Pristine ' + str(channel_pristine_min_thebiggestchannels) + '\n')
     f.write('bestPEDOTchannel ' + ','+ 'bestPristinechannel' + ','+ 'bestP2PPEDOT' + ','+ 'bestP2PPristine'+'\n')
     f.write(str(channel_PEDOT)+ ',' + str(channel_pristine)+ ','+ str(max_ampl_PEDOT)+ ','+ str(max_ampl_pristine)+'\n')
+    f.write('bestPEDOTchannel ' + ','+ 'bestPristinechannel' + ','+ 'bestP2PPEDOT_min' + ','+ 'bestP2PPristine_min'+'\n')
+    f.write(str(channel_pedot_min_thebiggestchannels)+ ',' + str(channel_pristine_min_thebiggestchannels)+ ','+ str(min_biggestchannel_pedot)+ ','+ str(min_biggestchannel_pristine)+'\n')
     f.write('#------------------------------------------------------'+'\n')
 
 f.close()
 
 
-#write the values of the max P2P for the best ch pedot and pristine for  all the clusters that have high quality in txt
-
-
+#For each cluster print the maxP2P for the best ch pedot and pristine--------------------------------------------------
 
 os.path.join(spike_template_folder, "spike_count_for_each_good_cluster.csv")
 f = open(os.path.join(spike_template_folder, "P2P_MAX.txt"),"w")
@@ -573,8 +561,8 @@ for pick_cluster in clusterSelected:
 f.close()
 
 
-#plot waveform of the best channel PEDOT versus Pristine
 
+#plot the waveforms of the best channel PEDOT versus Pristine-----------------------------------------------------------
 
 for pick_cluster in clusterSelected:
     f, axarr = plt.subplots(2, sharex=True, sharey=True)
@@ -624,7 +612,7 @@ for pick_cluster in clusterSelected:
 
 
 
-#plot waveform average PEDOT versus Pristine
+#plot averages of the best channel PEDOT versus Pristine overlaid-------------------------------------------------------
 
 number_clusters = len(clusterSelected)
 ylim = 500
@@ -664,17 +652,8 @@ for pick_cluster in clusterSelected:
         plt.close()
 
 
-#nice colors codes hexa
-#2ca065 (green)
-#ff4136(red)
-#cf72ff(purple)
-#5da4d6 (blue)
-#ff900e (orange)
-#'#f3f3f3' grey
-#__________________________________________________________________________________________________
 
-
-#plot waveform averages where(amplitudes >= (amplitudes.max()/2))
+#plot waveform averages where(amplitudes >= (amplitudes.max()/2);the bigger P2P amplitude channels----------------------
 
 pedot_all = [22,29,3,23,18,4,17,19,5,16,20,6,30,21,7,31]
 pristine_all = np.array([2,9,28,13,8,27,12,14,26,11,15,25,10,1,24,0])
@@ -721,10 +700,20 @@ for pick_cluster in clusterSelected:
     plt.axis("OFF")
     plt.close()
 
+
+
+
+
+#Quantify the quality of cluster----------------------------------------------------------------------------------------
+#first we run in matlab:
+#addpath(genpath('F:\sortingQuality-master\sortingQuality-master'))
+#addpath('F:\sortingQuality-master\sortingQuality-master')
+#addpath('F:\npy-matlab-master')
+#[cgs, uQ, cR, isiV] = sqKilosort.computeAllMeasures('Z:\j\Joana Neto\Neuronexus32ch\2014-11-13\Datakilosort\amplifier2014-11-13T14_59_40')
+#[cgs, uQ, cR, isiV] = sqKilosort.computeAllMeasures('Z:\j\Joana Neto\Neuronexus32ch\2017-02-02\Datakilosort\amplifier2017-02-02T15_49_35')
+
 #Steve code to open quantification files from clusters
-
 #Load  files
-
 def flatten_list(list_to_flatten):
     """
     turn a list of lists into a single flat list
@@ -747,15 +736,12 @@ def load_quality_outputs(path):
 quality_file = os.path.join(spike_template_folder + '\\' + 'quality.mat')
 cluster_groups, isi_violation, contamination_rate, unit_quality = load_quality_outputs(quality_file)
 
-#plot functions
 
-
+#plot clusters quality: isi violations vs contamination rate colored according unit quality-----------------------------
 fig_folder = os.path.join(spike_template_folder+ '\\'+ 'Figures')
 
 if not os.path.exists(fig_folder):
     os.makedirs(fig_folder)
-
-
 
 
 def get_colormaps(palette, min_val, max_val):
@@ -773,31 +759,6 @@ def get_colormaps(palette, min_val, max_val):
     bounds = np.insert(bounds, idx, 0)
     norm = BoundaryNorm(bounds, cmap.N)
     return cmap, norm
-
-
-
-def plot_cluster_quality_by_group(cluster_groups, sorting_quality_parameter):
-    """
-    visualise any sorting quality parameter according to the classification clusters of each group
-    groups 0:
-    :param cluster_groups:
-    :param sorting_quality_parameter:
-    :return:
-    """
-
-    fig = plt.figure()
-    for group in np.unique(cluster_groups)[0:3]:
-        in_this_group = cluster_groups == group
-        these_unit_qualities = sorting_quality_parameter[in_this_group]
-        group_mean = np.mean(these_unit_qualities)
-        plt.scatter(np.ones_like(these_unit_qualities)*group, these_unit_qualities, color='k', alpha=0.5)
-        plt.scatter(group, group_mean, s=50)
-    return fig
-
-
-plot_cluster_quality_by_group(cluster_groups, contamination_rate)
-plot_cluster_quality_by_group(cluster_groups, unit_quality)
-plot_cluster_quality_by_group(cluster_groups, isi_violation)
 
 
 def plot_cluster_quality_w_label(cluster_id, spike_templates, isi_violation,
@@ -826,21 +787,18 @@ def plot_cluster_quality_w_label(cluster_id, spike_templates, isi_violation,
     plt.ylabel('isi violations')
 
 
-
 plt.figure()
 for i in mua_clusters:
     plot_cluster_quality_w_label(i, spike_templates, isi_violation, contamination_rate, unit_quality,'Blues', zorder=0, s=200 )
-
 for clus in good_clusters:
     plot_cluster_quality_w_label(clus, spike_templates, isi_violation, contamination_rate, unit_quality, 'Reds', zorder=0, s=100)
-
 fig_filename = os.path.join(fig_folder + '\\' + 'quality.png')
 plt.savefig(fig_filename)
 
 
 #for 'Z:\\j\\Joana Neto\\Neuronexus32ch\\2014-11-25\\Datakilosort\\amplifier2014-11-25T21_27_13' we good_clusters = np.delete(good_clusters, np.where(good_clusters==139),0) because cluster 139 has a contamainatio rate of Nan
 
-
+# plot the first quadrant-----------------------------------------------------------------------------------------------
 plt.figure()
 for i in mua_clusters:
     plot_cluster_quality_w_label(i, spike_templates, isi_violation, contamination_rate, unit_quality,'Blues', zorder=0, s=200 )
@@ -848,10 +806,128 @@ for i in mua_clusters:
     plt.ylim(-0.2, 0.5)
 for clus in good_clusters:
     plot_cluster_quality_w_label(clus, spike_templates, isi_violation, contamination_rate, unit_quality, 'Reds', zorder=0, s=100)
-
 fig_filename = os.path.join(fig_folder + '\\' + 'qualityfirstqua.png')
 plt.savefig(fig_filename)
 
+
+
+
+
+#plot for each cluster the P2Pmax for pristine and pedot; Figure 2 I---------------------------------------------------
+
+#cortex ketamine
+#max_ampl_PEDOT = np.loadtxt(r'E:\Paper Impedance\bestP2PPEDOT_cortex_ket.txt')
+max_ampl_PEDOT1 = np.loadtxt(r"C:\Users\KAMPFF-LAB-ANALYSIS3\Documents\Impedance paper\bestP2PPEDOT_cortex_ket.txt")
+max_ampl_pristine1 = np.loadtxt(r"C:\Users\KAMPFF-LAB-ANALYSIS3\Documents\Impedance paper\bestP2Pristine_cortex_ket.txt")
+fig = plt.figure()
+#ax = fig.add_subplot(1,1,1)
+ax = plt.gca()
+plt.scatter(max_ampl_pristine1, max_ampl_PEDOT1, color= 'k', label = 'Cortex/Ketamine')
+
+#cortex urethane
+max_ampl_PEDOT2 = np.loadtxt(r"C:\Users\KAMPFF-LAB-ANALYSIS3\Documents\Impedance paper\bestP2PPEDOT_cortex_uret.txt")
+max_ampl_pristine2 = np.loadtxt(r"C:\Users\KAMPFF-LAB-ANALYSIS3\Documents\Impedance paper\bestP2Pristine_cortex_uret.txt")
+#fig = plt.figure()
+#ax = fig.add_subplot(1,1,1)
+#ax = plt.gca()
+plt.scatter(max_ampl_pristine2, max_ampl_PEDOT2, color ='r', label= 'Cortex/Urethane')
+
+#hippocampus urethane
+max_ampl_PEDOT3 = np.loadtxt(r"C:\Users\KAMPFF-LAB-ANALYSIS3\Documents\Impedance paper\bestP2PPEDOT_hippocampus_uret.txt")
+max_ampl_pristine3 = np.loadtxt(r"C:\Users\KAMPFF-LAB-ANALYSIS3\Documents\Impedance paper\bestP2Pristine_hippocampus_uret.txt")
+#fig = plt.figure()
+#ax = fig.add_subplot(1,1,1)
+#ax = plt.gca()
+plt.scatter(max_ampl_pristine3, max_ampl_PEDOT3, color= '#2ca065', marker='s', label = 'Hippocampus/Urethane')
+
+pristine= np.concatenate((max_ampl_pristine1,max_ampl_pristine2 , max_ampl_pristine3),axis=0)
+pedot = np.concatenate((max_ampl_PEDOT1,max_ampl_PEDOT2 , max_ampl_PEDOT3),axis=0)
+
+x = np.arange(800)
+y = np.arange(800)
+plt.plot(x, y, color='k', linestyle='dotted')
+plt.xlabel('P2P Amplitude Pristine (\u00B5V)',fontsize=20)
+plt.ylabel('P2P Amplitude PEDOT (\u00B5V)', fontsize=20)
+plt.xticks(fontsize=15)
+plt.yticks(fontsize=15)
+plt.ylim(0, 800)
+plt.xlim(0, 800)
+plt.legend()
+
+slope, intercept, r_value, p_value, std_err = stats.linregress(pristine,pedot)
+print("r-squared:", r_value**2)
+#plt.plot(pristine, pedot, 'o', label='original data')
+plt.plot(pristine, intercept + slope*pristine, color='#5da4d6', label='fitted line')
+plt.legend()
+plt.show()
+
+
+#______________________________________________________________________________________________________________________
+
+
+#nice colors codes hexa
+#2ca065 (green)
+#ff4136(red)
+#cf72ff(purple)
+#5da4d6 (blue)
+#ff900e (orange)
+#'#f3f3f3' grey
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#code not used---------------------------------------------------------------------------------------------------------
+
+#Code from steve to plot cluster quality
+
+def plot_cluster_quality_by_group(cluster_groups, sorting_quality_parameter):
+    """
+    visualise any sorting quality parameter according to the classification clusters of each group
+    groups 0:
+    :param cluster_groups:
+    :param sorting_quality_parameter:
+    :return:
+    """
+
+    fig = plt.figure()
+    for group in np.unique(cluster_groups)[0:3]:
+        in_this_group = cluster_groups == group
+        these_unit_qualities = sorting_quality_parameter[in_this_group]
+        group_mean = np.mean(these_unit_qualities)
+        plt.scatter(np.ones_like(these_unit_qualities)*group, these_unit_qualities, color='k', alpha=0.5)
+        plt.scatter(group, group_mean, s=50)
+    return fig
+
+
+plot_cluster_quality_by_group(cluster_groups, contamination_rate)
+plot_cluster_quality_by_group(cluster_groups, unit_quality)
+plot_cluster_quality_by_group(cluster_groups, isi_violation)
 
 
 
@@ -879,62 +955,13 @@ group_dict_for_quality = {
 
 
 
-#plot P2P max for pristine and pedot
-
-#plot cortex ketam
-
-max_ampl_PEDOT = np.loadtxt(r'E:\Paper Impedance\bestP2PPEDOT_cortex_ket.txt')
-max_ampl_pristine = np.loadtxt(r'E:\Paper Impedance\bestP2Pristine_cortex_ket.txt')
-
-fig = plt.figure()
-#ax = fig.add_subplot(1,1,1)
-ax = plt.gca()
-plt.scatter(max_ampl_pristine, max_ampl_PEDOT, color= 'k', label = 'Cortex/Ketamine')
-
-
-
-#plot cortex uret
-max_ampl_PEDOT = np.loadtxt(r'E:\Paper Impedance\bestP2PPEDOT_cortex_uret.txt')
-max_ampl_pristine = np.loadtxt(r'E:\Paper Impedance\bestP2Pristine_cortex_uret.txt')
-
-#fig = plt.figure()
-#ax = fig.add_subplot(1,1,1)
-#ax = plt.gca()
-plt.scatter(max_ampl_pristine, max_ampl_PEDOT, color ='r', label= 'Cortex/Urethane')
-
-
-
-#plot hippocamp uret
-
-max_ampl_PEDOT = np.loadtxt(r'E:\Paper Impedance\bestP2PPEDOT_hippocampus_uret.txt')
-max_ampl_pristine = np.loadtxt(r'E:\Paper Impedance\bestP2Pristine_hippocampus_uret.txt')
-
-#fig = plt.figure()
-#ax = fig.add_subplot(1,1,1)
-#ax = plt.gca()
-plt.scatter(max_ampl_pristine, max_ampl_PEDOT, color= '#cf72ff', label = 'Hippocampus/Urethane')
-x = np.arange(800)
-y = np.arange(800)
-plt.plot(x, y, color='k')
-plt.xlabel('P2P Voltage Pristine (\u00B5V)',fontsize=20)
-plt.ylabel('P2P Voltage PEDOT (\u00B5V)', fontsize=20)
-plt.xticks(fontsize=15)
-plt.yticks(fontsize=15)
-plt.ylim(0, 800)
-plt.xlim(0, 800)
-plt.legend()
-
-
-
 
 # create folder to save figures ---------------------------------------------------------------------------------------
-
 fig_folder = os.path.join(analysis_folder+ '\\'+ 'figures' +  '\\' + 'amplifier' + date + 'T' +
   all_recordings_capture_times[surgery][pick_recording])
 
 if not os.path.exists(fig_folder):
     os.makedirs(fig_folder)
-
 
 
 #plot best channel PEDOT versus Pristine
@@ -989,8 +1016,6 @@ for pick_cluster in clusterSelected:
     plt.close()
 
 
-
-
 #plot P2P max for pristine and pedot
 
 best_channel_pedot = np.loadtxt(r'E:\Paper Impedance\bestPEDOTchannel.txt')
@@ -1008,3 +1033,70 @@ ax.scatter( best_channel_pristine,max_ampl_pristine, color = 'b')
 yt = pristine_all
 ax.set_yticklabels(yt)
 
+
+
+#plot P2P min for pristine and pedot-----------------------------------------------------------------------------------
+
+#plot cortex ketam
+
+min_ampl_PEDOT = np.loadtxt(r"Z:\j\Joana Neto\Backup_2017_28_06\PCDisk\Paper Impedance\Figures\plot_2P2_pristine_pedot\min_bestP2PPEDOT_cortex_ket.txt")
+min_ampl_pristine = np.loadtxt(r"Z:\j\Joana Neto\Backup_2017_28_06\PCDisk\Paper Impedance\Figures\plot_2P2_pristine_pedot\min_bestP2Pristine_cortex_ket.txt")
+
+fig = plt.figure()
+#ax = fig.add_subplot(1,1,1)
+ax = plt.gca()
+plt.scatter(min_ampl_pristine, min_ampl_PEDOT, color= 'k', label = 'Cortex/Ketamine')
+
+
+
+#plot cortex uret
+min_ampl_PEDOT = np.loadtxt(r"Z:\j\Joana Neto\Backup_2017_28_06\PCDisk\Paper Impedance\Figures\plot_2P2_pristine_pedot\min_bestP2PPEDOT_cortex_uret.txt")
+min_ampl_pristine = np.loadtxt(r"Z:\j\Joana Neto\Backup_2017_28_06\PCDisk\Paper Impedance\Figures\plot_2P2_pristine_pedot\min_bestP2Pristine_cortex_uret.txt")
+
+#fig = plt.figure()
+#ax = fig.add_subplot(1,1,1)
+#ax = plt.gca()
+plt.scatter(min_ampl_pristine, min_ampl_PEDOT, color ='r', label= 'Cortex/Urethane')
+
+
+
+#plot hippocamp uret
+
+min_ampl_PEDOT = np.loadtxt(r"Z:\j\Joana Neto\Backup_2017_28_06\PCDisk\Paper Impedance\Figures\plot_2P2_pristine_pedot\min_bestP2PPEDOT_hippocampus_uret.txt")
+min_ampl_pristine = np.loadtxt(r"Z:\j\Joana Neto\Backup_2017_28_06\PCDisk\Paper Impedance\Figures\plot_2P2_pristine_pedot\min_bestP2Pristine_hippocampus_uret.txt")
+
+#fig = plt.figure()
+#ax = fig.add_subplot(1,1,1)
+#ax = plt.gca()
+plt.scatter(min_ampl_pristine, min_ampl_PEDOT, color= '#cf72ff', label = 'Hippocampus/Urethane')
+x = np.arange(800)
+y = np.arange(800)
+plt.plot(x, y, color='k')
+plt.xlabel('P2P Voltage Pristine (\u00B5V)',fontsize=20)
+plt.ylabel('P2P Voltage PEDOT (\u00B5V)', fontsize=20)
+plt.xticks(fontsize=15)
+plt.yticks(fontsize=15)
+plt.ylim(0, 800)
+plt.xlim(0, 800)
+plt.legend()
+
+
+
+def _generate_adjacency_graph(all_electrodes):
+    graph_dict = {}
+    for r in np.arange(all_electrodes.shape[0]):
+        for c in np.arange(all_electrodes.shape[1]):
+            electrode = all_electrodes[r, c]
+            if electrode != -1:
+                graph_dict[electrode] = []
+                for step_r in np.arange(-1, 2):
+                    if -1 < r + step_r < all_electrodes.shape[0]:
+                        for step_c in np.arange(-1, 2):
+                            if -1 < c + step_c < all_electrodes.shape[1] and not (step_r ==0 and step_c == 0):
+                                neighbour = all_electrodes[r + step_r, c + step_c]
+                                if neighbour != -1:
+                                    graph_dict[electrode].append(all_electrodes[r + step_r, c + step_c])
+                if len(graph_dict[electrode]) == 0:
+                    graph_dict.pop(electrode)
+
+    return graph_dict

@@ -3,17 +3,10 @@
 import numpy as np
 import pandas as pd
 from os.path import join
-#from GUIs.Kilosort import clean_kilosort_templates as clean
-from spikesorting_tsne_guis import clean_kilosort_templates as clean
+from GUIs.Kilosort import clean_kilosort_templates as clean
 from GUIs.Kilosort import create_data_cubes as c_cubes
 from Layouts.Probes.Neuroseeker import probes_neuroseeker as ps
-from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_06_AK_34p4 import constants as const
-
-# Before importing pyculib with cudatoolkit >7.5 you need to tell python where the bin of the cudatoolkit files of your
-# CUDA are
-import os
-os.environ['NUMBAPRO_CUDALIB']=r'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\bin'
-
+from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_11_AK_40p3 import constants as const
 from spikesorting_tsne import tsne, visualization as viz, preprocessing_kilosort_results as preproc_kilo, \
      io_with_cpp as tsne_io, spike_positioning_on_probe as sp_pos
 
@@ -23,32 +16,32 @@ from spikesorting_tsne import tsne, visualization as viz, preprocessing_kilosort
 # ----------------------------------------------------------------
 
 # FOLDERS NAMES --------------------------------------------------
-date = 2
-kilosort_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date],
+experiment = 1
+kilosort_folder = join(const.base_save_folder, const.experiment_folders[experiment],
                        'Analysis', 'Kilosort')
-binary_data_filename = join(const.base_save_folder, const.rat_folder, const.date_folders[date],
+binary_data_filename = join(const.base_save_folder, const.experiment_folders[experiment],
                             'Data', 'Amplifier_APs.bin')
-tsne_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date],
+tsne_folder = join(const.base_save_folder, const.experiment_folders[experiment],
                    'Analysis', 'Tsne')
 # ----------------------------------------------------------------
 
 
 # CLEANING THE KILOSORT RESULTS ----------------------------------
 
-'''
+
 # Create once the data cube of the average template spike
 c_cubes.generate_average_over_spikes_per_template_multiprocess(kilosort_folder,
                                                                binary_data_filename,
                                                                const.NUMBER_OF_CHANNELS_IN_BINARY_FILE,
                                                                cut_time_points_around_spike=100)
-'''
+
 
 # Run the GUI that helps clean the templates
 clean.cleanup_kilosorted_data(kilosort_folder,
                               number_of_channels_in_binary_file=const.NUMBER_OF_CHANNELS_IN_BINARY_FILE,
                               binary_data_filename=binary_data_filename,
                               prb_file=const.prb_file,
-                              type_of_binary=const.BINARY_FILE_ENCODING,
+                              type_of_binary=np.float16,
                               order_of_binary='F',
                               sampling_frequency=20000,
                               num_of_shanks_for_vis=5)
@@ -63,7 +56,7 @@ number_of_raw_spikes = len(templates_of_spikes)
 template_markings = preproc_kilo.get_template_marking(kilosort_folder)
 clean_templates = np.argwhere(template_markings > 0)
 number_of_clean_templates = len(clean_templates)
-clean_spikes = np.squeeze(np.argwhere(np.in1d(templates_of_spikes, clean_templates) > 0))
+clean_spikes = np.argwhere(np.in1d(templates_of_spikes, clean_templates) > 0)
 number_of_clean_spikes = len(clean_spikes)
 
 
@@ -76,15 +69,8 @@ representative_indices, small_templates, large_templates = \
 template_features_matrix = preproc_kilo.calculate_template_features_matrix_for_tsne(kilosort_folder, tsne_folder,
                                                                                     spikes_used_with_original_indexing=
                                                                                     representative_indices)
+
 template_features_matrix = np.load(join(tsne_folder, 'data_to_tsne_(699973, 762).npy'))
-
-# OR
-template_features_matrix = preproc_kilo.calculate_template_features_matrix_for_tsne(kilosort_folder, tsne_folder,
-                                                                                    spikes_used_with_original_indexing=
-                                                                                    clean_spikes)
-template_features_matrix = np.load(join(tsne_folder, 'data_to_tsne_(85271, 286).npy'))
-
-
 
 
 # First run of t-sne
@@ -110,6 +96,7 @@ verbose = 3
 
 tsne_results = tsne.t_sne_from_existing_distances(files_dir=tsne_folder, data_has_exageration=True, num_dims=num_dims,
                                                   theta=theta, iterations=iterations, random_seed=random_seed,
+                                                  verbose=verbose, exe_dir=r'E:\Software\Develop\Source\Repos\spikesorting_tsne_bhpart\Barnes_Hut\win\x64\Release')
 spike_info = preproc_kilo.generate_spike_info(kilosort_folder=kilosort_folder, tsne_folder=tsne_folder)
 
 

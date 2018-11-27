@@ -21,3 +21,10 @@ NUMBER_OF_CHANNELS_IN_BINARY_FILE = 1368
 BINARY_FILE_ENCODING = np.int16
 CAMERA_TTL_PULSES_TIMEPOINT_PERIOD = 158
 
+
+PROBE_DIMENSIONS = [100, 8100]
+POSITION_MULT = 2.25
+
+BRAIN_REGIONS = {'Cortex LPA': 8100, 'Corpus Calosum': 6240, 'CA1': 5780, 'CA2': 5190, 'CA3': 4870,
+                 'Thalamus LPLR': 4250, 'Thalamus Po': 3300, 'Thalamus VPM': 2660,
+                 'Zona Incerta': 1180, 'Subthalamic Nuclei': 200}

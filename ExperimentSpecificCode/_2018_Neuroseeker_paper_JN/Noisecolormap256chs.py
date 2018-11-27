@@ -1,7 +1,6 @@
 import itertools
 import os
 import warnings
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -9,66 +8,43 @@ import scipy.interpolate as interpolate
 import scipy.signal as signal
 import scipy.stats as stats
 from matplotlib import mlab
-
 import IO.ephys as ephys
 
 
-#Neuroseeker 256 channels
-
+#Plot traces Neuroseeker 256 channels-----------------------------------------------------------------------------------
+#File names
 #256ch probe in saline 2017-02-08
 raw_data_file_ivm = r'Z:\j\Neuroseeker256ch\Type1_Probe6\2017-02-08\Data\Noise saline\amplifier2017-02-07T18_12_22_int16.bin'
+
+
+#Open data
 num_ivm_channels = 256
 amp_dtype = np.int16
-
-
-#256ch probe recording 2017-02-08
-
-#co2
-raw_data_file_ivm = r'Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-08\Datakilosort\Nfilt_Test\nfilt512\amplifier2017-02-08T15_34_04\amplifier2017-02-08T15_34_04_int16.bin'
-num_ivm_channels = 256
-amp_dtype = np.int16
-
-
-#c05
-raw_data_file_ivm =r"Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-22\Datakilosort\amplifier2017-02-23T14_38_33\amplifier2017-02-23T14_38_33_int16.bin"
-
-#cr1
-raw_data_file_ivm =r"Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-16\Datakilosort\amplifier2017-02-16T15_37_59\amplifier2017-02-16T15_37_59_int16.bin"
-
-
-
-
 sampling_freq = 20000
 high_pass_freq = 250
 filtered_data_type = np.float64
 voltage_step_size = 0.195e-6
 scale_uV = 1000000
-
-samples = 3000000 #2.5minutes
-
+samples = 3000000 #2.5 minutes
 raw_data_ivm = ephys.load_raw_data(raw_data_file_ivm, numchannels=num_ivm_channels, dtype=amp_dtype)
 temp_unfiltered = raw_data_ivm.dataMatrix [:, 0:samples]
 temp_unfiltered = temp_unfiltered.astype(filtered_data_type)
 
+
+#High-pass filter
 def highpass(data,BUTTER_ORDER=3, F_HIGH=14250,sampleFreq=30000.0,passFreq=100.0):
     b, a = signal.butter(BUTTER_ORDER,(passFreq/(sampleFreq/2), F_HIGH/(sampleFreq/2)),'pass')
     return signal.filtfilt(b,a,data)
-
 
 temp_filtered = highpass(temp_unfiltered, F_HIGH = (sampling_freq/2)*0.95, sampleFreq = sampling_freq, passFreq = high_pass_freq)
 temp_filtered_uV = temp_filtered * scale_uV * voltage_step_size
 
 
-
-#Plot traces
-
-
+#Plot
 offset_microvolt = 100
-
-time_samples = 100000.0
+time_samples = 100000.0 #5 seconds
 index1 = np.int(temp_filtered_uV.shape[1]/10*9)
 index2 = np.int(index1 + time_samples)
-
 plt.figure()
 for i in np.arange(0, np.shape(temp_filtered_uV)[0]):
     plt.plot(temp_filtered_uV[i,index1:index2].T + (offset_microvolt*i))
@@ -77,10 +53,7 @@ for i in np.arange(0, np.shape(temp_filtered_uV)[0]):
 
 
 
-#RMS
-
-#Protocol 1 to calculate the stdv from noise MEDIAN
-
+#Calculate noise--------------------------------------------------------------------------------------------------------
 noise_median = np.median(np.abs(temp_filtered_uV)/0.6745, axis=1)
 noise_median_average = np.average(noise_median)
 noise_median_stdv = stats.sem(noise_median)
@@ -89,148 +62,21 @@ print('Noise_Median:'+ str(noise_median))
 print('Noise_Median_average:'+ str(noise_median_average))
 print('Noise_Median_stdv:'+ str(noise_median_stdv))
 print('#------------------------------------------------------')
-
 #analysis_folder =r'Z:\j\Neuroseeker256ch\Type1_Probe6\2017-02-08\Data\Noise saline'
 #analysis_folder =r'Z:\j\Neuroseeker256ch\Type1_Probe6\2017-02-08\Datakilosort\Nfilt_Test\nfilt512\amplifier2017-02-08T15_34_04'
-
-analysis_folder =r'Z:\j\Neuroseeker256ch\Type1_Probe6\2017-02-08\Datakilosort\Nfilt_Test\nfilt512'
-analysis_folder =r'Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-22\Datakilosort\amplifier2017-02-23T14_38_33'
+#analysis_folder =r'Z:\j\Neuroseeker256ch\Type1_Probe6\2017-02-08\Datakilosort\Nfilt_Test\nfilt512'
+#analysis_folder =r'Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-22\Datakilosort\amplifier2017-02-23T14_38_33'
 analysis_folder =r'Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-16\Datakilosort\amplifier2017-02-16T15_37_59'
-
 filename_Median = os.path.join(analysis_folder + '\\' + str(high_pass_freq) + 'noise_Median' + '.npy')
-
 np.save(filename_Median, noise_median)
 
-#Protocol 2 to calculate the stdv from noise RMS
-
-# RMS noise level for all channels
-def RMS_calculation(data):
-
-    NumSites = 256
-    RMS = np.zeros(NumSites)
-
-    for i in range(NumSites):
-        RMS[i] = np.sqrt((1/len(data[i]))*np.sum(data[i]**2))
-
-    return RMS
-
-noise_rms = RMS_calculation(temp_filtered_uV)
-noise_rms_average = np.average(noise_rms)
-noise_rms_stdv = stats.sem(noise_rms)
-
-print('#------------------------------------------------------')
-print('RMS:'+ str(noise_rms))
-print('RMS_average:'+ str(noise_rms_average))
-print('RMS_average_stdv:'+ str(noise_rms_stdv))
-print('#------------------------------------------------------')
-
-analysis_folder =r'Z:\j\Neuroseeker256ch\Type1_Probe6\2017-02-08\Datakilosort\Nfilt_Test\nfilt512'
-
-filename_RMS = os.path.join(analysis_folder + '\\' + str(high_pass_freq) + 'noise_RMS' + '.npy')
-
-np.save(filename_RMS, noise_rms)
 
 
-analysis_folder =r'Z:\j\Neuroseeker256ch\Type1_Probe6\2017-02-08\Data\Noise saline'
-filename_RMS = os.path.join(analysis_folder + '\\' + 'noise_RMS' + '.npy')
-np.save(filename_RMS, noise_rms)
-
-
-#plot RMS w colormap
-
-RMSvalues = np.load(filename_RMS)
-RMSvalues_norm_float= RMSvalues / max(RMSvalues)
-RMSvalues_norm = np.round(RMSvalues_norm_float, 1)
-fig = plt.figure()
-ax1 = fig.add_subplot(1,2,1)
-channel_positions = polytrode_256channels(bad_channels=[-1])
-image, scat = plot_topoplot256(ax1, channel_positions, RMSvalues_norm, show=False, interpolation_method='none', gridscale=5, zlimits=[np.min(RMSvalues_norm), np.max(RMSvalues_norm)])
-ax1.set_yticks([], minor=False)
-ax1.set_xticks([], minor=False)
-plt.colorbar(mappable=image, ticks = np.arange(np.min(RMSvalues_norm), np.max(RMSvalues_norm), 0.1))
-plt.title('Noise_RMS_values')
-plt.show()
-
-
-Medianvalues = np.load(filename_Median)
-fig = plt.figure()
-ax1 = fig.add_subplot(1,2,1)
-channel_positions = polytrode_256channels(bad_channels=[-1])
-image, scat = plot_topoplot256(ax1, channel_positions, Medianvalues, show=False, interpolation_method='none', gridscale=5, zlimits=[np.min(Medianvalues), np.max(Medianvalues)])
-ax1.set_yticks([], minor=False)
-ax1.set_xticks([], minor=False)
-plt.colorbar(mappable=image, ticks = np.arange(np.min(Medianvalues), np.max(Medianvalues), 0.1))
-plt.title('Noise_Median_values')
-plt.show()
-
-# Compare impedance vs RMS in saline and brain recording
-
-#impedance
-impedancevalues = np.genfromtxt(r'Z:\j\Neuroseeker256ch\Type1_Probe6\2017-02-08\impedance-2017-02-08.txt')
-impedancevalues_MOhm = impedancevalues*0.000001
-impedancevalues_MOhm[impedancevalues_MOhm > 2] = 0
-impedancevalues_MOhm_norm_float = impedancevalues_MOhm / max(impedancevalues_MOhm)
-impedancevalues_MOhm_norm = np.round(impedancevalues_MOhm_norm_float, 1)
-fig = plt.figure()
-ax1 = fig.add_subplot(1,2,1)
-channel_positions=polytrode_256channels(bad_channels=[-1])
-image, scat = plot_topoplot256(ax1, channel_positions,impedancevalues_MOhm_norm, show=False, interpolation_method='none', gridscale=5, zlimits=[np.min(impedancevalues_MOhm_norm), np.max(impedancevalues_MOhm_norm)])
-ax1.set_yticks([], minor=False)
-ax1.set_xticks([], minor=False)
-plt.title('Impedance_values_saline')
-plt.colorbar(mappable=image, ticks = np.arange(np.min(impedancevalues_MOhm_norm), np.max(impedancevalues_MOhm_norm), 0.1))
-plt.show()
-
-#saline
-filename_RMS_saline = r'E:\Paper Impedance\256chNeuroseeker\Noise\Saline\Noise saline\250noise_RMS.npy'
-
-RMSvalues_saline = np.load(filename_RMS_saline)
-RMSvalues_norm_float= RMSvalues_saline / max(RMSvalues_saline)
-RMSvalues_norm = np.round(RMSvalues_norm_float, 1)
-fig = plt.figure()
-ax1 = fig.add_subplot(1,2,1)
-channel_positions = polytrode_256channels(bad_channels=[-1])
-image, scat = plot_topoplot256(ax1, channel_positions, RMSvalues_norm, show=False, interpolation_method='none', gridscale=5, zlimits=[np.min(RMSvalues_norm), np.max(RMSvalues_norm)])
-ax1.set_yticks([], minor=False)
-ax1.set_xticks([], minor=False)
-plt.colorbar(mappable=image, ticks = np.arange(np.min(RMSvalues_norm), np.max(RMSvalues_norm), 0.1))
-plt.title('Noise_RMS_values_saline')
-plt.show()
-
-
-#brain
-filename_RMS_brain = r'E:\Paper Impedance\256chNeuroseeker\Noise\amplifier2017-02-08T15_34_04\250noise_RMS.npy'
-filename_RMS_brain =r"Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-22\Datakilosort\amplifier2017-02-23T14_38_33\250noise_Median.npy"
-
-RMSvalues_brain = np.load(filename_RMS_brain)
-#RMSvalues_norm_float= RMSvalues_brain / max(RMSvalues_brain)
-#RMSvalues_norm = np.round(RMSvalues_norm_float, 1)
-fig = plt.figure()
-ax1 = fig.add_subplot(1,2,1)
-channel_positions = polytrode_256channels(bad_channels=[-1])
-image, scat = plot_topoplot256(ax1, channel_positions, RMSvalues_brain, show=False, interpolation_method='none', gridscale=5, zlimits=[np.min(RMSvalues_brain), np.max(RMSvalues_brain)])
-ax1.set_yticks([], minor=False)
-ax1.set_xticks([], minor=False)
-plt.colorbar(mappable=image)
-plt.title('Noise_RMS_values_15_34_04')
-plt.show()
-
-#plot and compare impedance vs RMS saline vs brain
-
-plt.figure()
-plt.scatter(np.arange(num_ivm_channels), RMSvalues_saline, color='g')
-plt.scatter(np.arange(num_ivm_channels), RMSvalues_brain, color='r')
-plt.scatter(np.arange(num_ivm_channels),impedancevalues_MOhm)
-triggerline(np.arange(num_ivm_channels))
-
-# Plot a line at time x------------------------------------------------------------------------------------------------
-
+#Plot colormaps---------------------------------------------------------------------------------------------------------
 def triggerline(x, **kwargs):
     if x is not None:
         ylim = plt.ylim()
         plt.vlines(x,ylim[0],ylim[1],alpha=0.4)
-
-
 
 def polytrode_256channels(bad_channels=[]):
     '''
@@ -248,7 +94,7 @@ def polytrode_256channels(bad_channels=[]):
     electrode_coordinate_grid = list(itertools.product(np.arange(0, 18),
                                                        np.arange(0, 15)))
 
-    electrode_amplifier_index_on_grid = np.genfromtxt(r"Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-08\chanmap256.csv", delimiter=",")
+    electrode_amplifier_index_on_grid = np.genfromtxt(r"Z:\labs2\kampff\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-08\chanmap256.csv", delimiter=",")
 
     electrode_amplifier_index_on_grid = electrode_amplifier_index_on_grid.astype(np.int16)
 
@@ -257,6 +103,8 @@ def polytrode_256channels(bad_channels=[]):
 
     electrode_amplifier_index_on_grid = reshaped
     electrode_amplifier_name_on_grid = np.array(["Int"+str(x) for x in electrode_amplifier_index_on_grid])
+
+
     indices_arrays = [electrode_amplifier_index_on_grid.tolist(), electrode_amplifier_name_on_grid.tolist()]
     indices_tuples = list(zip(*indices_arrays))
 
@@ -336,7 +184,7 @@ def plot_topoplot256(axis, channel_positions, data, show=True, **kwargs):
         These will create unexpected results in the interpolation. \
         Deal with them.')
 
-    channel_positions = channel_positions.sort('Numbers', ascending=True)
+    channel_positions = channel_positions.sort_values('Numbers', ascending=True)
     channel_positions = np.array([[x, y] for x, y in channel_positions.Positions])
     allCoordinates = channel_positions
 
@@ -389,11 +237,140 @@ def plot_topoplot256(axis, channel_positions, data, show=True, **kwargs):
         plt.show()
     return image, scat
 
+#Figure 3 Supplementary material----------------------------------------------------------------------------------------
+#Plot noise w colormap
+Medianvalues = np.load(filename_Median)
+fig = plt.figure()
+ax1 = fig.add_subplot(1,2,1)
+channel_positions = polytrode_256channels(bad_channels=[-1])
+image, scat = plot_topoplot256(ax1, channel_positions, Medianvalues, show=False, interpolation_method='none', gridscale=5, zlimits=[np.min(Medianvalues), np.max(Medianvalues)])
+ax1.set_yticks([], minor=False)
+ax1.set_xticks([], minor=False)
+plt.colorbar(mappable=image, ticks = np.arange(np.min(Medianvalues), np.max(Medianvalues), 0.1))
+plt.title('Noise_Median_values')
+plt.show()
+#Plot impedance w colormap
+impedancevalues = np.genfromtxt(r"Z:\labs2\kampff\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-08\impedance-2017-02-08.txt")
+impedancevalues_MOhm = impedancevalues*0.000001
+impedancevalues_MOhm[impedancevalues_MOhm > 2] = 0
+impedancevalues_MOhm_norm_float = impedancevalues_MOhm / max(impedancevalues_MOhm)
+impedancevalues_MOhm_norm = np.round(impedancevalues_MOhm_norm_float, 1)
+fig = plt.figure()
+ax1 = fig.add_subplot(1,2,1)
+channel_positions=polytrode_256channels(bad_channels=[-1])
+image, scat = plot_topoplot256(ax1, channel_positions,impedancevalues_MOhm_norm, show=False, interpolation_method='none', gridscale=5, zlimits=[np.min(impedancevalues_MOhm_norm), np.max(impedancevalues_MOhm_norm)])
+ax1.set_yticks([], minor=False)
+ax1.set_xticks([], minor=False)
+plt.title('Impedance_values_saline')
+plt.colorbar(mappable=image, ticks = np.arange(np.min(impedancevalues_MOhm_norm), np.max(impedancevalues_MOhm_norm), 0.1))
+plt.show()
 
 
-#SPD
 
-# All Channels 256channels
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#code not in use
+
+#256ch probe in acute recordings 2017-02-08
+#co2
+raw_data_file_ivm = r'Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-08\Datakilosort\Nfilt_Test\nfilt512\amplifier2017-02-08T15_34_04\amplifier2017-02-08T15_34_04_int16.bin'
+#c05
+raw_data_file_ivm =r"Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-22\Datakilosort\amplifier2017-02-23T14_38_33\amplifier2017-02-23T14_38_33_int16.bin"
+#cr1
+raw_data_file_ivm =r"Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-16\Datakilosort\amplifier2017-02-16T15_37_59\amplifier2017-02-16T15_37_59_int16.bin"
+
+
+#Protocol 2: RMS noise level for all channels
+def RMS_calculation(data):
+
+    NumSites = 256
+    RMS = np.zeros(NumSites)
+
+    for i in range(NumSites):
+        RMS[i] = np.sqrt((1/len(data[i]))*np.sum(data[i]**2))
+
+    return RMS
+
+noise_rms = RMS_calculation(temp_filtered_uV)
+noise_rms_average = np.average(noise_rms)
+noise_rms_stdv = stats.sem(noise_rms)
+
+print('#------------------------------------------------------')
+print('RMS:'+ str(noise_rms))
+print('RMS_average:'+ str(noise_rms_average))
+print('RMS_average_stdv:'+ str(noise_rms_stdv))
+print('#------------------------------------------------------')
+
+analysis_folder =r'Z:\j\Neuroseeker256ch\Type1_Probe6\2017-02-08\Datakilosort\Nfilt_Test\nfilt512'
+
+filename_RMS = os.path.join(analysis_folder + '\\' + str(high_pass_freq) + 'noise_RMS' + '.npy')
+
+np.save(filename_RMS, noise_rms)
+
+
+analysis_folder =r'Z:\j\Neuroseeker256ch\Type1_Probe6\2017-02-08\Data\Noise saline'
+filename_RMS = os.path.join(analysis_folder + '\\' + 'noise_RMS' + '.npy')
+np.save(filename_RMS, noise_rms)
+
+#RMS noise w color
+RMSvalues = np.load(filename_RMS)
+RMSvalues_norm_float= RMSvalues / max(RMSvalues)
+RMSvalues_norm = np.round(RMSvalues_norm_float, 1)
+fig = plt.figure()
+ax1 = fig.add_subplot(1,2,1)
+channel_positions = polytrode_256channels(bad_channels=[-1])
+image, scat = plot_topoplot256(ax1, channel_positions, RMSvalues_norm, show=False, interpolation_method='none', gridscale=5, zlimits=[np.min(RMSvalues_norm), np.max(RMSvalues_norm)])
+ax1.set_yticks([], minor=False)
+ax1.set_xticks([], minor=False)
+plt.colorbar(mappable=image, ticks = np.arange(np.min(RMSvalues_norm), np.max(RMSvalues_norm), 0.1))
+plt.title('Noise_RMS_values')
+plt.show()
+
+
+#SPD--------------------------------------------------------------------------------------------------------------------
+
+# All Channels: 256channels
 plt.figure()
 Pxx_dens_g =[]
 for i in np.arange(num_ivm_channels):
@@ -417,7 +394,6 @@ filename_power = os.path.join(r'E:\Paper Impedance\256chNeuroseeker\Noise\Saline
 np.save(filename_power, Pxx_dens_g_tranp)
 
 #Integration of power across frequencies
-
 power_channels = []
 for i in np.arange(num_ivm_channels):
     integrate_power = np.trapz(Pxx_dens_g_matrix[i][500:7500])
@@ -429,7 +405,10 @@ power = np.append(np.arange(num_ivm_channels).reshape(num_ivm_channels,1), power
 np.savetxt(r'E:\Paper Impedance\256chNeuroseeker\Noise\Saline\SPD' + 'Powerintegration_' + str(high_pass_freq) + 'Hz' + '.txt', power, delimiter=',')
 
 
-# All GOD channels 239channels
+
+
+
+#GOD channels: 239channels
 bad_channels = [7, 8, 19, 28, 30, 32, 34, 94, 131, 137, 148, 149, 151, 162, 171, 232, 31]
 channels = np.delete(np.arange(num_ivm_channels), bad_channels)
 
@@ -456,7 +435,6 @@ filename_power = os.path.join(r'E:\Paper Impedance\256chNeuroseeker\Noise\Saline
 np.save(filename_power, Pxx_dens_g_tranp)
 
 #Integration of power across frequencies
-
 power_channels = []
 for i in np.arange(channels.shape[0]):
     integrate_power = np.trapz(Pxx_dens_g_matrix[i][500:7500])
@@ -466,3 +444,67 @@ power_matrix = np.array(power_channels)
 power = np.append(channels.reshape(239,1), power_matrix.reshape(239,1), 1)
 
 np.savetxt(r'E:\Paper Impedance\256chNeuroseeker\Noise\Saline\SPD' + 'Powerintegration_' + str(high_pass_freq) + 'Hz' + '.txt', power, delimiter=',')
+
+
+
+#Noise in saline w colormap
+filename_RMS_saline = r'E:\Paper Impedance\256chNeuroseeker\Noise\Saline\Noise saline\250noise_RMS.npy'
+RMSvalues_saline = np.load(filename_RMS_saline)
+RMSvalues_saline =noise_median
+RMSvalues_norm_float= RMSvalues_saline / max(RMSvalues_saline)
+RMSvalues_norm = np.round(RMSvalues_norm_float, 1)
+fig = plt.figure()
+ax1 = fig.add_subplot(1,2,1)
+channel_positions = polytrode_256channels(bad_channels=[-1])
+image, scat = plot_topoplot256(ax1, channel_positions, RMSvalues_norm, show=False, interpolation_method='none', gridscale=5, zlimits=[np.min(RMSvalues_norm), np.max(RMSvalues_norm)])
+ax1.set_yticks([], minor=False)
+ax1.set_xticks([], minor=False)
+plt.colorbar(mappable=image, ticks = np.arange(np.min(RMSvalues_norm), np.max(RMSvalues_norm), 0.1))
+plt.title('Noise_RMS_values_saline')
+plt.show()
+
+
+
+
+
+
+#Scaterplot impedance vs noise saline and noise brain-------------------------------------------------------------------
+plt.figure()
+plt.scatter(np.arange(num_ivm_channels), RMSvalues_saline, color='g')
+plt.scatter(np.arange(num_ivm_channels), RMSvalues_brain, color='r')
+plt.scatter(np.arange(num_ivm_channels),impedancevalues_MOhm)
+triggerline(np.arange(num_ivm_channels))
+
+
+
+#Plot noise in brain w colormap
+#filename_RMS_brain = r'E:\Paper Impedance\256chNeuroseeker\Noise\amplifier2017-02-08T15_34_04\250noise_RMS.npy'
+filename_RMS_brain =r"Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-22\Datakilosort\amplifier2017-02-23T14_38_33\250noise_Median.npy"
+RMSvalues_brain = np.load(filename_RMS_brain)
+#RMSvalues_norm_float= RMSvalues_brain / max(RMSvalues_brain)
+#RMSvalues_norm = np.round(RMSvalues_norm_float, 1)
+fig = plt.figure()
+ax1 = fig.add_subplot(1,2,1)
+channel_positions = polytrode_256channels(bad_channels=[-1])
+image, scat = plot_topoplot256(ax1, channel_positions, RMSvalues_brain, show=False, interpolation_method='none', gridscale=5, zlimits=[np.min(RMSvalues_brain), np.max(RMSvalues_brain)])
+ax1.set_yticks([], minor=False)
+ax1.set_xticks([], minor=False)
+plt.colorbar(mappable=image)
+plt.title('Noise_RMS_values_15_34_04')
+plt.show()
+
+#Plot noise in brain w colormap
+#filename_RMS_brain = r'E:\Paper Impedance\256chNeuroseeker\Noise\amplifier2017-02-08T15_34_04\250noise_RMS.npy'
+filename_RMS_brain =r"Z:\j\Joana Neto\Neuroseeker256ch\Type1_Probe6\2017-02-22\Datakilosort\amplifier2017-02-23T14_38_33\250noise_Median.npy"
+RMSvalues_brain = np.load(filename_RMS_brain)
+#RMSvalues_norm_float= RMSvalues_brain / max(RMSvalues_brain)
+#RMSvalues_norm = np.round(RMSvalues_norm_float, 1)
+fig = plt.figure()
+ax1 = fig.add_subplot(1,2,1)
+channel_positions = polytrode_256channels(bad_channels=[-1])
+image, scat = plot_topoplot256(ax1, channel_positions, RMSvalues_brain, show=False, interpolation_method='none', gridscale=5, zlimits=[np.min(RMSvalues_brain), np.max(RMSvalues_brain)])
+ax1.set_yticks([], minor=False)
+ax1.set_xticks([], minor=False)
+plt.colorbar(mappable=image)
+plt.title('Noise_RMS_values_15_34_04')
+plt.show()
