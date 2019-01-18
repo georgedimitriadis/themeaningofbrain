@@ -60,12 +60,16 @@ def generate_average_over_spikes_per_template_multiprocess(base_folder,
                                                            number_of_channels_in_binary_file,
                                                            cut_time_points_around_spike=100):
     channel_map = np.load(join(base_folder, 'channel_map.npy'))
-    active_channel_map = np.squeeze(channel_map, axis=1)
+    if len(channel_map.shape) > 1:
+        active_channel_map = np.squeeze(channel_map, axis=1)
+    else:
+        active_channel_map = channel_map
 
     spike_templates = np.load(join(base_folder, r'spike_templates.npy'))
-    template_feature_ind = np.load(join(base_folder, 'template_feature_ind.npy'))
-    number_of_templates = template_feature_ind.shape[0]
-
+    #template_feature_ind = np.load(join(base_folder, 'template_feature_ind.npy'))
+    #number_of_templates = template_feature_ind.shape[0]
+    templates = np.load(join(base_folder, 'templates.npy'))
+    number_of_templates = templates.shape[0]
     spike_times = np.squeeze(np.load(join(base_folder, 'spike_times.npy')).astype(np.int))
 
     num_of_channels = active_channel_map.size

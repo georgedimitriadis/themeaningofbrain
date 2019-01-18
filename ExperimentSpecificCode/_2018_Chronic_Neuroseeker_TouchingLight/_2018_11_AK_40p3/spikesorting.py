@@ -3,7 +3,8 @@
 import numpy as np
 import pandas as pd
 from os.path import join
-from GUIs.Kilosort import clean_kilosort_templates as clean
+#from GUIs.Kilosort import clean_kilosort_templates as clean
+from spikesorting_tsne_guis import clean_kilosort_templates as clean
 from GUIs.Kilosort import create_data_cubes as c_cubes
 from Layouts.Probes.Neuroseeker import probes_neuroseeker as ps
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_11_AK_40p3 import constants as const
@@ -16,9 +17,11 @@ from spikesorting_tsne import tsne, visualization as viz, preprocessing_kilosort
 # ----------------------------------------------------------------
 
 # FOLDERS NAMES --------------------------------------------------
-experiment = 1
+experiment = 3
 kilosort_folder = join(const.base_save_folder, const.experiment_folders[experiment],
                        'Analysis', 'Kilosort')
+spyking_circus_folder = join(const.base_save_folder, const.experiment_folders[experiment],
+                       'Analysis', r'SpykingCircus\data\data.GUI')
 binary_data_filename = join(const.base_save_folder, const.experiment_folders[experiment],
                             'Data', 'Amplifier_APs.bin')
 tsne_folder = join(const.base_save_folder, const.experiment_folders[experiment],
@@ -34,10 +37,14 @@ c_cubes.generate_average_over_spikes_per_template_multiprocess(kilosort_folder,
                                                                binary_data_filename,
                                                                const.NUMBER_OF_CHANNELS_IN_BINARY_FILE,
                                                                cut_time_points_around_spike=100)
+c_cubes.generate_average_over_spikes_per_template_multiprocess(spyking_circus_folder,
+                                                               binary_data_filename,
+                                                               NUMBER_OF_CHANNELS_IN_BINARY_FILE,
+                                                               cut_time_points_around_spike=50)
 
 
 # Run the GUI that helps clean the templates
-clean.cleanup_kilosorted_data(kilosort_folder,
+clean.cleanup_kilosorted_data(spyking_circus_folder,
                               number_of_channels_in_binary_file=const.NUMBER_OF_CHANNELS_IN_BINARY_FILE,
                               binary_data_filename=binary_data_filename,
                               prb_file=const.prb_file,

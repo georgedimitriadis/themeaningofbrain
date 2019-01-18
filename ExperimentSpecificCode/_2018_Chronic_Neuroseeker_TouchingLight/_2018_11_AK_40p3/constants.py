@@ -6,10 +6,12 @@ probe_layout_folder = r'E:\Software\Develop\Source\Repos\Python35Projects\TheMea
 prb_file = path.join(probe_layout_folder, 'ap_only_prb.txt')
 
 
-base_save_folder = r'D:\Data\George\Neuroseeker chronic'
+base_save_folder = r'F:\Neuroseeker chronic'
 
 
-experiment_folders = {1: r'AK_40.3_AK_40.4\2018_11_22-10_31'}
+experiment_folders = {1: r'AK_40.3_AK_40.4\2018_11_22-10_31',
+                      2: r'AK_40.3\2018_12_05-16_18',
+                      3: r'AK_40.3\2018_12_11-11_29'}
 
 
 NUMBER_OF_CHANNELS_IN_BINARY_FILE = 1368

@@ -11,8 +11,11 @@ try:
 except:  # Exception
     from GUIs.VideoAnnotator import custom_viewbox
 
-data_folder = r'D:\Data\Danby\L1-H2013-03_2014-09-09_TS02'
-video_file = r'L1-H2013-03_2014-09-09_TS02_raw.avi'
+#data_folder = r'D:\Data\Danby\L1-H2013-03_2014-09-09_TS02'
+#video_file = r'L1-H2013-03_2014-09-09_TS02_raw.avi'
+
+data_folder = r'D:\Data\George\AK_33.1\2018_04_30-11_38\Data'
+video_file = 'Video.avi'
 
 
 cap = cv2.VideoCapture(join(data_folder, video_file))

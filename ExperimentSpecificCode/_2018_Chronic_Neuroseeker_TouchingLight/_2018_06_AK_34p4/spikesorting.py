@@ -109,7 +109,7 @@ random_seed = 1
 verbose = 3
 
 tsne_results = tsne.t_sne_from_existing_distances(files_dir=tsne_folder, data_has_exageration=True, num_dims=num_dims,
-                                                  theta=theta, iterations=iterations, random_seed=random_seed,
+                                                  theta=theta, iterations=iterations, random_seed=random_seed, verbose=2)
 spike_info = preproc_kilo.generate_spike_info(kilosort_folder=kilosort_folder, tsne_folder=tsne_folder)
 
 
