@@ -30,8 +30,8 @@ def video_csv_as_dataframe(video_csv_file):
     :param video_csv_file: the Video.csv file
     :return: The DataFrame
     """
-    video_record = pd.read_csv(video_csv_file, sep='T|:|\+|00 ', engine='python', header=None)
-    video_record.columns = ['Date', 'Hour', 'Minute', 'Second', 'FrameAdded', 'Nothing', 'FrameNumber']
+    video_record = pd.read_csv(video_csv_file, sep='-|T|:|\+|00 ', engine='python', header=None)
+    video_record.columns = ['Year', 'Month', 'Day', 'Hour', 'Minute', 'Second', 'FrameAdded', 'Nothing', 'FrameNumber']
     video_record = video_record.drop('Nothing', axis=1)
     return video_record
 
@@ -85,7 +85,3 @@ def get_rat_positions_from_bonsai_image_processing(csvfile):
     positions_df.columns = ['Frame', 'Brother XY', 'Recorded XY']
 
 
-
-
-#pandas.concat([pandas.DataFrame([row], columns=['date_time', 'name', 'info']) for row in events_csv_reader],
-#              ignore_index=True)
