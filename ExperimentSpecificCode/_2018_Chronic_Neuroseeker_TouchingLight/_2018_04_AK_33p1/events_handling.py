@@ -35,7 +35,7 @@ for event_type in sync_funcs.event_types:
 # ----------------------------------
 
 
-#  Load the pre generated DataFrames for the event csvs
+#  Load the pre generated DataFrames for the event CSVs
 def camel_to_snake_converter(string):
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', string)
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
@@ -55,10 +55,6 @@ points_per_pulse = np.mean(np.diff(camera_pulses))
 
 camera_frames_in_video = csv_funcs.get_true_frame_array(data_folder)
 time_point_of_first_video_frame = camera_pulses[camera_frames_in_video][0]
-
-
-def get_sync_point_from_video_frame(x):
-    return int(time_point_of_first_video_frame + (camera_frames_in_video[x] * points_per_pulse))
 # ----------------------------------
 
 
@@ -77,36 +73,23 @@ sv.graph_range(globals(), 'sync_point', 'sync_range', 'sync')
 # ----------------------------------
 
 
-# Connect the sync trace gui to the video gui
-def frame_to_time_point(x):
-    return get_sync_point_from_video_frame(x)
-
-
-tr.connect_repl_var(globals(), 'video_frame', 'frame_to_time_point', 'sync_point')
-# ----------------------------------
-
-
 # Connect the video gui to the sync trace gui
 def time_point_to_frame(x):
-    true_frame = int((x - time_point_of_first_video_frame) / points_per_pulse)
-
-    if true_frame < 0:
-        vf = 0
-    elif true_frame > len(camera_frames_in_video):
-        vf = len(camera_frames_in_video) - 1
-    else:
-        vf = np.argwhere(camera_frames_in_video == true_frame).squeeze()
-
-    if vf.__class__ is not int:
-        while vf.size == 0:
-            true_frame -= 1
-            vf = np.argwhere(camera_frames_in_video == true_frame).squeeze()
-        vf = vf.tolist()
-
-    return vf
+    return sync_funcs.time_point_to_frame(time_point_of_first_video_frame, camera_frames_in_video,
+                                          points_per_pulse, x)
 
 
 tr.connect_repl_var(globals(), 'sync_point', 'time_point_to_frame', 'video_frame')
+# ----------------------------------
+
+
+# Connect the sync trace gui to the video gui
+def frame_to_time_point(x):
+    return sync_funcs.frame_to_time_point(time_point_of_first_video_frame, camera_frames_in_video,
+                                                     points_per_pulse, x)
+
+
+tr.connect_repl_var(globals(), 'video_frame', 'frame_to_time_point', 'sync_point')
 # ----------------------------------
 
 # Connect the video gui to a gui showing if the sound is on
@@ -114,10 +97,11 @@ sound_on = False
 
 
 def is_sound_on(x):
-    sync_point = get_sync_point_from_video_frame(x)
+    time_point = sync_funcs.frame_to_time_point(time_point_of_first_video_frame, camera_frames_in_video,
+                                                     points_per_pulse, x)
     result = False
     for sound_period in sounds:
-        if sound_period[0] < sync_point and sound_period[1] > sync_point:
+        if sound_period[0] < time_point and sound_period[1] > time_point:
             result = True
 
     return result
@@ -131,10 +115,11 @@ beam_broken = False
 
 
 def is_beam_broken(x):
-    sync_point = get_sync_point_from_video_frame(x)
+    time_point = sync_funcs.frame_to_time_point(time_point_of_first_video_frame, camera_frames_in_video,
+                                                points_per_pulse, x)
     result = False
     for beam_period in beam_breaks:
-        if beam_period[0] > sync_point and beam_period[1] < sync_point:
+        if beam_period[0] < time_point and beam_period[1] > time_point:
             result = True
 
     return result
@@ -148,5 +133,5 @@ trial_end_points = ev_rat_touch_ball['AmpTimePoints'].tolist()
 dd.connect_repl_var(globals(), 'trial_end_points', 'sync_point')
 
 
-f = 0
-vv.video(globals(), 'f', 'video_file')
+key_frame = 0
+vv.video(globals(), 'key_frame', 'video_file')

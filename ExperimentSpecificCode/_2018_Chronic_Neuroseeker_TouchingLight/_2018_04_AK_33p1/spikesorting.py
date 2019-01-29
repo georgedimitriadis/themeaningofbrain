@@ -37,7 +37,7 @@ c_cubes.generate_average_over_spikes_per_template_multiprocess(kilosort_folder,
 
 # Run the GUI that helps clean the templates
 clean.cleanup_kilosorted_data(kilosort_folder,
-                              number_of_channels_in_binary_file=const.NUMBER_OF_CHANNELS_IN_BINARY_FILE,
+                              number_of_channels_in_binary_file=const.NUMBER_OF_AP_CHANNELS_IN_BINARY_FILE,
                               binary_data_filename=binary_data_filename,
                               prb_file=const.prb_file,
                               type_of_binary=np.float16,

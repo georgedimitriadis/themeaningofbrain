@@ -53,37 +53,6 @@ def find_nearest(array, value):
     return idx, array[idx]
 
 
-def _find_single_bit_in_sync(sync_file, bit):
-    """
-    Finds the position in the sync data of the requested bit.
-    :param sync_file: The binary file with the sync data
-    :param bit: The bit number (see the bits dictionary)
-    :return: The indices in the sync file where the bit appears
-    """
-    sync_data = np.fromfile(sync_file, np.uint16).astype(np.int32)
-    sync_data_zeroed = sync_data - sync_data.min()
-    bit_on = sync_data_zeroed & bits[bit]
-    bit_start = np.argwhere(np.diff(bit_on) < 0).squeeze()
-
-    return bit_start
-
-
-def _find_pairs_of_bits_in_sync(sync_file, bit):
-    """
-    Finds the start and end positions in the sync data of the requested bit.
-    :param sync_file: The binary file with the sync data
-    :param bit: The bit number (see the bits dictionary)
-    :return: The array of tuples (pairs) of indices in the sync file where the bit appears and disappears
-    """
-    sync_data = np.fromfile(sync_file, np.uint16).astype(np.int32)
-    sync_data_zeroed = sync_data - sync_data.min()
-    bit_on = sync_data_zeroed & bits[bit]
-    bit_start = np.argwhere(np.diff(bit_on) > 0).squeeze()
-    bit_end = np.argwhere(np.diff(bit_on) < 0).squeeze()
-
-    return np.array(list(zip(bit_start, bit_end)))
-
-
 def _find_bit_in_sync(sync_file, bit, direction):
     """
     Finds the bit in the sync file and returns the time points that there is a transition (given by the direction parameter).
@@ -127,7 +96,6 @@ def _generate_camera_pulses(sync_file, clean=False, cam_ttl_pulse_period=158):
     :return: The array of indices in the sync file (time points) where the camera sent a pulse in
     """
     bit = 'CAMERA'
-    #ones_up = _find_single_bit_in_sync(sync_file, bit)
     ones_up = _find_bit_in_sync(sync_file, bit, 'up')
     camera_pulses = ones_up
 
@@ -231,6 +199,7 @@ def get_amp_time_point_from_computer_time(correspondance_dataframe, datetime):
     :param datetime: The datetime Timestamp to get the time points of
     :return: The time point corresponding to the datetime
     """
+    sampling_period_in_milliseconds = 20
     items = correspondance_dataframe['ComputerTime']
     index = (np.abs(items - datetime)).values.argmin()
     t1 = items.iloc[index]
@@ -243,13 +212,13 @@ def get_amp_time_point_from_computer_time(correspondance_dataframe, datetime):
     if datetime < correspondance_dataframe['ComputerTime'].iloc[0]:
         print('The datetime provided {} is smaller than the first video frame time'.format(datetime))
         dt = (correspondance_dataframe['ComputerTime'].iloc[0] - datetime)/np.timedelta64(1, 'ms')
-        dp = dt * 20
+        dp = dt * sampling_period_in_milliseconds
         p3 = p1 - dp
 
     elif datetime > correspondance_dataframe['ComputerTime'].iloc[-1]:
         print('The datetime provided {} is larger than the last video frame time'.format(datetime))
         dt = (datetime - correspondance_dataframe['ComputerTime'].iloc[-1]) / np.timedelta64(1, 'ms')
-        dp = dt * 20
+        dp = dt * sampling_period_in_milliseconds
         p3 = p1 + dp
 
     else:
@@ -299,3 +268,48 @@ def get_dataframe_of_event_csv_file(data_folder, event_type):
     df.to_pickle(path.join(data_folder, 'events', event_type + '.pkl'))
 
     return df
+
+
+def frame_to_time_point(time_point_of_first_video_frame, camera_frames_in_video, points_per_pulse, frame):
+    """
+    Get the amplifier time point corresponding to the frame of the video.
+
+    :param time_point_of_first_video_frame:  The time point of the firist video frame
+    :param camera_frames_in_video: The array (with size the number of video frames) that for each element (index
+    corresponds to video frame) gives the corresponding camera pulse number (zero based).
+    :param points_per_pulse: The average points per camera TTL pulse (camera frame)
+    :param frame: The video frame to find
+    :return: The amplifier time point
+    """
+    return int(time_point_of_first_video_frame + (camera_frames_in_video[frame] * points_per_pulse))
+
+
+def time_point_to_frame(time_point_of_first_video_frame, camera_frames_in_video, points_per_pulse, time_point):
+    """
+    Returns the video frame number corresponding to the amplifier time point. If the time point is before (after) the
+    video then the zeroth (last) frame will be returned. Also if the time point corresponds to a dropped camera frame
+    then the nearest past video frame will be returned
+
+    :param time_point_of_first_video_frame: The time point of the first video frame
+    :param camera_frames_in_video: The array (with size the number of video frames) that for each element (index
+    corresponds to video frame) gives the corresponding camera pulse number (zero based).
+    :param points_per_pulse: The average points per camera TTL pulse (camera frame)
+    :param time_point: The amplifier's time point
+    :return: The video frame
+    """
+    true_frame = int((time_point - time_point_of_first_video_frame) / points_per_pulse)
+
+    if true_frame < 0:
+        video_frame = 0
+    elif true_frame > len(camera_frames_in_video):
+        video_frame = len(camera_frames_in_video) - 1
+    else:
+        video_frame = np.argwhere(camera_frames_in_video == true_frame).squeeze()
+
+    if video_frame.__class__ is not int:
+        while video_frame.size == 0:
+            true_frame -= 1
+            video_frame = np.argwhere(camera_frames_in_video == true_frame).squeeze()
+        video_frame = video_frame.tolist()
+
+    return video_frame

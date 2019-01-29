@@ -25,17 +25,33 @@ for channel in np.arange(1440):
 all_channels_height = np.array(all_channels_height_on_probe)
 
 
-def load_binary_amplifier_data(file):
+def load_binary_amplifier_data(file, number_of_channels=1440):
     raw_extracellular_data = np.memmap(file, mode='r', dtype=np.int16)
     raw_extracellular_data = np.reshape(raw_extracellular_data,
-                                        (number_of_channels_in_binary_file,
-                                         int(raw_extracellular_data.shape[0] / number_of_channels_in_binary_file)),
+                                        (number_of_channels,
+                                         int(raw_extracellular_data.shape[0] / number_of_channels)),
                                         order='F')
 
     return raw_extracellular_data
 
 
-def spread_data(data, channels_height, channels_used, row_spacing=0.5):
+def get_channels_heights_for_spread_calulation(channels_used):
+    channels_height_on_probe = []
+
+    for channel in channels_used:
+        row = int(channel / 8) * 2
+        if ((channel % 8) + 1) % 2 != 1:
+            row += 1
+        channels_height_on_probe.append(row * electrode_pitch)
+
+    channels_height = np.array(all_channels_height_on_probe)
+
+    return channels_height
+
+
+def spread_data(data,  channels_height, channels_used=None, row_spacing=0.5):
+    if channels_used is None:
+        channels_used = np.arange(data.shape[0])
 
     data_baseline = (data.T - np.median(data, axis=1).T).T
 
