@@ -37,10 +37,7 @@ CAMERA_TTL_PULSES_TIMEPOINT_PERIOD = 158
 PROBE_DIMENSIONS = [100, 8100]
 POSITION_MULT = 2.25
 
-#BRAIN_REGIONS = {'Cortex MPA': 8070, 'Corpus Calosum': 6600, 'CA1': 6210, 'CA3': 4950,
-#                 'Thalamus LPMR': 4440, 'Thalamus Po': 3550, 'Thalamus VPM': 1950,
-#                 'Zona Incerta': 1250, 'Subthalamic Nucleus': 750, 'Internal Capsule': 300}
 
-BRAIN_REGIONS = {'Cortex MPA': 8070, 'CA1': 6400, 'CA3': 4950,
-                 'Thalamus LPMR': 4440, 'Thalamus Po': 3550, 'Thalamus VPM': 1950,
-                 'Zona Incerta': 1250, 'Subthalamic Nucleus': 750, 'Internal Capsule': 300}
+BRAIN_REGIONS = {'Cortex MPA': 7808, 'CA1': 6200, 'CA3': 5030,
+                 'Thalamus LPMR': 4410, 'Thalamus Po': 3420, 'Thalamus VPM': 2200,
+                 'Zona Incerta': 1210, 'Subthalamic Nucleus': 750, 'Internal Capsule': 300}

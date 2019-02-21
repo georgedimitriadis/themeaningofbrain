@@ -31,7 +31,7 @@ ap_data_panes = np.swapaxes(np.reshape(ap_data, (ap_data.shape[0], int(ap_data.s
 
 
 pane = 120
-colormap = 'RdYlBu'
+colormap = 'jet'
 image_levels = [0, 150]
 sv.image_sequence(globals(), 'pane', 'ap_data_panes', image_levels=image_levels, colormap=colormap, flip='ud')
 
@@ -46,7 +46,7 @@ def spread_lfp_pane(p):
     pane = lfp_data_panes[p, :, :]
     spread = ns_funcs.spread_data(pane, channels_heights, lfp_channels_used)
     spread = np.flipud(spread)
-    return np.expand_dims(spread, 0)
+    return spread
 
 pane_data = None
 tr.connect_repl_var(globals(), 'pane', 'spread_lfp_pane', 'pane_data')
@@ -71,7 +71,8 @@ sv.image_sequence(globals(), 'video_frame', 'video_file')
 
 
 def pane_to_frame(x):
+    time_point = (x + 0.4) * time_points_buffer
     return sync_funcs.time_point_to_frame(time_point_of_first_video_frame, camera_frames_in_video,
-                                                               points_per_pulse, x * time_points_buffer)
+                                                               points_per_pulse, time_point)
 
 tr.connect_repl_var(globals(), 'pane', 'pane_to_frame', 'video_frame')

@@ -39,7 +39,7 @@ c_cubes.generate_average_over_spikes_per_template_multiprocess(kilosort_folder,
                                                                cut_time_points_around_spike=100)
 c_cubes.generate_average_over_spikes_per_template_multiprocess(spyking_circus_folder,
                                                                binary_data_filename,
-                                                               NUMBER_OF_CHANNELS_IN_BINARY_FILE,
+                                                               const.NUMBER_OF_CHANNELS_IN_BINARY_FILE,
                                                                cut_time_points_around_spike=50)
 
 

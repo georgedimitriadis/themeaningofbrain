@@ -3,8 +3,7 @@
 import numpy as np
 from os.path import join
 from joblib import Parallel, delayed
-from BrainDataAnalysis import neuroseeker_specific_functions as nf
-
+import sys
 
 def generate_average_over_spikes_per_template(base_folder,
                                               binary_data_filename,
@@ -128,6 +127,15 @@ def _avg_of_single_template(template,
     return template, y
 
 
-
+if __name__ == "__main__":
+    args = sys.argv
+    base_folder = args[1]
+    binary_data_filename = args[2]
+    number_of_channels_in_binary_file = int(args[3])
+    cut_time_points_around_spike = int(args[4])
+    generate_average_over_spikes_per_template_multiprocess(base_folder=base_folder,
+                                                           binary_data_filename=binary_data_filename,
+                                                           number_of_channels_in_binary_file=number_of_channels_in_binary_file,
+                                                           cut_time_points_around_spike=cut_time_points_around_spike)
 
 
