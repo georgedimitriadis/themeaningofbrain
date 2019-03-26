@@ -40,7 +40,7 @@ files_dir = join(base_folder, 'Tsne_Results')
 
 
 
-spike_info = preproc.generate_spike_info(base_folder, files_dir)
+spike_info = preproc.generate_spike_info_from_full_tsne(base_folder, files_dir)
 
 
 

@@ -97,7 +97,7 @@ verbose = 3
 
 tsne_results = tsne.t_sne(template_features_matrix, files_dir=tsne_folder, num_dims=num_dims, perplexity=perplexity,
                           theta=theta, iterations=iterations, random_seed=random_seed, verbose=verbose)
-spike_info = preproc_kilo.generate_spike_info(kilosort_folder=kilosort_folder, tsne_folder=tsne_folder)
+spike_info = preproc_kilo.generate_spike_info_from_full_tsne(kilosort_folder=kilosort_folder, tsne_folder=tsne_folder)
 
 
 # Run t-sne again with different parameters starting from the already calculated hd distances
@@ -110,7 +110,7 @@ verbose = 3
 
 tsne_results = tsne.t_sne_from_existing_distances(files_dir=tsne_folder, data_has_exageration=True, num_dims=num_dims,
                                                   theta=theta, iterations=iterations, random_seed=random_seed, verbose=2)
-spike_info = preproc_kilo.generate_spike_info(kilosort_folder=kilosort_folder, tsne_folder=tsne_folder)
+spike_info = preproc_kilo.generate_spike_info_from_full_tsne(kilosort_folder=kilosort_folder, tsne_folder=tsne_folder)
 
 
 # OR Load previously run t-sne

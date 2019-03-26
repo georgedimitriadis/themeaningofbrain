@@ -1,3 +1,6 @@
+"""
+This module carries all the constants for the 33.1 rat.
+"""
 
 import os.path as path
 import numpy as np

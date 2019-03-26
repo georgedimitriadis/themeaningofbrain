@@ -1,5 +1,6 @@
 
 import os.path as path
+import numpy as np
 
 
 probe_layout_folder = r'E:\Software\Develop\Source\Repos\Python35Projects\TheMeaningOfBrain\Layouts\Probes\Neuroseeker'
@@ -13,10 +14,10 @@ experiment_folders = {1: r'AK_40.3_AK_40.4\2018_11_22-10_31',
                       2: r'AK_40.3\2018_12_05-16_18',
                       3: r'AK_40.3\2018_12_11-11_29'}
 
-
-NUMBER_OF_CHANNELS_IN_BINARY_FILE = 1368
+NUMBER_OF_AP_CHANNELS_IN_BINARY_FILE = 1368
+NUMBER_OF_LFP_CHANNELS_IN_BINARY_FILE = 72
+BINARY_FILE_ENCODING = np.int16
 CAMERA_TTL_PULSES_TIMEPOINT_PERIOD = 158
-
 
 PROBE_DIMENSIONS = [100, 8100]
 POSITION_MULT = 2.25

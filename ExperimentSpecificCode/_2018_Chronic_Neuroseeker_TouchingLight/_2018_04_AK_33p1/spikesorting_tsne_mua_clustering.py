@@ -1,4 +1,12 @@
 
+"""
+This is an effort to write code that automatically scans a t-sne embedding and finds groups of spikes within larger
+blobs that come from single units.
+
+At the end of the day it didn't work and the best thing to do is to manually try and split spikes on the t-sne
+embedding
+"""
+
 
 from BrainDataAnalysis import tsne_analysis_functions as tsne_funcs
 

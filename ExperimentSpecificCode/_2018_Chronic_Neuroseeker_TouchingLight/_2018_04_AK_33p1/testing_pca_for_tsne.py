@@ -1,4 +1,7 @@
 
+"""
+This module has code that t-snes the larger MUAs (of dataset 2018_04_30-11_38) using the PCs of each spike.
+"""
 
 from BrainDataAnalysis import tsne_analysis_functions as tsne_funcs
 import matplotlib.pyplot as plt
@@ -24,7 +27,7 @@ binary_data_filename = join(const.base_save_folder, const.rat_folder, const.date
                             'Data', 'Amplifier_APs.bin')
 tsne_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date],
                    'Analysis', 'Tsne')
-barnes_hut_exe_dir=r'E:\Software\Develop\Source\Repos\spikesorting_tsne_bhpart\Barnes_Hut\win\x64\Release'
+barnes_hut_exe_dir = r'E:\Software\Develop\Source\Repos\spikesorting_tsne_bhpart\Barnes_Hut\win\x64\Release'
 # ----------------------------------------------------------------
 
 '''
@@ -45,11 +48,11 @@ number_of_spikes_in_large_mua_templates = 10000
 large_mua_templates = preproc_kilo.find_large_mua_templates(kilosort_folder, number_of_spikes_in_large_mua_templates)
 
 
-mua_template_to_look = 2
+mua_template_to_look = 5
 mua_template = large_mua_templates[mua_template_to_look]
 
 template_folder = join(tsne_folder, 'template_{}'.format(mua_template))
-data_for_tsne = np.load(join(template_folder, 'data_to_tsne_(50491, 36).npy'))
+#data_for_tsne = np.load(join(template_folder, 'data_to_tsne_(50491, 36).npy'))
 
 spike_times = np.squeeze(np.load(join(kilosort_folder, 'spike_times.npy')))
 spikes = np.squeeze(np.load(join(template_folder, 'indices_of_spikes_used.npy')))
@@ -68,22 +71,42 @@ mua_template_data = avg_spike_template[mua_template, :, :]
 raw_data = ns_funcs.load_binary_amplifier_data(binary_data_filename,
                                                number_of_channels=const.NUMBER_OF_AP_CHANNELS_IN_BINARY_FILE)
 
+spike_time_windows = np.array([np.arange(int(spike_time-40), int(spike_time+40)) for spike_time in spike_times])
+
+spike_data_one = raw_data[:, spike_time_windows.flatten()]
+spike_data = np.swapaxes(
+    np.reshape(
+        spike_data_one[large_channels, :],
+        (len(large_channels), spike_time_windows.shape[0], spike_time_windows.shape[1])),
+    0, 1)
+spike_data_mean = np.mean(spike_data, axis=0)
+plt.plot(spike_data_mean.transpose())
+
+
+largest_channel = large_channels[np.squeeze(np.argwhere(spike_data_mean == np.min(spike_data_mean)))[0]]
+
 #large_channels_full = np.arange(np.min(large_channels), np.max(large_channels))
 
-large_channels_full = np.arange(int(large_channels[0] - 30), int(large_channels[0] + 30))
+large_channels_full = np.arange(int(largest_channel - 30), int(largest_channel + 30))
 
 #plt.plot(mua_template_data[large_channels_full, :].T)
 
 
-spike_data = []
-i = 0
-for spike_time in spike_times:
-    spike_data.append(raw_data[large_channels_full, int(spike_time-20):int(spike_time+20)])
-    i += 1
-    if i%1000 == 0:
-        print(i)
-
+spike_data = np.swapaxes(
+    np.reshape(
+        spike_data_one[large_channels_full, :],
+        (len(large_channels_full), spike_time_windows.shape[0], spike_time_windows.shape[1])),
+    0, 1)
 spike_data = np.array(spike_data)
+
+spike_data_mean = np.mean(spike_data, axis=0)
+plt.plot(spike_data_mean.transpose())
+
+s = 0
+seq_v.graph_pane(globals(), 's', 'spike_data')
+
+c = 0
+seq_v.graph_pane(globals(), 'c', 'spike_data_mean')
 
 
 # TSNE The 10 PCs of all the channels that are within the group of largest channels according to Kilosort
@@ -102,7 +125,7 @@ for index in range(len(spike_data)):
         print(pca.explained_variance_)
 
 
-template_folder = join(tsne_folder, 'template_{}_morePCs'.format(mua_template))
+template_folder = join(tsne_folder, 'template_{}'.format(mua_template))
 num_dims = 2
 perplexity = 100
 theta = 0.2
@@ -115,7 +138,7 @@ tsne.t_sne(template_features_matrix, files_dir=template_folder,
            exe_dir=barnes_hut_exe_dir,
            num_dims=num_dims, perplexity=perplexity,
            theta=theta, iterations=iterations, random_seed=random_seed, verbose=verbose)
-preproc_kilo.generate_spike_info(kilosort_folder=kilosort_folder, tsne_folder=template_folder)
+preproc_kilo.generate_spike_info_from_full_tsne(kilosort_folder=kilosort_folder, tsne_folder=template_folder)
 
 spike_info = np.load(join(template_folder, 'spike_info.df'))
 vis.plot_tsne_of_spikes(spike_info)
@@ -194,7 +217,7 @@ for mua_template in large_mua_templates_minus:
                exe_dir=barnes_hut_exe_dir,
                num_dims=num_dims, perplexity=perplexity,
                theta=theta, iterations=iterations, random_seed=random_seed, verbose=verbose)
-    preproc_kilo.generate_spike_info(kilosort_folder=kilosort_folder, tsne_folder=tsne_folder_single_template)
+    preproc_kilo.generate_spike_info_from_full_tsne(kilosort_folder=kilosort_folder, tsne_folder=tsne_folder_single_template)
 # -------------------------------------------------------------
 
 

@@ -90,4 +90,4 @@ labeled_sizes = range(20, 100, 20)
 pf.plot_tsne(tsne.T, cm=plt.cm.prism, labels_dict=labels_dict, legent_on=False, markers=None, labeled_sizes=None)
 
 
-spike_info = preproc.generate_spike_info(base_folder, files_dir)
+spike_info = preproc.generate_spike_info_from_full_tsne(base_folder, files_dir)

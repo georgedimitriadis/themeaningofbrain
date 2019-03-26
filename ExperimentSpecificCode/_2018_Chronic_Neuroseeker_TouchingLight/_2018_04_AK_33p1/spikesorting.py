@@ -1,4 +1,13 @@
 
+"""
+This is the original cleaning and t-sne embedding of all the template (using a subset of spikes) on the kilosorted
+data of 2018_04_30-11_38.
+
+It also has code that selects the largest MUA templates and t-sne each one of them separately. It does using the
+kilosort template distances. This doesn't work at all because each template has only one or two distance to templates that
+are not noise. The testing_pca_for_tsne.py has code that t-snes the MUA templates using PCs).
+"""
+
 import os
 import numpy as np
 import pandas as pd
@@ -42,7 +51,7 @@ clean.cleanup_kilosorted_data(kilosort_folder,
                               number_of_channels_in_binary_file=const.NUMBER_OF_AP_CHANNELS_IN_BINARY_FILE,
                               binary_data_filename=binary_data_filename,
                               prb_file=const.prb_file,
-                              type_of_binary=np.float16,
+                              type_of_binary=np.int16,
                               order_of_binary='F',
                               sampling_frequency=20000,
                               num_of_shanks_for_vis=5)
@@ -83,7 +92,7 @@ verbose = 3
 
 tsne_results = tsne.t_sne(template_features_matrix, files_dir=tsne_folder, num_dims=num_dims, perplexity=perplexity,
                           theta=theta, iterations=iterations, random_seed=random_seed, verbose=verbose)
-spike_info = preproc_kilo.generate_spike_info(kilosort_folder=kilosort_folder, tsne_folder=tsne_folder)
+spike_info = preproc_kilo.generate_spike_info_from_full_tsne(kilosort_folder=kilosort_folder, tsne_folder=tsne_folder)
 
 
 # Run t-sne again with different parameters starting from the already calculated hd distances
@@ -97,7 +106,7 @@ verbose = 3
 tsne_results = tsne.t_sne_from_existing_distances(files_dir=tsne_folder, data_has_exageration=True, num_dims=num_dims,
                                                   theta=theta, iterations=iterations, random_seed=random_seed,
                                                   verbose=verbose)
-spike_info = preproc_kilo.generate_spike_info(kilosort_folder=kilosort_folder, tsne_folder=tsne_folder)
+spike_info = preproc_kilo.generate_spike_info_from_full_tsne(kilosort_folder=kilosort_folder, tsne_folder=tsne_folder)
 
 
 # OR Load previously run t-sne
@@ -177,7 +186,7 @@ tsne_results = tsne.t_sne_from_existing_distances(files_dir=tsne_folder_single_t
 tsne_results = tsne_io.load_tsne_result(files_dir=tsne_folder_single_template)
 
 # Get the spike info (if not already there)
-spike_info = preproc_kilo.generate_spike_info(kilosort_folder=kilosort_folder, tsne_folder=tsne_folder_single_template)
+spike_info = preproc_kilo.generate_spike_info_from_full_tsne(kilosort_folder=kilosort_folder, tsne_folder=tsne_folder_single_template)
 # OR Load
 spike_info = pd.read_pickle(join(tsne_folder_single_template, 'spike_info.df'))
 
@@ -209,6 +218,6 @@ for mua_template in large_mua_templates[2:]:
                               exe_dir=barnes_hut_exe_dir,
                               num_dims=num_dims, perplexity=perplexity,
                               theta=theta, iterations=iterations, random_seed=random_seed, verbose=verbose)
-    spike_info = preproc_kilo.generate_spike_info(kilosort_folder=kilosort_folder,
-                                                  tsne_folder=tsne_folder_single_template)
+    spike_info = preproc_kilo.generate_spike_info_from_full_tsne(kilosort_folder=kilosort_folder,
+                                                                 tsne_folder=tsne_folder_single_template)
 

@@ -81,7 +81,7 @@ pf.plot_tsne(tsne.T, labels_dict=labels_dict, legent_on=False)
 
 
 tsne_folder = r'F:\JoanaPaired\128ch\2015-09-03\Analysis\kilosort\thres4_10_10_Fe16_Pc12\tsne\tsne_uncleaned_466Kspikes'
-spike_info = preproc.generate_spike_info(kilosort_folder, tsne_folder)
+spike_info = preproc.generate_spike_info_from_full_tsne(kilosort_folder, tsne_folder)
 
 
 # CREATE SPIKE_INFO FROM KLUSTAKWIK RESULTS AND RUN THIS IN THE TSNE SPIKESORT GUI

@@ -161,7 +161,7 @@ pf.make_video_of_tsne_iterations(iterations=3000, video_dir=files_dir, data_file
 
 
 
-spike_info = preproc.generate_spike_info(base_folder, files_dir)
+spike_info = preproc.generate_spike_info_from_full_tsne(base_folder, files_dir)
 
 
 
