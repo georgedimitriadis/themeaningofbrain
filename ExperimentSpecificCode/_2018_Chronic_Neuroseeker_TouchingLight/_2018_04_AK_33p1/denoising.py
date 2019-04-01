@@ -1,5 +1,9 @@
 """
-This module has developed a technique to amplify the regions in the data that correspond to spikes. The final
+This module has developed a technique to amplify the regions in the data that correspond to spikes. The final code that
+does the denoising (resulting from the development in this script) can be found in
+BrainDataAnalysis.Spike_Sorting.dense_probe_denoising.py.
+
+An example on how to call this function is in this script under the comment header 'Test denoising from its own module'
 """
 
 import matplotlib.pyplot as plt
@@ -592,3 +596,27 @@ spike_info_after_sorting = preproc_kilo.add_sorting_info_to_spike_info(spike_inf
                                                                        spike_info_cortex_sorted,
                                                                        tsne_filename=tsne_filename,
                                                                        save_to_file=spike_info_after_cortex_sorting_file)
+
+
+
+# ------------------------------------------------------------------------
+# Test denoising from its own module
+
+from os.path import join
+import BrainDataAnalysis.Spike_Sorting.dense_probe_desnoising as denoise
+from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_33p1 import constants as const
+
+
+# FOLDERS NAMES --------------------------------------------------
+date = 8
+binary_data_filename = join(const.base_save_folder, const.rat_folder, const.date_folders[date],
+                            'Data', 'Amplifier_APs.bin')
+denoised_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date],
+                       'Analysis', 'Denoised')
+denoised_data_filename = join(denoised_folder, 'Data', 'Amplifier_APs_Denoised.bin')
+
+sampling_freq = 20000
+
+denoise.denoise_data(binary_data_filename, const.BINARY_FILE_ENCODING, denoised_data_filename,
+                     const.NUMBER_OF_AP_CHANNELS_IN_BINARY_FILE, sampling_freq, compute_window_in_secs=1,
+                     use_dask_for_parallel=True)
