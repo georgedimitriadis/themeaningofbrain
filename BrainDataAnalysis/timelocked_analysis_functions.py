@@ -49,6 +49,7 @@ def create_piezosensor_events(event_channel, threshold, sampling_freq, filt_cuto
         event_values = event_values[event_values < 0][valid_indices]
     return np.array([event_samples, event_values])
 
+
 def create_spike_triggered_events(data_raw_spikes, threshold, inter_spike_time_distance=0.01, amp_gain=1000,
                                   sampling_freq=30000, amp_y_digitization=65536, amp_y_range=10):
     scaling_factor = amp_y_range / (amp_y_digitization * amp_gain)
@@ -77,8 +78,6 @@ def create_spike_triggered_events(data_raw_spikes, threshold, inter_spike_time_d
         spike_times[i] = spike_crossings[i] + offset - (1e-3*sampling_freq)
         spike_peaks[i] = peak
     return spike_times, spike_peaks, data_in_V
-
-
 
 
 def spikedetect(data_raw_spikes, threshold_multiplier=4, single_max_threshold=False, inter_spike_time_distance=0.01,

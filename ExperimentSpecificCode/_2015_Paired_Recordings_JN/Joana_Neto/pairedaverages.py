@@ -1,18 +1,9 @@
-
-import random
-from matplotlib import colors
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-import itertools
-import warnings
-import numpy as np
-import Layouts.Probes.klustakwik_prb_generator as prb_gen
-import itertools
-import numpy as np
-import matplotlib.colors as colors
 import matplotlib.cm as cmx
-import scipy.signal as signal
+import matplotlib.colors as colors
+import matplotlib.pyplot as plt
+import numpy as np
+
+import Layouts.Probes.klustakwik_prb_generator as prb_gen
 
 
 # Return all_electrodes
