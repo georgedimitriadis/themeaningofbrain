@@ -11,7 +11,7 @@ import ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_fun
 import ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions.csv_manipulation_funcs as csv_funcs
 from scipy.signal import hilbert, butter, sosfiltfilt, savgol_filter
 
-from spikesorting_tsne import spike_positioning_on_probe as spp
+from spikesorting_tsne import positions_on_probe as spp
 import sequence_viewer as seq_v
 import transform as tr
 import one_shot_viewer as one_s_v

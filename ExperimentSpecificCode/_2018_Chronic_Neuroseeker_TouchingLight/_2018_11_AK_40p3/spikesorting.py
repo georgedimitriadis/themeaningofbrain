@@ -9,7 +9,7 @@ from GUIs.Kilosort import create_data_cubes as c_cubes
 from Layouts.Probes.Neuroseeker import probes_neuroseeker as ps
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_11_AK_40p3 import constants as const
 from spikesorting_tsne import tsne, visualization as viz, preprocessing_kilosort_results as preproc_kilo, \
-     io_with_cpp as tsne_io, spike_positioning_on_probe as sp_pos
+     io_with_cpp as tsne_io, positions_on_probe as sp_pos
 
 
 # This is to create the correct prb file with only the AP channels in (1368). It should never be run again

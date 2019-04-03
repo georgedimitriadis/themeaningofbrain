@@ -1,7 +1,7 @@
 
 from os.path import join
 import numpy as np
-from spikesorting_tsne import spike_positioning_on_probe as pos
+from spikesorting_tsne import positions_on_probe as pos
 
 base_folder_v = r'F:\Neuroseeker\\' + \
                 r'Neuroseeker_2017_03_28_Anesthesia_Auditory_DoubleProbes\Vertical\Analysis\\' + \

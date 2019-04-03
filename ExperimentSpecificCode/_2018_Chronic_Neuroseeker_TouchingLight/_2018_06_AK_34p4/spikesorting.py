@@ -15,7 +15,7 @@ import os
 os.environ['NUMBAPRO_CUDALIB']=r'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v9.2\bin'
 
 from spikesorting_tsne import tsne, visualization as viz, preprocessing_kilosort_results as preproc_kilo, \
-     io_with_cpp as tsne_io, spike_positioning_on_probe as sp_pos
+     io_with_cpp as tsne_io, positions_on_probe as sp_pos
 
 
 # This is to create the correct prb file with only the AP channels in (1368). It should never be run again
