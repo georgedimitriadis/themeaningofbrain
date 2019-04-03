@@ -12,7 +12,7 @@ import pandas as pd
 from os.path import join
 
 from spikesorting_tsne import preprocessing_kilosort_results as preproc_kilo, io_with_cpp as tsne_io, tsne as tsne,\
-                              spike_positioning_on_probe as spp, visualization as viz
+                              positions_on_probe as spp, visualization as viz
 from spikesorting_tsne_guis import clean_kilosort_templates as clean
 
 import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
