@@ -38,10 +38,12 @@ BINARY_FILE_ENCODING = np.int16
 CAMERA_TTL_PULSES_TIMEPOINT_PERIOD = 158
 SAMPLING_FREQUENCY = 20000
 
+NUMBER_OF_IMFS = 13
+
 PROBE_DIMENSIONS = [100, 8100]
 POSITION_MULT = 2.25
 
 
-BRAIN_REGIONS = {'Cortex MPA': 7808, 'CA1': 6200, 'CA3': 5030,
+BRAIN_REGIONS = {'Cortex MPA': 8100, 'CA1': 6200, 'CA3': 5030,
                  'Thalamus LPMR': 4410, 'Thalamus Po': 3420, 'Thalamus VPM': 2200,
                  'Zona Incerta': 1210, 'Subthalamic Nucleus': 750, 'Internal Capsule': 300}
