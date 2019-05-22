@@ -1,7 +1,8 @@
 
 
 import numpy as np
-
+import scipy
+from os.path import join
 
 number_of_channels_in_binary_file = 1440
 electrode_pitch = 22.5
@@ -33,6 +34,10 @@ def load_binary_amplifier_data(file, number_of_channels=1440):
                                         order='F')
 
     return raw_extracellular_data
+
+def load_sync_binary_data(data_folder):
+    sync = np.fromfile(join(data_folder, 'Sync.bin'), dtype=np.uint16).astype(np.int32)
+    sync -= sync.min()
 
 
 def get_channels_heights_for_spread_calulation(channels_used):
@@ -66,3 +71,24 @@ def spread_data(data,  channels_height, channels_used=None, row_spacing=0.5):
                              row_spacing * 0.5 * channels_height[channels_used[r]] - \
                              r * row_spacing
     return new_data
+
+
+def downsample(filename, data, factor, filter_type='iir', filter_order=8, zero_phase=True):
+
+    type = data.dtype
+
+    first_channel_downsampled = scipy.signal.decimate(data[0], q=factor, n=filter_order, ftype='iir',
+                                                      zero_phase=zero_phase)
+    first_channel_downsampled = np.squeeze(first_channel_downsampled)
+    downsampled_shape = (data.shape[0], len(first_channel_downsampled))
+
+    downsampled_data = np.memmap(filename, dtype=type, mode='w+', shape=downsampled_shape, order='F')
+
+    downsampled_data[0, :] = first_channel_downsampled
+
+    for channel in np.arange(1, downsampled_shape[0]):
+
+        downsampled_data[channel, :] = scipy.signal.decimate(data[channel], q=factor, n=filter_order, ftype=filter_type,
+                                                             zero_phase=zero_phase)
+
+    return downsampled_data
