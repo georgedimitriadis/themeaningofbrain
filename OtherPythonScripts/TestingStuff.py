@@ -754,7 +754,7 @@ from os.path import join
 
 data_folder = r'E:\Data\Neuroseeker_2017_03_28_Anesthesia_Auditory_DoubleProbes\Angled\Data\Experiment_Bach_1_2017-03-28T18_10_41'
 kilosort_folder = r'E:\Data\Neuroseeker_2017_03_28_Anesthesia_Auditory_DoubleProbes\Angled\Analysis\Experiment_Bach_1_2017-03-28T18_10_41\Kilosort'
-binary_filename = join(data_folder, 'Amplifier_APs.bin')66
+binary_filename = join(data_folder, 'Amplifier_APs.bin')
 number_of_channels = 1368
 prb_file = join(kilosort_folder, 'ap_only_prb.txt')
 
@@ -766,3 +766,120 @@ clean.cleanup_kilosorted_data(kilosort_folder,
                               order_of_binary='F',
                               sampling_frequency=20000,
                               num_of_shanks_for_vis=5)
+
+
+
+
+
+
+import pyqtgraph as pg
+win = pg.GraphicsWindow()
+vb = win.addViewBox()
+img1 = pg.ImageItem(pg.np.random.normal(size=(100,100)))
+img2 = pg.ImageItem(pg.np.random.normal(size=(10,10)))
+vb.addItem(img1)
+vb.addItem(img2)
+img2.setZValue(10)  # make sure this image is on top
+img2.setOpacity(0.5)
+img2.scale(10, 10)
+
+
+
+from PyQt5 import QtWidgets, QtCore
+import numpy as np
+import pyqtgraph as pg
+from pyqtgraph.widgets import RawImageWidget
+import sys
+
+data1 = (100*pg.np.random.random(size=(100,100,4))).astype(np.int8)
+data1[:,:,3] = 20
+data2 = (100*pg.np.random.random(size=(10,10))).astype(np.int8)
+
+file1 = r'E:\George\Temporary\IMG_20180615_140851.jpg'
+im1 = plt.imread(file1)
+
+#app = QtWidgets.QApplication(sys.argv)
+
+win = QtWidgets.QWidget()
+image_widget = RawImageWidget.RawImageWidget(scaled=True)
+image_widget2 = RawImageWidget.RawImageWidget(scaled=True)
+
+layout_window1 = QtWidgets.QVBoxLayout()
+
+layout_window2 = QtWidgets.QVBoxLayout(image_widget)
+layout_window2.setContentsMargins(0, 0, 0, 0)
+
+win.setLayout(layout_window1)
+
+layout_window1.insertWidget(0, image_widget)
+layout_window2.insertWidget(0, image_widget2)
+
+image_widget.setImage(im1)
+
+colormap = plt.get_cmap('jet')
+colormap._init()
+lut = (colormap._lut * 200).view(np.ndarray)
+lut[:, 3] = 20
+image_widget2.setImage(data2, levels=(0, 200), lut=lut)
+win.show()
+
+
+
+
+import one_shot_viewer as osv
+file1 = r'E:\George\Temporary\IMG_20180615_140851.jpg'
+im1 = plt.imread(file1)
+
+data1 = (100*np.random.random(size=(100, 100, 4)))
+data1[:, :, 3] = 100
+
+data2 = (100*np.random.random(size=(10, 10)))
+
+
+ops = [255, 100]
+image_levels = [None, (0, 255)]
+cms = [None, 'jet']
+d = [im1, data2]
+flips = ['lr', 'ud']
+
+osv.image(globals(), 'd', 'image_levels', 'cms', 'ops', 'flips', number_of_images=2)
+
+#osv.image(globals(), 'im1')
+
+#osv.image(globals(), 'data1')
+
+
+im_l = (0, 255)
+op = 250
+cm = 'jet'
+osv.image(globals(), 'data2', 'im_l', 'cm', 'op', number_of_images=1)
+
+
+osv.graph(globals(), 'data2')
+
+
+
+
+import transform as tr
+
+a = 1
+b = 2
+c = 3
+def t(a, b):
+    return a+b
+
+tr.connect_repl_var(globals(), 'a', 't', 'c', 'b')
+'''
+import drop_down as dd
+e = [1,2,3,4]
+dd.connect_repl_var(globals(), 'e', 't', 'c', 'b')
+'''
+
+import slider as s
+s.connect_repl_var(globals(), 'a', 't', 'c', 'b', slider_limits=[0, 200])
+
+
+
+
+
+
