@@ -2,6 +2,7 @@
 
 from os.path import join
 import numpy as np
+from BrainDataAnalysis import neuroseeker_specific_functions as ns_funcs
 import ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions.events_sync_funcs as sync_funcs
 import ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions.csv_manipulation_funcs as csv_funcs
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_33p1 import constants as const
@@ -20,6 +21,7 @@ date_folder = 8
 
 data_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date_folder], 'Data')
 spikes_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date_folder], 'Analysis', 'Kilosort')
+events_folder = join(data_folder, 'events')
 
 sync = np.fromfile(join(data_folder, 'Sync.bin'), dtype=np.uint16).astype(np.int32)
 sync -= sync.min()
@@ -36,15 +38,7 @@ for event_type in sync_funcs.event_types:
 
 
 #  Load the pre generated DataFrames for the event CSVs
-def camel_to_snake_converter(string):
-    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', string)
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
-
-
-for event_type in sync_funcs.event_types:
-    exec(r'{} = pd.read_pickle(join(data_folder, "events", event_type+".pkl"))'.format('ev_' + camel_to_snake_converter(event_type)))
-# ----------------------------------
-
+event_dataframes = ns_funcs.load_events_dataframes(events_folder, sync_funcs.event_types)
 
 # Create some arrays and constants relating to the events
 camera_pulses, beam_breaks, sounds = \
@@ -129,7 +123,7 @@ tr.connect_repl_var(globals(), 'video_frame', 'is_beam_broken', 'beam_broken')
 # ----------------------------------
 
 
-trial_end_points = ev_rat_touch_ball['AmpTimePoints'].tolist()
+trial_end_points = event_dataframes['ev_rat_touch_ball']['AmpTimePoints'].tolist()
 dd.connect_repl_var(globals(), 'trial_end_points', 'sync_point')
 
 

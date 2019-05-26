@@ -661,3 +661,7 @@ def make_video_of_tsne_iterations(iterations, video_dir, data_file_name='interim
             if it%100 == 0:
                 print('Done '+str(it) + ' frames')
 
+
+def plot_log_histogram(data, number_of_bins, minimum_bin, maximum_bin):
+    plt.hist(data, bins=np.logspace(np.log10(minimum_bin), np.log10(maximum_bin), number_of_bins))
+    plt.gca().set_xscale("log")

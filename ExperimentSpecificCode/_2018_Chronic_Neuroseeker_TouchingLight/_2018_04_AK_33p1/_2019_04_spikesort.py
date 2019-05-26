@@ -222,7 +222,7 @@ spike_info_after_sorting = preproc_kilo.add_sorting_info_to_spike_info(spike_inf
                                                                        save_to_file=spike_info_after_cortex_sorting_file)
 
 # OR load it if you have already merged it
-spike_info_after_sorting = np.load(spike_info_after_cortex_sorting_file)
+spike_info_after_sorting = np.load(spike_info_after_cortex_sorting_file, allow_pickle=True)
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -235,7 +235,7 @@ spike_info_after_sorting = np.load(spike_info_after_cortex_sorting_file)
 template_info = preproc_kilo.generate_template_info_from_spike_info(spike_info_after_sorting, kilosort_folder_denoised,
                                                                     sampling_freq)
 # OR load it if already made
-template_info = np.load(join(kilosort_folder_denoised, 'template_info.df'))
+template_info = np.load(join(kilosort_folder_denoised, 'template_info.df'), allow_pickle=True)
 
 # b) Run the following command in the command line to create the new avg_spike_template.npy
 # E:\Software\Develop\Source\Repos\spikesorting_tsne_guis\spikesorting_tsne_guis>python create_data_cubes.py
@@ -254,6 +254,12 @@ avg_spike_template = np.load(join(kilosort_folder_denoised, 'avg_spike_template.
 template_positions = spp.generate_probe_positions_of_templates(kilosort_folder_denoised,
                                                                new_templates_array=avg_spike_template)
 
-# d) and have a look at them
+# d) , have a look at them
 spp.view_grouped_templates_positions(kilosort_folder_denoised, const.BRAIN_REGIONS, const.PROBE_DIMENSIONS,
                                      const.POSITION_MULT, template_info)
+
+# e) and finally every time the positions are updated the generate_template_info_from_spike_info must be run to update
+# the template_info position columns
+template_info = preproc_kilo.generate_template_info_from_spike_info(spike_info_after_sorting, kilosort_folder_denoised,
+                                                                    sampling_freq)
+

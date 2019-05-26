@@ -6,6 +6,7 @@ import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
 import ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions.events_sync_funcs as sync_funcs
 import ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions.csv_manipulation_funcs as csv_funcs
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_33p1 import constants as const
+from BrainDataAnalysis import binning
 
 import sequence_viewer as sv
 import transform as tr
@@ -23,6 +24,8 @@ denoised_data_folder = join(const.base_save_folder, const.rat_folder, const.date
                             'Denoised', 'Data')
 spikes_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date_folder], 'Analysis', 'Denoised',
                      'Kilosort')
+
+events_folder = join(data_folder, "events")
 
 time_points_buffer = 5200
 
@@ -91,7 +94,7 @@ def pane_to_frame(x):
 tr.connect_repl_var(globals(), 'pane', 'pane_to_frame', 'video_frame')
 
 
-#  CHECKING PCS OF FIRING RATES
+#  CREATING NEURON FIRING RATES
 #  Separating neurons to region and having a look at their distributions
 
 spike_info = pd.read_pickle(join(spikes_folder, 'spike_info_after_cortex_sorting.df'))
@@ -112,8 +115,6 @@ sub_th_cells = template_info[np.logical_and(template_info['position Y'] < sub_th
 
 plt.hist(sub_th_cells['firing rate'], bins=np.logspace(np.log10(0.001), np.log10(100), 50))
 plt.gca().set_xscale("log")
-
-
 
 
 # Creating a scatter plot for neurons spiking
@@ -158,7 +159,7 @@ tr.connect_repl_var(globals(), 'pane', 'raster_from_pane', 'raster')
 
 osv.graph(globals(), 'y', 'x', True)
 
-# Calculating firing rates
+# Calculating firing rates using arbitrary time windows
 '''
 seconds_in_averaging_window = 0.5
 averaging_window = int(seconds_in_averaging_window * const.SAMPLING_FREQUENCY)
@@ -179,8 +180,32 @@ for t_index in np.arange(len(template_info)):
 np.save(join(spikes_folder, 'firing_rate_with_0p50s_window.npy'), spike_rates)
 '''
 
-spike_rates = np.load(join(spikes_folder, 'firing_rate_with_0p50s_window.npy'))
-spike_rates_fixed = np.copy(spike_rates)
+# Make the spike rates using each frame as a binning window
+'''
+#  Load the pre generated DataFrames for the event CSVs
+event_dataframes = ns_funcs.load_events_dataframes(events_folder, sync_funcs.event_types)
+file_to_save_to = join(spikes_folder, 'firing_rate_with_video_frame_window.npy')
+template_info = pd.read_pickle(join(spikes_folder, 'template_info.df'))
+
+spike_info = pd.read_pickle(join(spikes_folder, 'spike_info_after_cortex_sorting.df'))
+sampling_frequency = const.SAMPLING_FREQUENCY
+spike_rates = binning.spike_count_per_frame(template_info, spike_info, event_dataframes['ev_video'],
+                                            sampling_frequency, file_to_save_to=file_to_save_to)
+
+# Using the frame based spikes rates do a rolling window to average a bit more
+num_of_frames_to_average = 0.25/(1/120)
+
+spike_rates_0p25 = []
+for n in np.arange(spike_rates.shape[0]):
+    spike_rates_0p25.append(binning.rolling_window_with_step(spike_rates[n, :], np.mean,
+                                                        num_of_frames_to_average, num_of_frames_to_average))
+spike_rates_0p25 = np.array(spike_rates_0p25)
+np.save(join(spikes_folder, 'firing_rate_with_0p25s_window.npy'), spike_rates_0p25)
+'''
+
+# Have a look
+spike_rates_0p25 = np.load(join(spikes_folder, 'firing_rate_with_0p25s_window.npy'))
+spike_rates_fixed = np.copy(spike_rates_0p25)
 spike_rates_fixed[601, :5] = 0
 
 image_levels_sr = [0, 200]
@@ -188,9 +213,8 @@ cm_sr = 'jet'
 
 osv.image(globals(), 'spike_rates_fixed', 'image_levels_sr', 'cm_sr')
 
-spike_rates_spaced = com_tr.space_data(spike_rates, 100)
+spike_rates_spaced = com_tr.space_data(spike_rates_0p25, 100)
 
-spike_rates[:, 1000]
 
 
 

@@ -3,6 +3,8 @@
 import numpy as np
 import scipy
 from os.path import join
+import re
+import pandas as pd
 
 number_of_channels_in_binary_file = 1440
 electrode_pitch = 22.5
@@ -35,9 +37,23 @@ def load_binary_amplifier_data(file, number_of_channels=1440):
 
     return raw_extracellular_data
 
+
 def load_sync_binary_data(data_folder):
     sync = np.fromfile(join(data_folder, 'Sync.bin'), dtype=np.uint16).astype(np.int32)
     sync -= sync.min()
+
+
+def camel_to_snake_converter(string):
+    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', string)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
+
+def load_events_dataframes(basic_folder, event_types):
+    event_dataframes = {}
+    for event_type in event_types:
+        event_dataframes['ev_' + camel_to_snake_converter(event_type)] = \
+            pd.read_pickle(join(basic_folder, event_type+".pkl"))
+    return event_dataframes
 
 
 def get_channels_heights_for_spread_calulation(channels_used):

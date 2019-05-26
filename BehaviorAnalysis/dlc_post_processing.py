@@ -26,10 +26,16 @@ def assign_croped_markers_to_full_arena(markers_croped, crop_window_position):
 def clean_large_movements(positions, maximum_pixels):
     for i in np.arange(positions.shape[0]) + 1:
         try:
+            '''
             if np.abs(positions[i - 1, 0] - positions[i, 0]) > maximum_pixels or \
                     np.isnan(np.abs(positions[i - 1, 0] - positions[i, 0])) or \
                     np.abs(positions[i - 1, 1] - positions[i, 1]) > maximum_pixels or \
                     np.isnan(np.abs(positions[i - 1, 1] - positions[i, 1])):
+                positions[i, :] = positions[i - 1, :]
+            '''
+            distance = np.sqrt(np.power(positions[i - 1, 0] - positions[i, 0], 2) -
+                               np.power(positions[i - 1, 1] - positions[i, 1], 2))
+            if distance > maximum_pixels:
                 positions[i, :] = positions[i - 1, :]
         except:
             pass
