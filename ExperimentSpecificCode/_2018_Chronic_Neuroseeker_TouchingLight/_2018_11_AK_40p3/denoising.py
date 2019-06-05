@@ -1,23 +1,9 @@
-
-
-from BrainDataAnalysis import tsne_analysis_functions as tsne_funcs
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 from os.path import join
-from spikesorting_tsne import preprocessing_kilosort_results as preproc_kilo, constants as ct, visualization as vis
 import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
-import ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions.events_sync_funcs as sync_funcs
-import ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions.csv_manipulation_funcs as csv_funcs
-from scipy.signal import hilbert, butter, sosfiltfilt, savgol_filter
 
-from spikesorting_tsne import positions_on_probe as spp
 import sequence_viewer as seq_v
-import transform as tr
-import one_shot_viewer as one_s_v
 
-from copy import copy
-import dask
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_11_AK_40p3 import constants as const
 
 

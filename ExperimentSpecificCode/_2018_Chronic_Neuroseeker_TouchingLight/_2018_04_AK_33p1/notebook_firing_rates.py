@@ -3,10 +3,10 @@
 from os.path import join
 import numpy as np
 import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
-import ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions.events_sync_funcs as sync_funcs
-import ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions.csv_manipulation_funcs as csv_funcs
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_33p1 import constants as const
-from BrainDataAnalysis import binning
+from BrainDataAnalysis import ploting_functions as pf
+
+from BrainDataAnalysis.Spike_Sorting import positions_on_probe as spp
 
 import sequence_viewer as sv
 import transform as tr
@@ -16,7 +16,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import common_data_transforms as com_tr
 
+from io import StringIO  # Python3
+import sys
 
+# -------------------------------------------------
+# LOAD FOLDERS
+# -------------------------------------------------
 date_folder = 8
 
 data_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date_folder], 'Data')
@@ -29,95 +34,38 @@ events_folder = join(data_folder, "events")
 
 time_points_buffer = 5200
 
-lfp_data = ns_funcs.load_binary_amplifier_data(join(data_folder, 'Amplifier_LFPs.bin'),
-                                               number_of_channels=const.NUMBER_OF_LFP_CHANNELS_IN_BINARY_FILE)
-
-lfp_data_panes = np.swapaxes(np.reshape(lfp_data, (lfp_data.shape[0], int(lfp_data.shape[1] / time_points_buffer), time_points_buffer)), 0, 1)
-
 ap_data = ns_funcs.load_binary_amplifier_data(join(data_folder, 'Amplifier_APs.bin'),
                                               number_of_channels=const.NUMBER_OF_AP_CHANNELS_IN_BINARY_FILE)
 
-ap_data_panes = np.swapaxes(np.reshape(ap_data, (ap_data.shape[0], int(ap_data.shape[1] / time_points_buffer), time_points_buffer)), 0, 1)
+ap_data_panes = np.swapaxes(np.reshape(ap_data, (ap_data.shape[0],
+                                                 int(ap_data.shape[1] / time_points_buffer), time_points_buffer)),
+                            0, 1)
 
 ap_den_data = ns_funcs.load_binary_amplifier_data(join(denoised_data_folder, 'Amplifier_APs_Denoised.bin'),
-                                              number_of_channels=const.NUMBER_OF_AP_CHANNELS_IN_BINARY_FILE)
-ap_den_data_panes = np.swapaxes(np.reshape(ap_den_data, (ap_den_data.shape[0], int(ap_den_data.shape[1] / time_points_buffer),
-                                                     time_points_buffer)), 0, 1)
+                                                  number_of_channels=const.NUMBER_OF_AP_CHANNELS_IN_BINARY_FILE)
+ap_den_data_panes = np.swapaxes(np.reshape(ap_den_data, (ap_den_data.shape[0],
+                                                         int(ap_den_data.shape[1] / time_points_buffer),
+                                                         time_points_buffer)),
+                                0, 1)
 
 
-
+# -------------------------------------------------
+# QUICK LOOK AT NEURONS FIRING
+# -------------------------------------------------
 pane = 120
 colormap = 'jet'
 image_levels = [0, 150]
 sv.image_sequence(globals(), 'pane', 'ap_data_panes', image_levels=image_levels, colormap=colormap, flip='ud')
 sv.image_sequence(globals(), 'pane', 'ap_den_data_panes', image_levels=image_levels, colormap=colormap, flip='ud')
 
-lfp_channels_on_probe = np.arange(9, 1440, 20)
-channels_heights = ns_funcs.get_channels_heights_for_spread_calulation(lfp_channels_on_probe)
-bad_lfp_channels = [35, 36, 37]
-lfp_channels_used = np.delete(np.arange(const.NUMBER_OF_LFP_CHANNELS_IN_BINARY_FILE), bad_lfp_channels)
 
-
-def spread_lfp_pane(p):
-    pane = lfp_data_panes[p, :, :]
-    spread = ns_funcs.spread_data(pane, channels_heights, lfp_channels_used)
-    spread = np.flipud(spread)
-    return spread
-
-
-pane_data = None
-tr.connect_repl_var(globals(), 'pane', 'spread_lfp_pane', 'pane_data')
-
-osv.graph(globals(), 'pane_data')
-
-
-camera_pulses, beam_breaks, sounds = \
-    sync_funcs.get_time_points_of_events_in_sync_file(data_folder, clean=True,
-                                                      cam_ttl_pulse_period=
-                                                      const.CAMERA_TTL_PULSES_TIMEPOINT_PERIOD)
-points_per_pulse = np.mean(np.diff(camera_pulses))
-
-camera_frames_in_video = csv_funcs.get_true_frame_array(data_folder)
-time_point_of_first_video_frame = camera_pulses[camera_frames_in_video][0]
-
-video_frame = 0
-video_file = join(data_folder, 'Video.avi')
-sv.image_sequence(globals(), 'video_frame', 'video_file')
-
-
-def pane_to_frame(x):
-    time_point = (x + 0.4) * time_points_buffer
-    return sync_funcs.time_point_to_frame(time_point_of_first_video_frame, camera_frames_in_video,
-                                                               points_per_pulse, time_point)
-
-
-tr.connect_repl_var(globals(), 'pane', 'pane_to_frame', 'video_frame')
-
-
+# -------------------------------------------------
 #  CREATING NEURON FIRING RATES
-#  Separating neurons to region and having a look at their distributions
-
+# -------------------------------------------------
+# Creating a scatter plot for neurons spiking
 spike_info = pd.read_pickle(join(spikes_folder, 'spike_info_after_cortex_sorting.df'))
 template_info = pd.read_pickle(join(spikes_folder, 'template_info.df'))
 
-
-brain_regions = const.BRAIN_REGIONS
-cortex = np.array([brain_regions['Cortex MPA'], brain_regions['CA1']]) / const.POSITION_MULT
-hippocampus = np.array([brain_regions['CA1'], brain_regions['Thalamus LPMR']]) / const.POSITION_MULT
-thalamus = np.array([brain_regions['Thalamus LPMR'], brain_regions['Zona Incerta']]) / const.POSITION_MULT
-sub_thalamic = np.array([brain_regions['Zona Incerta'], 0]) / const.POSITION_MULT
-
-cort_cells = template_info[np.logical_and(template_info['position Y'] < cortex[0], template_info['position Y'] > cortex[1])]
-hipp_cells = template_info[np.logical_and(template_info['position Y'] < hippocampus[0], template_info['position Y'] > hippocampus[1])]
-thal_cells = template_info[np.logical_and(template_info['position Y'] < thalamus[0], template_info['position Y'] > thalamus[1])]
-sub_th_cells = template_info[np.logical_and(template_info['position Y'] < sub_thalamic[0], template_info['position Y'] > sub_thalamic[1])]
-
-
-plt.hist(sub_th_cells['firing rate'], bins=np.logspace(np.log10(0.001), np.log10(100), 50))
-plt.gca().set_xscale("log")
-
-
-# Creating a scatter plot for neurons spiking
 fast_neuron = template_info[template_info['firing rate'] == template_info['firing rate'].max()]['template number']
 spike_times = spike_info[spike_info['template_after_sorting'] == fast_neuron.values[0]]['times'].values
 
@@ -216,5 +164,177 @@ osv.image(globals(), 'spike_rates_fixed', 'image_levels_sr', 'cm_sr')
 spike_rates_spaced = com_tr.space_data(spike_rates_0p25, 100)
 
 
+# -------------------------------------------------
+# CHECKING SIMILARITIES AND DIFFERENCES BETWEEN THE TWO MODES OF FIRING NEURONS (SLOW AND FAST)
+# -------------------------------------------------
+
+spike_info = pd.read_pickle(join(spikes_folder, 'spike_info_after_cortex_sorting.df'))
+template_info = pd.read_pickle(join(spikes_folder, 'template_info.df'))
+
+brain_regions = const.BRAIN_REGIONS
+cortex = np.array([brain_regions['Cortex MPA'], brain_regions['CA1']]) / const.POSITION_MULT
+hippocampus = np.array([brain_regions['CA1'], brain_regions['Thalamus LPMR']]) / const.POSITION_MULT
+thalamus = np.array([brain_regions['Thalamus LPMR'], brain_regions['Zona Incerta']]) / const.POSITION_MULT
+sub_thalamic = np.array([brain_regions['Zona Incerta'], 0]) / const.POSITION_MULT
+
+cort_cells = template_info[np.logical_and(template_info['position Y'] < cortex[0], template_info['position Y'] > cortex[1])]
+hipp_cells = template_info[np.logical_and(template_info['position Y'] < hippocampus[0], template_info['position Y'] > hippocampus[1])]
+thal_cells = template_info[np.logical_and(template_info['position Y'] < thalamus[0], template_info['position Y'] > thalamus[1])]
+sub_th_cells = template_info[np.logical_and(template_info['position Y'] < sub_thalamic[0], template_info['position Y'] > sub_thalamic[1])]
 
 
+plt.hist(template_info['firing rate'], bins=np.logspace(np.log10(0.001), np.log10(100), 50))
+plt.gca().set_xscale("log")
+
+
+rate_type_cutoff = 0.05  # = 3 times a minute
+fast_neurons = template_info[template_info['firing rate'] >= rate_type_cutoff]['template number']
+slow_neurons = template_info[template_info['firing rate'] < rate_type_cutoff]['template number']
+
+avg_templates = np.load(join(spikes_folder, 'avg_spike_template.npy'))
+avg_template_indices_for_fast_neurons = template_info[np.isin(template_info['template number'], fast_neurons.values)].\
+    index.values
+avg_template_indices_for_slow_neurons = template_info[np.isin(template_info['template number'], slow_neurons.values)].\
+    index.values
+
+# Find fast neurons
+fast_neurons_biggest_channels = []
+fast_indices = []
+for neuron in avg_template_indices_for_fast_neurons:
+    channel = np.squeeze(np.argwhere(avg_templates[neuron, :, :] == np.nanmin(avg_templates[neuron, :, :])))[0]
+    if channel.__class__ is np.ndarray:
+        channel = channel[0]
+    fast_neurons_biggest_channels.append(avg_templates[neuron, channel, :])
+    fast_indices.append(neuron)
+
+fast_neurons_biggest_channels = np.array(fast_neurons_biggest_channels)
+
+# and plot them
+tim = np.arange(-30/const.SAMPLING_FREQUENCY, 30/const.SAMPLING_FREQUENCY, 1/const.SAMPLING_FREQUENCY)
+f_fast = plt.figure(0)
+ax_fast = f_fast.add_subplot(111)
+ax_fast.plot(tim, fast_neurons_biggest_channels.T)
+ax_fast.plot(tim, np.mean(fast_neurons_biggest_channels, axis=0), c=(0,0,0), linewidth=5)
+
+
+# There are a good few slow neurons that have their peak really offset in time from the middle time point.
+# That is because these 'neurons' have double peaks
+# The following code REMOVES those (not useful)
+'''
+slow_neurons_biggest_channels = []
+clean_slow_indices = []
+for neuron in avg_template_indices_for_slow_neurons:
+    channel_time = np.squeeze(np.argwhere(avg_templates[neuron, :, :] == np.nanmin(avg_templates[neuron, :, :])))
+    if len(channel_time.shape) > 1:
+        channel_time = channel_time[0]
+    if channel_time[1] < 25 or channel_time[1] > 35:
+        pass
+    else:
+        channel = channel_time[0]
+        slow_neurons_biggest_channels.append(avg_templates[neuron, channel, :])
+        clean_slow_indices.append(neuron)
+
+slow_neurons_biggest_channels = np.array(slow_neurons_biggest_channels)
+clean_slow_indices = np.array(clean_slow_indices)
+
+centered_avg_template_indices = np.concatenate((avg_template_indices_for_fast_neurons, clean_slow_indices))
+firing_rates_of_centered_neurons = template_info.iloc[centered_avg_template_indices]['firing rate'].values
+
+pf.plot_log_histogram(firing_rates_of_centered_neurons, 50, 0.001, 50)
+'''
+
+# Here I SHIFT the double spiking neurons to the middle time point
+slow_neurons_biggest_channels = []
+single_slow_indices = []
+double_slow_indices = []
+for neuron in avg_template_indices_for_slow_neurons:
+    channel_time = np.squeeze(np.argwhere(avg_templates[neuron, :, :] == np.nanmin(avg_templates[neuron, :, :])))
+    if len(channel_time.shape) > 1:
+        channel_time = channel_time[0]
+    if channel_time[1] < 25:
+
+        min_time = channel_time[1]
+        data = avg_templates[neuron, channel_time[0], :]
+        data_new = np.zeros(60)
+        data_new[30-min_time:30+min_time] = data[:2 * min_time]
+        slow_neurons_biggest_channels.append(data_new)
+        double_slow_indices.append(neuron)
+    elif channel_time[1] > 35:
+
+        min_time = channel_time[1]
+        data = avg_templates[neuron, channel_time[0], :]
+        data_new = np.zeros(60)
+        data_new[30 - (60 - min_time):30 + (60-min_time)] = data[-2*(60 - min_time):]
+        slow_neurons_biggest_channels.append(data_new)
+        double_slow_indices.append(neuron)
+    else:
+        channel = channel_time[0]
+        slow_neurons_biggest_channels.append(avg_templates[neuron, channel, :])
+        single_slow_indices.append(neuron)
+
+slow_neurons_biggest_channels = np.array(slow_neurons_biggest_channels)
+
+# Plot slow neurons
+f_slow = plt.figure(1)
+ax_slow = f_slow.add_subplot(111)
+ax_slow.plot(tim, slow_neurons_biggest_channels.T)
+ax_slow.plot(tim, np.mean(slow_neurons_biggest_channels, axis=0), c=(0,0,0), linewidth=5)
+
+
+spp.view_grouped_templates_positions(spikes_folder, const.BRAIN_REGIONS, const.PROBE_DIMENSIONS,
+                                     const.POSITION_MULT, template_info.iloc[avg_template_indices_for_fast_neurons])
+spp.view_grouped_templates_positions(spikes_folder, const.BRAIN_REGIONS, const.PROBE_DIMENSIONS,
+                                     const.POSITION_MULT, template_info.iloc[avg_template_indices_for_slow_neurons])
+
+
+# CHECK IF THE DOUBLE FIRING NEURONS ARE ACTUALLY EXISTING SINGLE FIRING NEURONS THAT KILOSORT SAW AS DIFFERENT
+# WHEN THEY FIRED VERY FAST
+template_info_double_slow = template_info.iloc[double_slow_indices]
+template_info_fast = template_info.iloc[fast_indices]
+template_info_fast_and_double_slow = pd.concat([template_info_fast, template_info_double_slow])
+
+spp.view_grouped_templates_positions(spikes_folder, const.BRAIN_REGIONS, const.PROBE_DIMENSIONS,
+                                     const.POSITION_MULT, template_info_double_slow)
+
+spp.view_grouped_templates_positions(spikes_folder, const.BRAIN_REGIONS, const.PROBE_DIMENSIONS,
+                                     const.POSITION_MULT, template_info_fast_and_double_slow)
+
+# ---------------------------
+# USE THE FOLLOWING TO INTERACTIVELY SEE THE TEMPLATE TIME PLOT WHEN CLICKING ON A POINT ON A TEMPLATE POSITIONS PLOT
+# ---------------------------
+
+f = plt.figure(0)
+old_stdout = sys.stdout
+global previous_template_number
+previous_template_number = -1
+global result
+result = StringIO()
+template_number = 0
+
+
+def show_average_template(figure):
+    global previous_template_number
+    global result
+    sys.stdout = result
+    string = result.getvalue()
+    new = string[-200:]
+    try:
+        template_number = int(new[new.find('Template number'): new.find('Template number')+22][18:22])
+        if template_number != previous_template_number:
+            template = template_info[template_info['template number'] == template_number]
+            figure.clear()
+            ax = figure.add_subplot(111)
+            try:
+                ax.plot(np.squeeze(avg_templates[template.index.values]).T)
+            except:
+                pass
+        previous_template_number = template_number
+        figure.suptitle('Template = {}, with {} number of spikes'.format(str(template_number),
+                                                                         str(template['number of spikes'].values[0])))
+    except:
+        template_number = None
+    return template_number
+
+
+tr.connect_repl_var(globals(), 'f', 'show_average_template', 'template_number')
+# ---------------------------

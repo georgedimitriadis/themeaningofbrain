@@ -9,7 +9,10 @@ from mne.time_frequency import multitaper as mt
 import nitime as ni
 import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
 import matplotlib.pyplot as plt
+import ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions.events_sync_funcs as sync_funcs
+import ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions.csv_manipulation_funcs as csv_funcs
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_33p1 import constants as const
+
 from BrainDataAnalysis.LFP import emd
 
 import sequence_viewer as seq_v
@@ -23,19 +26,67 @@ import pyeemd
 import time
 
 # ----------------------------------------------------------------------------------------------------------------------
-# FOLDERS NAMES
+# LOAD FOLDER AND DATA
 date = 8
-binary_data_filename = join(const.base_save_folder, const.rat_folder, const.date_folders[date],
-                            'Data', 'Amplifier_LFPs.bin')
+data_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date], 'Data')
+binary_data_filename = join(data_folder, 'Amplifier_LFPs.bin')
 
 sampling_freq = const.SAMPLING_FREQUENCY
 
-
-# Load data
 raw_lfp = ns_funcs.load_binary_amplifier_data(binary_data_filename, const.NUMBER_OF_LFP_CHANNELS_IN_BINARY_FILE)
 
+time_points_buffer = 5200
+lfp_data_panes = np.swapaxes(np.reshape(raw_lfp, (raw_lfp.shape[0], int(raw_lfp.shape[1] / time_points_buffer), time_points_buffer)), 0, 1)
+# ----------------------------------------------------------------------------------------------------------------------
 
+# ----------------------------------------------------------------------------------------------------------------------
+# HAVE A LOOK AT THE LFPS
+# ----------------------------------------------------------------------------------------------------------------------
+lfp_channels_on_probe = np.arange(9, 1440, 20)
+channels_heights = ns_funcs.get_channels_heights_for_spread_calulation(lfp_channels_on_probe)
+bad_lfp_channels = [35, 36, 37]
+lfp_channels_used = np.delete(np.arange(const.NUMBER_OF_LFP_CHANNELS_IN_BINARY_FILE), bad_lfp_channels)
+
+
+def spread_lfp_pane(p):
+    pane = lfp_data_panes[p, :, :]
+    spread = ns_funcs.spread_data(pane, channels_heights, lfp_channels_used)
+    spread = np.flipud(spread)
+    return spread
+
+
+pane_data = None
+tr.connect_repl_var(globals(), 'pane', 'spread_lfp_pane', 'pane_data')
+
+one_v.graph(globals(), 'pane_data')
+
+
+camera_pulses, beam_breaks, sounds = \
+    sync_funcs.get_time_points_of_events_in_sync_file(data_folder, clean=True,
+                                                      cam_ttl_pulse_period=
+                                                      const.CAMERA_TTL_PULSES_TIMEPOINT_PERIOD)
+points_per_pulse = np.mean(np.diff(camera_pulses))
+
+camera_frames_in_video = csv_funcs.get_true_frame_array(data_folder)
+time_point_of_first_video_frame = camera_pulses[camera_frames_in_video][0]
+
+video_frame = 0
+video_file = join(data_folder, 'Video.avi')
+seq_v.image_sequence(globals(), 'video_frame', 'video_file')
+
+
+def pane_to_frame(x):
+    time_point = (x + 0.4) * time_points_buffer
+    return sync_funcs.time_point_to_frame(time_point_of_first_video_frame, camera_frames_in_video,
+                                                               points_per_pulse, time_point)
+
+
+tr.connect_repl_var(globals(), 'pane', 'pane_to_frame', 'video_frame')
+
+
+# ----------------------------------------------------------------------------------------------------------------------
 # SUBSAMPLE THE LFPS WITH DIFFERENT RATIOS AND SAVE THE FILES
+# ----------------------------------------------------------------------------------------------------------------------
 '''
 ds_filename = join(const.base_save_folder, const.rat_folder, const.date_folders[date],
                             'Data', 'Amplifier_LFPs_Downsampled_x4.bin')
@@ -55,8 +106,9 @@ ds_numpy_filename = join(const.base_save_folder, const.rat_folder, const.date_fo
 downsampled_lfp = np.load(ds_numpy_filename)
 
 
-
+# ----------------------------------------------------------------------------------------------------------------------
 # HAVE A LOOK AT THE RAW DATA
+# ----------------------------------------------------------------------------------------------------------------------
 '''
 def space_data(dat):
     dat = dat.astype(np.float32)
@@ -70,8 +122,9 @@ buffer = 10000
 seq_v.graph_range(globals(), 'timepoint', 'buffer', 'raw_lfp', transform_name='space_data')
 '''
 
-
+# ----------------------------------------------------------------------------------------------------------------------
 # TESTING DIFFERENT SPECTRAL DENSITY METHODS
+# ----------------------------------------------------------------------------------------------------------------------
 '''
 # Weltch is not half as good as multi taper. Done here for comparison only
 def weltch_psd(data):
@@ -84,7 +137,9 @@ def weltch_psd(data):
     return fs, psd
 '''
 
+# ----------------------------------------------------------------------------------------------------------------------
 # CHECKING OUT THE ERROR IN THE MULTITAPER METHOD
+# ----------------------------------------------------------------------------------------------------------------------
 '''
 psd, fs = mt.psd_array_multitaper(raw_lfp[:, timepoint:timepoint+10000], sfreq=sampling_freq, fmin=2, fmax=250,
                                           bandwidth=5)
@@ -95,7 +150,9 @@ fs_ni, psd_ni, jackknife = ni.algorithms.spectral.multi_taper_psd(raw_lfp[:, tim
                                                                    BW=6, jackknife=True)
 '''
 
+# ----------------------------------------------------------------------------------------------------------------------
 # SCAN THROUGH THE DATA AND HAVE A LOOK AT THE RESULTING PSDS
+# ----------------------------------------------------------------------------------------------------------------------
 '''
 
 timepoint = 100000
@@ -132,15 +189,18 @@ image_levels = [0, 100]
 one_v.image(globals(), 'psd', image_levels=image_levels, colormap=colormap)
 '''
 
-
+# ----------------------------------------------------------------------------------------------------------------------
 # EMD TESTING
+# ----------------------------------------------------------------------------------------------------------------------
 begin_point = 1000000
 end_point = 1020000
 example_data = raw_lfp[0, begin_point:end_point]
 example_data_ds = downsampled_lfp[0, int(begin_point/factor):int(end_point/factor)]
 
 
+# ----------------------------------------------------------------------------------------------------------------------
 # TESTING OF PyEMD PYTHON MODULE: NOT NICE CODE, WAY TOO SLOW
+# ----------------------------------------------------------------------------------------------------------------------
 '''
 config = {'FIXE_H': 200, 'MAX_ITERATION': 100}
 pyemd = PyEMD.EMD(extrema_detection="simple", spline_kind='akima', **config)
@@ -165,8 +225,9 @@ for n in np.arange(N):
         axs[n].plot(imfs_c[n])
 '''
 
-
+# ----------------------------------------------------------------------------------------------------------------------
 # TESTING THE pyeemd MODULE: NICE AND FAST (C CODE)
+# ----------------------------------------------------------------------------------------------------------------------
 '''
 t0 = time.process_time()
 imfs = pyeemd.emd(example_data_ds, num_imfs=15, S_number=5, num_siftings=5000)
@@ -218,7 +279,9 @@ S_number = 20
 num_siftings = 100
 '''
 
+# ----------------------------------------------------------------------------------------------------------------------
 # EMD not working. Too variable
+# ----------------------------------------------------------------------------------------------------------------------
 '''
 imfs_first = pyeemd.emd(ds_first, num_imfs=num_imfs,
                             S_number=S_number, num_siftings=num_siftings)
@@ -226,7 +289,9 @@ imfs_second = pyeemd.emd(ds_second, num_imfs=num_imfs,
                              S_number=S_number, num_siftings=num_siftings)
 '''
 
+# ----------------------------------------------------------------------------------------------------------------------
 # CEEMDAN works nice but is slow
+# ----------------------------------------------------------------------------------------------------------------------
 '''
 t0 = time.process_time()
 imfs_first = pyeemd.ceemdan(ds_first, num_imfs=num_imfs, ensemble_size=ensemble_size, noise_strength=noise_strength,
@@ -257,8 +322,9 @@ plt.plot(t, test_imfs[imf], color='b')
 plt.plot(t, real_imfs[imf], color='r')
 '''
 
-
-# Load the generated EMD data and have a look
+# ----------------------------------------------------------------------------------------------------------------------
+# LOAD THE GENERATED EMD DATA AND HAVE A LOOK
+# ----------------------------------------------------------------------------------------------------------------------
 num_of_imfs = const.NUMBER_OF_IMFS
 num_of_channels = const.NUMBER_OF_LFP_CHANNELS_IN_BINARY_FILE
 
@@ -307,8 +373,9 @@ sl.connect_repl_var(globals(), 'imf', 'get_windowed_imf', 'window', 'args', slid
 
 osv.graph(globals(), 'window')
 
-
-# Checking imfs similarity
+# ----------------------------------------------------------------------------------------------------------------------
+# CHECKING IMFS SIMILARITY
+# ----------------------------------------------------------------------------------------------------------------------
 t = imfs[30, :, :]
 for i in np.arange(t.shape[0]-1):
     vA = t[i, :]

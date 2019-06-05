@@ -49,3 +49,7 @@ PIXEL_PER_FRAME_TO_KM_PER_HOUR = PIXEL_PER_FRAME_TO_METERS_PER_SECOND * 3.6
 BRAIN_REGIONS = {'Cortex MPA': 8100, 'CA1': 6200, 'CA3': 5030,
                  'Thalamus LPMR': 4410, 'Thalamus Po': 3420, 'Thalamus VPM': 2200,
                  'Zona Incerta': 1210, 'Subthalamic Nucleus': 750, 'Internal Capsule': 300}
+
+BRAIN_DATA_UP_TO_QUARTER_SECOND = 13506
+BRAIN_DATA_UP_TO_FRAME = 405180
+BRAIN_DATA_UP_TO_POINT = 67259980

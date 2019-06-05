@@ -4,15 +4,11 @@ The pipeline for spikesorting this dataset
 """
 
 import numpy as np
-import pandas as pd
 from os.path import join
 import matplotlib.pyplot as plt
 
-from spikesorting_tsne import preprocessing_kilosort_results as preproc_kilo, io_with_cpp as tsne_io, tsne as tsne,\
-                              positions_on_probe as spp, visualization as viz
-from spikesorting_tsne_guis import clean_kilosort_templates as clean, spikesort_on_tsne
-
-import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
+from BrainDataAnalysis.Spike_Sorting import positions_on_probe as spp
+from spikesorting_tsne_guis import clean_kilosort_templates as clean
 
 from ExperimentSpecificCode._2019_EI_Anesthesia import constants as const
 

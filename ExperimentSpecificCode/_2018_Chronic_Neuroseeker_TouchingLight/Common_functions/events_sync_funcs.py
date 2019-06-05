@@ -230,7 +230,7 @@ def get_amp_time_point_from_computer_time(correspondance_dataframe, datetime):
     return p3
 
 
-def get_dataframe_of_event_csv_file(data_folder, event_type):
+def get_dataframe_of_event_csv_file(data_folder, event_type, cam_ttl_pulse_period=158):
 
     if event_type is 'Video':
         csv_file_name = path.join(data_folder, event_type + '.csv')
@@ -253,7 +253,7 @@ def get_dataframe_of_event_csv_file(data_folder, event_type):
 
         computer_time_amp_time = get_computer_time_to_amp_time_points_dataframe(data_folder,
                                                                                 clean=True,
-                                                                                cam_ttl_pulse_period=158)
+                                                                                cam_ttl_pulse_period=cam_ttl_pulse_period)
 
         if event_type is not 'BallTracking':
             time_points = []

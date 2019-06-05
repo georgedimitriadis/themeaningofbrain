@@ -12,12 +12,10 @@ import os
 import numpy as np
 import pandas as pd
 from os.path import join
-from GUIs.Kilosort import clean_kilosort_templates as clean
-from GUIs.Kilosort import create_data_cubes as c_cubes
-from Layouts.Probes.Neuroseeker import probes_neuroseeker as ps
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_33p1 import constants as const
 from spikesorting_tsne import tsne, visualization as viz, preprocessing_kilosort_results as preproc_kilo, \
-     io_with_cpp as tsne_io, positions_on_probe as sp_pos, constants as ct
+     io_with_cpp as tsne_io, constants as ct
+from BrainDataAnalysis.Spike_Sorting import positions_on_probe as sp_pos
 from spikesorting_tsne_guis import spikesort_on_tsne
 
 # This is to create the correct prb file with only the AP channels in (1368). It should never be run again

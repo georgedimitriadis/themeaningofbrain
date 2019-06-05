@@ -10,7 +10,7 @@ def assign_croped_markers_to_full_arena(markers_croped, crop_window_position):
     num_of_columns_to_change = \
         markers_croped.loc[:, markers_croped.columns.get_level_values(2).isin(['x'])].values.shape[1]
 
-    markers = markers_croped
+    markers = markers_croped.copy()
 
     markers.loc[:, markers_croped.columns.get_level_values(2).isin(['x'])] = \
         markers_croped.loc[:, markers_croped.columns.get_level_values(2).isin(['x'])].values + \
@@ -41,6 +41,20 @@ def clean_large_movements(positions, maximum_pixels):
             pass
 
     return positions
+
+
+def clean_large_movements_single_axis(positions, maximum_pixels):
+    new_positions = np.copy(positions)
+    for i in np.arange(positions.shape[0]) + 1:
+        try:
+            if np.abs(positions[i, 0] - positions[i - 1, 0]) > maximum_pixels:
+                new_positions[i, 0] = positions[i + 1, 0]
+            if np.abs(positions[i, 1] - positions[i + 1, 1]) > maximum_pixels:
+                new_positions[i, 1] = positions[i - 1, 1]
+        except:
+            pass
+
+    return new_positions
 
 
 def turn_low_likelihood_to_nans(markers, likelihood_threshold):
@@ -176,6 +190,7 @@ def clean_dlc_outpout(updated_markers_filename, markers, gap, order):
     for c in np.arange(len(updated_markers.columns)):
         # Get the column of positions and make sure the 1st element is not nan
         positions = updated_markers.loc[:, updated_markers.columns[c]]
+        print('Doing column {}'.format(updated_markers.columns[c]))
         if np.isnan(positions[0]):
             positions.loc[0] = positions.loc[1]
 
@@ -195,8 +210,8 @@ def clean_dlc_outpout(updated_markers_filename, markers, gap, order):
                 if np.isnan(positions.loc[i]):
                     x = i - window[0]
                     positions.loc[i] = interpolate[x]
-            print('{} of {} for {} of {}'.format(str(index), str(num_of_windows), str(c),
-                                                 str(len(markers.columns))))
+            print('    {} of {} for {} of {}'.format(str(index), str(num_of_windows), str(c),
+                                                     str(len(markers.columns))))
             index += 1
 
         updated_markers.loc[:, updated_markers.columns[c]] = positions

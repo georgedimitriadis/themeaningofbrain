@@ -7,7 +7,7 @@ from GUIs.Kilosort import create_data_cubes as cdc
 from spikesorting_tsne import preprocessing_kilosort_results as preproc
 from spikesorting_tsne import tsne as TSNE
 from spikesorting_tsne import io_with_cpp as io
-from spikesorting_tsne import positions_on_probe as pos
+from BrainDataAnalysis.Spike_Sorting import positions_on_probe as pos
 from BrainDataAnalysis import ploting_functions as pf
 
 kilosort_folder = r'F:\JoanaPaired\128ch\2015-09-03\Analysis\kilosort\thres4_10_10_Fe16_Pc12\kilosort output'
@@ -137,7 +137,7 @@ spike_info.to_pickle(join(klusta_tsne_folder, 'spike_info.df'))
 # COMPARE MASKED PCS BETWEEN DIFFERENT EMBEDDINGS
 import numpy as np
 from os.path import join
-from sklearn import manifold, datasets
+from sklearn import manifold
 import matplotlib.pyplot as plt
 from time import time
 from matplotlib.ticker import NullFormatter

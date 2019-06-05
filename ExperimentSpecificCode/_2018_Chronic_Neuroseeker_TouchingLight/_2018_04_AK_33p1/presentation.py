@@ -4,13 +4,9 @@ from os.path import join
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from npeet.lnc import MI
 from BrainDataAnalysis.LFP import emd
 import common_data_transforms as cdts
 from mne.time_frequency import multitaper as mt
-from mne.time_frequency import multitaper as mt
-
-from mpl_toolkits import mplot3d
 
 import one_shot_viewer as osv
 import sequence_viewer as sv
@@ -150,7 +146,7 @@ body_positions = dlc_pp.clean_large_movements(body_positions, maximum_pixels=20)
 conversion_const = const.PIXEL_PER_FRAME_TO_METERS_PER_SECOND
 body_velocities = np.diff(body_positions, axis=0) * conversion_const
 body_velocities_polar = np.array([np.sqrt(np.power(body_velocities[:, 0], 2) + np.power(body_velocities[:, 1], 2)),
-                         180 * (1/np.pi) * np.arctan(body_velocities[:, 1] / body_velocities[:, 0])]).transpose()
+                         180 * (1/np.pi) * np.arctan2(body_velocities[:, 1],  body_velocities[:, 0])]).transpose()
 
 
 
