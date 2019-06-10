@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 
 from BrainDataAnalysis.Spike_Sorting import positions_on_probe as spp
 from spikesorting_tsne_guis import clean_kilosort_templates as clean
+from spikesorting_tsne import preprocessing_kilosort_results as preproc_kilosort
 
 from ExperimentSpecificCode._2019_EI_Anesthesia import constants as const
 
@@ -66,6 +67,7 @@ spp.view_grouped_templates_positions(kilosort_folder, BRAIN_REGIONS, const.PROBE
 # b) Create the template_info.df dataframe (or load it if you already have it)
 # template_info = preproc_kilo.generate_template_info_after_cleaning(kilosort_folder, sampling_freq)
 template_info = np.load(join(kilosort_folder, 'template_info.df'))
+spike_info = preproc_kilosort.generate_spike_info_after_cleaning(kilosort_folder)
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
 
