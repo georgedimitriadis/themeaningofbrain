@@ -74,9 +74,17 @@ sv.image_sequence(globals(), 'frame', 'labeled_video_file')
 body_parts = ['Neck', 'Mid Body', 'Tail Base']
 body_markers = dlc_pp.seperate_markers(markers, body_parts)
 
+head_parts = ['Nose', 'Ear Left', 'Ear Right', 'Left Front Top Implant', 'Right Back To Implant', 'Screw Tip Implant']
+head_markers = dlc_pp.seperate_markers(markers, head_parts)
+
+tail_parts = ['Tail Mid', 'Tail Tip']
+tail_markers = dlc_pp.seperate_markers(markers, tail_parts)
 
 likelihood_threshold = 0.8
 body_markers = dlc_pp.turn_low_likelihood_to_nans(body_markers, likelihood_threshold)
+likelihood_threshold = 0.3
+head_markers = dlc_pp.turn_low_likelihood_to_nans(head_markers, likelihood_threshold)
+tail_markers = dlc_pp.turn_low_likelihood_to_nans(tail_markers, likelihood_threshold)
 
 
 '''
@@ -196,6 +204,8 @@ ax_y.plot_surface(X, Y, pred_y)
 #  -------------------------------------------------
 #  -------------------------------------------------
 # CLEANING THE BODY MARKERS BY FITTING 1D LINE USING ONLY ONE MARKER
+#  -------------------------------------------------
+#  -------------------------------------------------
 
 # Have a look at what different gaps and orders do to the fits
 body_markers_positions = body_markers.loc[:, body_markers.columns.get_level_values(2).isin(['x', 'y'])]
@@ -241,10 +251,16 @@ sv.image_sequence(globals(), 'frame', 'labeled_video_file')
 
 # --------------------------------------------------
 
+#  -------------------------------------------------
+#  -------------------------------------------------
+# CLEANING THE HEAD MARKERS BY FITTING 1D LINE USING ONLY ONE MARKER
+#  -------------------------------------------------
+#  -------------------------------------------------
+
 
 # --------------------------------------------------
 # --------------------------------------------------
-# DEVELOPING THE POSITION CORRELATIONS
+# LOOKING AT THE RESULTS SUPERIMPOSED ON THE VIDEO
 # --------------------------------------------------
 # --------------------------------------------------
 
@@ -326,16 +342,35 @@ tr.connect_repl_var(globals(), 'frame', 'update_trajectory_for_video', 'output')
 sv.image_sequence(globals(), 'frame', 'full_video_file', 'traj')
 
 
-# Create occupancy and categorical velocities distributions
-space_occupancy = binning.bin_2d_array(body_positions, bins=[10, 10])
+# Look at the whole video with head markers superimposed
+traj = np.zeros((640, 640, 4))
+frame = 3
+output = None
+head_markers_positions = head_markers.loc[:, head_markers.columns.get_level_values(2).isin(['x', 'y'])]
 
-max_pix_per_frame = 20  # Rats run up to 13Km/h = 20 pixels/frame
-bins = [np.logspace(np.log10(0.0001), np.log10(max_pix_per_frame * conversion_const), 30, base=10), 20]
-velocity_categories = binning.bin_2d_array(body_velocities_polar, bins=bins)
-speed_categories = pd.cut(body_velocities_polar[:, 0], bins=bins[0])
-movement_categories = pd.cut(body_velocities_polar[:, 0], bins=np.array([0, 0.06, 0.28, 5.7, 70]) * conversion_const,
-                             labels=['still', 'jitter', 'walk', 'run'])  # bins in pixels/frame * conversion factor
-orientation_categories = pd.cut(body_velocities_polar[:, 1], bins=20)
+
+def update_head_markers_for_video(frame):
+    traj[:, :, :] = 0
+    marker_size = 3
+
+    markers = head_markers_positions.loc[frame]
+    for index in np.arange(0, 10, 2):
+        data = markers[index:index+2].values.astype(int)
+        if ~np.isnan(data[0]) and ~np.isnan(data[1]):
+            traj[data[1] - marker_size:data[1] + marker_size, data[0] - marker_size:data[0] + marker_size, 3] = 255
+            if index < 5:
+                traj[data[1] - marker_size:data[1] + marker_size, data[0] - marker_size:data[0] + marker_size,
+                0] = 80 + index*80
+            else:
+                traj[data[1] - marker_size:data[1] + marker_size, data[0] - marker_size:data[0] + marker_size,
+                2] = 80 + index * 80
+
+    return output
+
+
+tr.connect_repl_var(globals(), 'frame', 'update_head_markers_for_video', 'output')
+sv.image_sequence(globals(), 'frame', 'full_video_file', 'traj')
+
 
 
 

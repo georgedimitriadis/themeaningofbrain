@@ -87,9 +87,9 @@ def emd(signal, result_filename, result_dtype=np.int16,
                         for channel in np.arange(n_channels))
 
 
-def main(args):
+def run_emd(args):
 
-    downsampled_lfp = args[1]
+    downsampled_lfp_filename = args[1]
     result_filename = args[2]
     num_imfs = int(args[4])
     ensemble_size = int(args[5])
@@ -98,44 +98,24 @@ def main(args):
     num_siftings = int(args[8])
 
     t = args[3]
-    if t == 'ínt8':
+    if t == 'int8':
         result_dtype = np.int8
-    elif t == 'uínt8':
+    elif t == 'uint8':
         result_dtype = np.uint8
-    elif t == 'ínt16':
+    elif t == 'int16':
         result_dtype = np.int16
-    elif t == 'uínt16':
+    elif t == 'uint16':
         result_dtype = np.uint16
-    elif t == 'ínt32':
+    elif t == 'int32':
         result_dtype = np.int32
-    elif t == 'uínt32':
+    elif t == 'uint32':
         result_dtype = np.uint32
     elif t == 'float' or t == 'float32':
         result_dtype = np.float32
     elif t == 'float64':
         result_dtype = np.float64
 
-    '''
-    factor = 4  # possible 3, 5, 10
-
-    base_folder = r'D:\Data\George'
-    rat_folder = r'AK_33.1'
-    date = r'2018_04_30-11_38'
-
-    ds_numpy_filename = join(base_folder, rat_folder, date,
-                             'Analysis', 'Lfp', 'Downsampling', 'Amplifier_LFPs_Downsampled_x{}.npy'.format(factor))
-    downsampled_lfp = np.load(ds_numpy_filename)
-
-    result_filename = join(base_folder, rat_folder, date,
-                           'Analysis', 'Lfp', 'EMD', 'imfs.bin')
-
-    result_dtype = np.int16
-    num_imfs = 13
-    ensemble_size = 25
-    noise_strength = 0.01
-    S_number = 20
-    num_siftings = 100
-    '''
+    downsampled_lfp = np.load(downsampled_lfp_filename)
 
     emd(downsampled_lfp, result_filename, result_dtype=result_dtype,
         num_imfs=num_imfs, ensemble_size=ensemble_size, noise_strength=noise_strength,
@@ -155,7 +135,7 @@ def load_memmaped_imfs(filename, num_of_imfs, num_of_channels, dtype=np.int16):
 
 if __name__ == "__main__":
     args = sys.argv
-    main(args)
+    run_emd(args)
 
 
 

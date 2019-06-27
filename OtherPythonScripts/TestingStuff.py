@@ -881,5 +881,14 @@ s.connect_repl_var(globals(), 'a', 't', 'c', 'b', slider_limits=[0, 200])
 
 
 
+from sklearn.decomposition import pca
+
+
+
+
+
+
+
+
 
 

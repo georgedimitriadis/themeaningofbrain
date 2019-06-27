@@ -2,6 +2,7 @@
   <dictionary name="KAMPFF-LAB-ANALYSIS2">
     <words>
       <w>denoise</w>
+      <w>discretize</w>
       <w>guis</w>
       <w>kilosort</w>
       <w>spikesort</w>

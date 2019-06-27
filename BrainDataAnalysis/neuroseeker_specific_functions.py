@@ -1,7 +1,7 @@
 
 
 import numpy as np
-import scipy
+from scipy import signal
 from os.path import join
 import re
 import pandas as pd
@@ -93,7 +93,7 @@ def downsample(filename, data, factor, filter_type='iir', filter_order=8, zero_p
 
     type = data.dtype
 
-    first_channel_downsampled = scipy.signal.decimate(data[0], q=factor, n=filter_order, ftype='iir',
+    first_channel_downsampled = signal.decimate(data[0], q=factor, n=filter_order, ftype='iir',
                                                       zero_phase=zero_phase)
     first_channel_downsampled = np.squeeze(first_channel_downsampled)
     downsampled_shape = (data.shape[0], len(first_channel_downsampled))
@@ -104,7 +104,7 @@ def downsample(filename, data, factor, filter_type='iir', filter_order=8, zero_p
 
     for channel in np.arange(1, downsampled_shape[0]):
 
-        downsampled_data[channel, :] = scipy.signal.decimate(data[channel], q=factor, n=filter_order, ftype=filter_type,
+        downsampled_data[channel, :] = signal.decimate(data[channel], q=factor, n=filter_order, ftype=filter_type,
                                                              zero_phase=zero_phase)
 
     return downsampled_data
