@@ -74,7 +74,7 @@ def emd(signal, result_filename, result_dtype=np.int16,
     imfs = np.memmap(result_filename, dtype=result_dtype, mode='w+', shape=emd_shape)
     del imfs
 
-    Parallel(n_jobs=10)(delayed(emd_per_channel)(channel,
+    Parallel(n_jobs=6)(delayed(emd_per_channel)(channel,
                                                 signal[channel, :],
                                                 result_filename,
                                                 result_dtype,

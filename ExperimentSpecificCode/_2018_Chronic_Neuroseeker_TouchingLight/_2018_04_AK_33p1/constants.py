@@ -9,7 +9,7 @@ probe_layout_folder = r'E:\Software\Develop\Source\Repos\Python35Projects\TheMea
 prb_file = path.join(probe_layout_folder, 'ap_only_prb.txt')
 
 
-base_save_folder = r'D:\Data\George'
+base_save_folder = r'F:\Neuroseeker chronic'
 rat_folder = r'AK_33.1'
 
 
@@ -43,7 +43,8 @@ NUMBER_OF_IMFS = 13
 PROBE_DIMENSIONS = [100, 8100]
 POSITION_MULT = 2.25
 
-PIXEL_PER_FRAME_TO_METERS_PER_SECOND = 0.1875
+PIXEL_PER_FRAME_TO_CM_PER_SECOND = 22.73
+PIXEL_PER_FRAME_TO_METERS_PER_SECOND = PIXEL_PER_FRAME_TO_CM_PER_SECOND / 100
 PIXEL_PER_FRAME_TO_KM_PER_HOUR = PIXEL_PER_FRAME_TO_METERS_PER_SECOND * 3.6
 
 BRAIN_REGIONS = {'Cortex MPA': 8100, 'CA1': 6200, 'CA3': 5030,

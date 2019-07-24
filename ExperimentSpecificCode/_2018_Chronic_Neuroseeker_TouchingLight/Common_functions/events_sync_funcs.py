@@ -48,6 +48,17 @@ bits = {'CAMERA': 1, 'BEAM_BREAK': 4, 'SOUND': 8}
 # There should be but there isn't a bit=2 for trial end
 
 
+def turn_full_events_csv_to_pandas(events_file):
+    """
+    This assumes that the Events.csv file has been reformated into 3 columns in excel. The 1st has the date/time, the
+    2nd the event type and the 3rd the result of the event
+    :param events_file:  The full Events.csv filename
+    :return: A pandas dataframe
+    """
+    return pd.read_csv(events_file, parse_dates=[0], usecols=[0, 1, 2], skipinitialspace=True, index_col=False,
+                       header=None)
+
+
 def find_nearest(array, value):
     idx = (np.abs(array-value)).argmin()
     return idx, array[idx]
@@ -284,6 +295,19 @@ def frame_to_time_point(time_point_of_first_video_frame, camera_frames_in_video,
     return int(time_point_of_first_video_frame + (camera_frames_in_video[frame] * points_per_pulse))
 
 
+def time_point_to_frame_from_video_df(ev_video_df, time_points):
+    times = ev_video_df['AmpTimePoints'].values
+    try:
+        length = len(time_points)
+        nearest_frames = []
+        for i in np.arange(length):
+            nearest_frames.append((np.abs(times - time_points[i])).argmin())
+    except TypeError:
+        nearest_frames = [(np.abs(times - time_points)).argmin()]
+
+    return nearest_frames
+
+
 def time_point_to_frame(time_point_of_first_video_frame, camera_frames_in_video, points_per_pulse, time_point):
     """
     Returns the video frame number corresponding to the amplifier time point. If the time point is before (after) the
@@ -313,3 +337,6 @@ def time_point_to_frame(time_point_of_first_video_frame, camera_frames_in_video,
         video_frame = video_frame.tolist()
 
     return video_frame
+
+
+

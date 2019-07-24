@@ -51,11 +51,29 @@ def spike_count_per_frame(template_info, spike_info, ev_video, sampling_frequenc
 
 
 def rolling_window_with_step(data, function, window_size, step):
-    data_len = len(data)
+    """
+    Runs the function over windows of window_size with step. Can deal with 1D and 2D data. For 2D data there are two
+    assumptions. 1) The function runs over the second axis (axis=1) and 2) The function accepts the axis parameter
+    :param data: The data to pass the function over
+    :param function: The function to run
+    :param window_size: The window size
+    :param step: The step
+    :return:
+    """
+    if len(np.shape(data)) == 1:
+        data_len = len(data)
 
-    start_indices = np.arange(0, data_len, step).astype(np.int)
+        start_indices = np.arange(0, data_len, step).astype(np.int)
 
-    result = [function(data[i:i + int(window_size)])
-              for i in start_indices if i + window_size < data_len]
+        result = [function(data[i:i + int(window_size)])
+                  for i in start_indices if i + window_size < data_len]
+    elif len(np.shape(data)) == 2:
+            data_len = np.shape(data)[1]
+
+            start_indices = np.arange(0, data_len, step).astype(np.int)
+
+            result = [function(data[:, i:i + int(window_size)], axis=1)
+                      for i in start_indices if i + window_size < data_len]
+            result = np.transpose(result)
 
     return result

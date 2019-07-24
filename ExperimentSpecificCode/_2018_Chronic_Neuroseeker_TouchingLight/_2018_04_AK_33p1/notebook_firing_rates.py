@@ -16,7 +16,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import common_data_transforms as com_tr
 
-from io import StringIO  # Python3
+from io import StringIO
 import sys
 
 # -------------------------------------------------

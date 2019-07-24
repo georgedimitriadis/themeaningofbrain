@@ -9,6 +9,8 @@ import numpy as np
 import scipy.interpolate as interpolate
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
+from matplotlib.patches import FancyArrowPatch
+from mpl_toolkits.mplot3d import proj3d
 import pandas as pd
 import warnings
 import BrainDataAnalysis.Utilities as ut
@@ -665,3 +667,18 @@ def make_video_of_tsne_iterations(iterations, video_dir, data_file_name='interim
 def plot_log_histogram(data, number_of_bins, minimum_bin, maximum_bin):
     plt.hist(data, bins=np.logspace(np.log10(minimum_bin), np.log10(maximum_bin), number_of_bins))
     plt.gca().set_xscale("log")
+
+
+
+
+class Arrow3D(FancyArrowPatch):
+
+    def __init__(self, xs, ys, zs, *args, **kwargs):
+        FancyArrowPatch.__init__(self, (0, 0), (0, 0), *args, **kwargs)
+        self._verts3d = xs, ys, zs
+
+    def draw(self, renderer):
+        xs3d, ys3d, zs3d = self._verts3d
+        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
+        self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
+        FancyArrowPatch.draw(self, renderer)

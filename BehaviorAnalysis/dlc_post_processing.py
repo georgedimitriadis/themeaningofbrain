@@ -23,6 +23,23 @@ def assign_croped_markers_to_full_arena(markers_croped, crop_window_position):
     return markers
 
 
+def clean_large_marker_movement(markers, maximum_pixels):
+    xy_markers = markers.loc[:, markers.columns.get_level_values(2).isin(['x', 'y'])]
+    for c in np.arange(xy_markers.shape[1]):
+        positions = xy_markers[:, c]
+        for i in np.arange(xy_markers.shape[0] + 1):
+            try:
+                if np.logical_and(~np.isnan(xy_markers[i, c]), ~np.isnan(xy_markers[i-1, c])):
+                    distance = np.sqrt(np.power(xy_markers[i - 1, c] - xy_markers[i, c], 2) +
+                                       np.power(xy_markers[i - 1, c] - xy_markers[i, c], 2))
+                    if distance > maximum_pixels:
+                        xy_markers[i, c] = xy_markers[i - 1, c]
+            except:
+                pass
+
+    return xy_markers
+
+
 def clean_large_movements(positions, maximum_pixels):
     for i in np.arange(positions.shape[0]) + 1:
         try:
@@ -33,7 +50,8 @@ def clean_large_movements(positions, maximum_pixels):
                     np.isnan(np.abs(positions[i - 1, 1] - positions[i, 1])):
                 positions[i, :] = positions[i - 1, :]
             '''
-            distance = np.sqrt(np.power(positions[i - 1, 0] - positions[i, 0], 2) -
+
+            distance = np.sqrt(np.power(positions[i - 1, 0] - positions[i, 0], 2) +
                                np.power(positions[i - 1, 1] - positions[i, 1], 2))
             if distance > maximum_pixels:
                 positions[i, :] = positions[i - 1, :]
@@ -41,6 +59,39 @@ def clean_large_movements(positions, maximum_pixels):
             pass
 
     return positions
+
+
+def clean_large_movements_with_nans(positions, maximum_pixels):
+    for i in np.arange(positions.shape[0]) + 1:
+        try:
+            if np.sqrt(np.power(positions[i - 1, 0] - positions[i, 0], 2) +
+                       np.power(positions[i - 1, 1] - positions[i, 1], 2)) > maximum_pixels or \
+                    np.isnan(np.abs(positions[i - 1, 0] - positions[i, 0])) or \
+                    np.isnan(np.abs(positions[i - 1, 1] - positions[i, 1])):
+                positions[i, :] = positions[i - 1, :]
+
+        except IndexError:
+            pass
+
+    return positions
+
+
+def clean_markers_with_large_movements(markers, maximum_pixels):
+    clean_markers = markers.copy()
+    for part in np.unique(markers.columns.get_level_values(1).values):
+        print('Doing {}'.format(part))
+        positions = markers.loc[:, np.logical_and(markers.columns.get_level_values(1) == part,
+                                          np.isin(markers.columns.get_level_values(2), ['x', 'y']))]
+        positions = positions.values
+        positions = clean_large_movements(positions, maximum_pixels)
+
+        clean_markers.loc[:, np.logical_and(markers.columns.get_level_values(1) == part,
+                                      np.isin(markers.columns.get_level_values(2), ['x', 'y']))] = \
+        positions
+
+        print('Done {}'.format(part))
+
+    return clean_markers
 
 
 def clean_large_movements_single_axis(positions, maximum_pixels):
@@ -97,7 +148,10 @@ def find_windows_with_nans(positions, gap):
     windows = []
     while i < len(positions) - 1:
         if np.isnan(positions[i]):
-            start = i - 1
+            if i == 0:
+                start = i
+            else:
+                start = i - 1
             try:
                 while np.isnan(positions[i]):
                     i += 1
@@ -202,7 +256,7 @@ def clean_dlc_outpout(updated_markers_filename, markers, gap, order):
         for window in windows:
             data = get_data_from_a_nan_window(positions, window, gap)
             x = np.arange(len(data))
-            if order < 2:
+            if order > 2:
                 interpolate, rsquared = poly_interpolate_data_with_nans(data, order)
             else:
                 interpolate, rsquared = linear_interpolate_data_with_nans(data)
@@ -216,6 +270,7 @@ def clean_dlc_outpout(updated_markers_filename, markers, gap, order):
 
         updated_markers.loc[:, updated_markers.columns[c]] = positions
 
-    pd.to_pickle(updated_markers, updated_markers_filename)
+    if updated_markers_filename is not None:
+        pd.to_pickle(updated_markers, updated_markers_filename)
 
     return updated_markers

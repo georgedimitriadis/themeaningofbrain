@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
 from spikesorting_tsne import constants as ct
 import pandas as pd
 
@@ -227,6 +228,19 @@ def generate_probe_positions_of_templates(base_folder, threshold=0.1, new_templa
     return np.array(templates_positions)
 
 
+def get_y_spread_regions_of_bad_channel_groups(base_folder, bad_channel_groups):
+
+    channel_positions = np.load(os.path.join(base_folder, 'channel_positions.npy'))
+    bad_channel_groups_y_spreads = []
+    for bc_group in bad_channel_groups:
+        bc_positions = channel_positions[bc_group]
+        top = bc_positions[:, 1].max()
+        bottom = bc_positions[:, 1].min()
+        bad_channel_groups_y_spreads.append([bottom, top])
+
+    return bad_channel_groups_y_spreads
+
+
 def view_spike_positions(spike_positions, brain_regions, probe_dimensions, labels_offset=80, font_size=20):
     """
     Plot the spike positions as a scatter plot on a probe marked with brain regions
@@ -256,7 +270,9 @@ def view_spike_positions(spike_positions, brain_regions, probe_dimensions, label
 
 
 def view_grouped_templates_positions(base_folder, brain_regions, probe_dimensions, position_multiplier=1,
-                                     template_info=None, labels_offset=80, font_size=20):
+                                     bad_channel_regions=None, template_info=None, labels_offset=80,
+                                     font_size=20, dot_sizes=None,
+                                     func_to_run_on_click=None, args_of_func=None):
     """
 
     :param base_folder: the folder where all the npy arrays (template_markings etc.) are saved
@@ -271,13 +287,20 @@ def view_grouped_templates_positions(base_folder, brain_regions, probe_dimension
 
     :type position_multiplier: float
     :param template_info: If provided the template_info will be used to define the types of the templates. It assumes
-    the length of the template_info and of the loaded weighted_template_positions array is the same
+    the length of the template_info and of the loaded weighted_template_positions array is the same unless the
+    template_info has template positions (position X and position Y column) in it. In this case these are used. Also
+    the template_info is used to know which template is clicked on the figure for the on_pick event
 
     :type template_info: pd.Dataframe
     :param labels_offset: offset of the labels on the plot
     :type labels_offset: (int)
     :param font_size: the font size of the labels
     :type font_size: (int)
+    :param func_to_run_on_click: The function to run on a click of a scatter point. It assumes that the first argument
+    it needs is the template row of the template_info that was click.
+    :type func_to_run_on_click: Func
+    :param args_of_func: The arguments of the function to run on on_pick (after the template itself)
+    :type args_of_func: list of objects
     :return:
     """
 
@@ -297,17 +320,23 @@ def view_grouped_templates_positions(base_folder, brain_regions, probe_dimension
     def on_pick(event):
         xmouse, ymouse = event.mouseevent.xdata, event.mouseevent.ydata
         ind = event.ind[0]
-        print(event.ind)
-        print(ind)
         x = template_positions[ind, 0]
         y = template_positions[ind, 1]
+        print('________________________')
         print('x, y of mouse: {:.2f},{:.2f}'.format(xmouse, ymouse))
         print('Position: {}, {}'.format(str(x), str(y)))
+        print('------------------------')
         if template_info is not None:
             template_number = template_info.iloc[ind]['template number']
             print('Template number = {}'.format(template_number))
             print('Firing frequency = {}'.format(template_info.iloc[ind]['firing rate']))
             print('Number of spikes = {}'.format(template_info.iloc[ind]['number of spikes']))
+            print('________________________')
+            if func_to_run_on_click is not None:
+                if args_of_func is None:
+                    func_to_run_on_click(template_info.iloc[ind])
+                else:
+                    func_to_run_on_click(template_info.iloc[ind], *args_of_func)
 
     types = np.flipud(np.unique(clean_template_markings))
     fig = plt.figure()
@@ -327,8 +356,15 @@ def view_grouped_templates_positions(base_folder, brain_regions, probe_dimension
 
     for type in types:
         indices_of_templates_of_type = np.squeeze(np.argwhere(clean_template_markings == type)).astype(np.int)
-        colors[indices_of_templates_of_type] = [type_to_color[type]]
-        sizes[indices_of_templates_of_type] = type_to_size[type]
+        if np.size(indices_of_templates_of_type) < 2:
+            colors[indices_of_templates_of_type] = type_to_color[type]
+        else:
+            colors[indices_of_templates_of_type] = [type_to_color[type]]
+        if dot_sizes is None:
+            sizes[indices_of_templates_of_type] = type_to_size[type]
+
+    if dot_sizes is not None:
+        sizes = dot_sizes
 
     ax.scatter(template_positions[:, 0], template_positions[:, 1], s=sizes, c=colors,
                picker=tolerance)
@@ -337,6 +373,13 @@ def view_grouped_templates_positions(base_folder, brain_regions, probe_dimension
     ax.set_ylim(0, probe_dimensions[1])
     ax.yaxis.set_ticks(np.arange(0, probe_dimensions[1], 100))
     ax.tick_params(axis='y', direction='in', length=5, width=1, colors='b')
+
+    if bad_channel_regions is not None:
+        for bc_region in bad_channel_regions:
+            bc_region = np.array(bc_region) * position_multiplier
+            ax.add_patch(Rectangle((0, bc_region[0]),
+                                   100, bc_region[1] - bc_region[0],
+                                   facecolor="grey", alpha=0.5))
 
     for region in brain_regions:
         ax.text(2, brain_regions[region] - labels_offset, region, fontsize=font_size)

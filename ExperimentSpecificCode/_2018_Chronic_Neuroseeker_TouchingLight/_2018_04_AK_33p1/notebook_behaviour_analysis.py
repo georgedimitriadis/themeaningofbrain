@@ -23,10 +23,10 @@ from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_
 
 #  -------------------------------------------------
 #  GET FOLDERS
-dlc_folder = r'D:\Data\George\AK_33.1\2018_04_30-11_38\Analysis\Deeplabcut'
-dlc_project_folder = join(dlc_folder, 'projects', 'V1--2019-05-07')
-
 date_folder = 8
+
+dlc_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date_folder], 'Analysis', 'Deeplabcut')
+dlc_project_folder = join(dlc_folder, 'projects', 'V1--2019-05-07')
 
 data_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date_folder], 'Data')
 spikes_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date_folder], 'Analysis', 'Denoised',

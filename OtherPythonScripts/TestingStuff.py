@@ -884,6 +884,15 @@ s.connect_repl_var(globals(), 'a', 't', 'c', 'b', slider_limits=[0, 200])
 from sklearn.decomposition import pca
 
 
+import re
+import pandas as pd
+
+events_file = r'Y:\swc\kampff\George\DataAndResults\Experiments\Awake\NeuroSeeker\AK_47.2\2019_06_29-11_36\Events_worked_on.csv'
+
+events = pd.read_csv(events_file, parse_dates=[0], usecols=[0, 1, 2], skipinitialspace =True, index_col=False, header=None)
+te = events[events[8] == 'TrialEnd']
+len(te)
+
 
 
 
