@@ -96,7 +96,7 @@ args = [increasing_firing_rates_neuron_index, avg_firing_rate_around_suc_trials,
 
 show_rasters_increase = fr_funcs.show_rasters
 
-sl.connect_repl_var(globals(), 'index', 'show_rasters_increase', 'output', 'args',
+sl.connect_repl_var(globals(), 'index', 'output', 'show_rasters_increase', 'args',
                     slider_limits=[0, len(increasing_firing_rates_neuron_index) - 1])
 
 # </editor-fold>
@@ -129,7 +129,7 @@ args = [decreasing_firing_rates_neuron_index, avg_firing_rate_around_suc_trials,
 
 show_rasters_decrease = fr_funcs.show_rasters
 
-sl.connect_repl_var(globals(), 'index', 'show_rasters_decrease', 'output', 'args',
+sl.connect_repl_var(globals(), 'index', 'output', 'show_rasters_decrease', 'args',
                     slider_limits=[0, len(decreasing_firing_rates_neuron_index) - 1])
 
 # </editor-fold>

@@ -18,7 +18,7 @@ import numpy as np
 # show_average_template = pl_funcs.show_average_template
 # template_number = 0
 #
-# tr.connect_repl_var(globals(), 'f', 'show_average_template', 'template_number')
+# tr.connect_repl_var(globals(), 'f', 'template_number', 'show_average_template')
 # ---------------------------
 
 def setup_for_capturing_template_positions_from_image():

@@ -67,6 +67,11 @@ def rolling_window_with_step(data, function, window_size, step):
 
         result = [function(data[i:i + int(window_size)])
                   for i in start_indices if i + window_size < data_len]
+
+        i = int(len(result) * window_size)
+        if i < data_len - 1:
+            result.append(function(data[i: -1]))
+
     elif len(np.shape(data)) == 2:
             data_len = np.shape(data)[1]
 
@@ -74,6 +79,11 @@ def rolling_window_with_step(data, function, window_size, step):
 
             result = [function(data[:, i:i + int(window_size)], axis=1)
                       for i in start_indices if i + window_size < data_len]
+
+            i = int(len(result) * window_size)
+            if i < data_len - 1:
+                result.append(function(data[:, i: -1], axis=1))
+
             result = np.transpose(result)
 
     return result

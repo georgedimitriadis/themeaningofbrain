@@ -103,7 +103,7 @@ def time_point_to_frame(x):
                                           points_per_pulse, x)
 
 
-tr.connect_repl_var(globals(), 'pointer', 'time_point_to_frame', 'video_frame')
+tr.connect_repl_var(globals(), 'pointer', 'video_frame', 'time_point_to_frame')
 
 
 # -----------------------------------------------------------------------------
@@ -293,10 +293,10 @@ seq_v.graph_range(globals(), 'pointer', 'buffer', 'data_th', transform_name='spa
 seq_v.graph_range(globals(), 'pointer', 'buffer', 'data_sth', transform_name='space_data')
 
 phases_m_f_g = []
-tr.connect_repl_var(globals(), 'pointer', 'time_point_to_phases', 'phases_m_f_g')
+tr.connect_repl_var(globals(), 'pointer', 'phases_m_f_g', 'time_point_to_phases')
 
 masked_data = []
-tr.connect_repl_var(globals(), 'pointer', 'time_point_to_masked_data', 'masked_data')
+tr.connect_repl_var(globals(), 'pointer', 'masked_data', 'time_point_to_masked_data')
 
 phases_m_f_g_cor = []
 phases_m_f_g_hyp = []
@@ -320,10 +320,10 @@ def cut_phases_into_sth_channels(x):
     return np.array(phases_m_f_g[sth_channels, :])
 
 
-tr.connect_repl_var(globals(), 'pointer', 'cut_phases_into_cor_channels', 'phases_m_f_g_cor')
-tr.connect_repl_var(globals(), 'pointer', 'cut_phases_into_hyp_channels', 'phases_m_f_g_hyp')
-tr.connect_repl_var(globals(), 'pointer', 'cut_phases_into_th_channels', 'phases_m_f_g_th')
-tr.connect_repl_var(globals(), 'pointer', 'cut_phases_into_sth_channels', 'phases_m_f_g_sth')
+tr.connect_repl_var(globals(), 'pointer', 'phases_m_f_g_cor', 'cut_phases_into_cor_channels')
+tr.connect_repl_var(globals(), 'pointer', 'phases_m_f_g_hyp', 'cut_phases_into_hyp_channels')
+tr.connect_repl_var(globals(), 'pointer', 'phases_m_f_g_th', 'cut_phases_into_th_channels')
+tr.connect_repl_var(globals(), 'pointer', 'phases_m_f_g_sth', 'cut_phases_into_sth_channels')
 
 
 levels = [-10, 250]
@@ -358,10 +358,10 @@ def cut_masked_data_into_sth_channels(x):
     return space_data(np.array(masked_data[sth_channels, :]))
 
 
-tr.connect_repl_var(globals(), 'pointer', 'cut_masked_data_into_cor_channels', 'masked_data_cor')
-tr.connect_repl_var(globals(), 'pointer', 'cut_masked_data_into_hyp_channels', 'masked_data_hyp')
-tr.connect_repl_var(globals(), 'pointer', 'cut_masked_data_into_th_channels', 'masked_data_th')
-tr.connect_repl_var(globals(), 'pointer', 'cut_masked_data_into_sth_channels', 'masked_data_sth')
+tr.connect_repl_var(globals(), 'pointer', 'masked_data_cor', 'cut_masked_data_into_cor_channels')
+tr.connect_repl_var(globals(), 'pointer', 'masked_data_hyp', 'cut_masked_data_into_hyp_channels')
+tr.connect_repl_var(globals(), 'pointer', 'masked_data_th', 'cut_masked_data_into_th_channels')
+tr.connect_repl_var(globals(), 'pointer', 'masked_data_sth', 'cut_masked_data_into_sth_channels')
 
 one_s_v.graph(globals(), 'masked_data_cor')
 one_s_v.graph(globals(), 'masked_data_hyp')

@@ -119,7 +119,7 @@ s = 1000
 args = [s]
 
 sv.graph_range(globals(), 'sync_start', 'sync_step', 'sync_diff')
-dd.connect_repl_var(globals(), 'sound_starting_times', 'step_back', 'sync_start', 'args')
+dd.connect_repl_var(globals(), 'sound_starting_times', 'sync_start', 'step_back', 'args')
 # -------------------------
 '''
 
@@ -145,7 +145,7 @@ for start in sound_starting_times:
 six_pip_sound_start_times = np.array(six_pip_sound_start_times)
 
 np.save(join(events_folder, 'six_pip_sound_start_times.npy'), six_pip_sound_start_times)
-dd.connect_repl_var(globals(), 'six_pip_sound_start_times', 'step_back', 'sync_start', 'args')
+dd.connect_repl_var(globals(), 'six_pip_sound_start_times', 'sync_start', 'step_back', 'args')
 '''
 # -------------------------
 
@@ -190,8 +190,8 @@ def sync_step_to_sound_step(sync_step):
     return int(sync_step * sound_to_sync_sampling_ratio)
 
 
-tr.connect_repl_var(globals(), 'sync_start', 'sync_start_to_sound_start', 'sound_start')
-tr.connect_repl_var(globals(), 'sync_step', 'sync_step_to_sound_step', 'sound_step')
+tr.connect_repl_var(globals(), 'sync_start', 'sound_start', 'sync_start_to_sound_start')
+tr.connect_repl_var(globals(), 'sync_step', 'sound_step', 'sync_step_to_sound_step')
 
 
 # Calculate manually the different offsets
@@ -227,7 +227,7 @@ def step_back(i, step):
 s = 10000
 args = [s]
 
-dd.connect_repl_var(globals(), 'starts_of_long_flat_stretches', 'step_back', 'sync_start', 'args')
+dd.connect_repl_var(globals(), 'starts_of_long_flat_stretches', 'sync_start', 'step_back', 'args')
 
 
 # Create manually the offsets given the sound stops of recording
@@ -308,8 +308,8 @@ def step_back(i, step):
 s = 1000
 args = [s]
 
-tr.connect_repl_var(globals(), 'sync_start', 'get_offset', 'offset')
-dd.connect_repl_var(globals(), 'six_pip_sound_start_times', 'step_back', 'sync_start', 'args')
+tr.connect_repl_var(globals(), 'sync_start', 'offset', 'get_offset')
+dd.connect_repl_var(globals(), 'six_pip_sound_start_times', 'sync_start', 'step_back', 'args')
 # -------------------------
 
 
@@ -377,9 +377,9 @@ def get_freq_and_power(sound_data, figure=None):
 # Manually check if the data are aligned and if the freq calculation works
 sync_starting_point = 0
 sound_starting_point = 0
-dd.connect_repl_var(globals(), 'six_pip_sound_start_times', 'do_nothing', 'sync_starting_point')
-# tr.connect_repl_var(globals(), 'sync_starting_point', 'sync_to_sound_1', 'sound_starting_point')
-tr.connect_repl_var(globals(), 'sync_starting_point', 'sync_to_sound_2', 'sound_starting_point')
+dd.connect_repl_var(globals(), 'six_pip_sound_start_times', 'sync_starting_point')
+# tr.connect_repl_var(globals(), 'sync_starting_point', 'sound_starting_point', 'sync_to_sound_1')
+tr.connect_repl_var(globals(), 'sync_starting_point', 'sound_starting_point', 'sync_to_sound_2')
 
 range = 10000
 # sv.graph_range(globals(), 'sync_starting_point', 'range', 'sync1')
@@ -390,17 +390,17 @@ sv.graph_range(globals(), 'sound_starting_point', 'range_sound', 'rec2_sound')
 
 sound_data = []
 args_end_of_data = [150000]
-# tr.connect_repl_var(globals(), 'sound_starting_point', 'get_sound1_data', 'sound_data', 'args_end_of_data')
-tr.connect_repl_var(globals(), 'sound_starting_point', 'get_sound2_data', 'sound_data', 'args_end_of_data')
+# tr.connect_repl_var(globals(), 'sound_starting_point', 'sound_data', 'get_sound1_data', 'args_end_of_data')
+tr.connect_repl_var(globals(), 'sound_starting_point', 'sound_data', 'get_sound2_data', 'args_end_of_data')
 osv.graph(globals(), 'sound_data')
 
 freq_and_power = 0
 fig = plt.figure(1)
 args_spectrum_figure = [fig]
-tr.connect_repl_var(globals(), 'sound_data', 'get_freq_and_power', 'freq_and_power', 'args_spectrum_figure')
+tr.connect_repl_var(globals(), 'sound_data',  'freq_and_power', 'get_freq_and_power', 'args_spectrum_figure')
 
 # this is just to live display the freq and intensity
-tr.connect_repl_var(globals(), 'freq_and_power', 'do_nothing', 'freq_and_power')
+tr.connect_repl_var(globals(), 'freq_and_power', 'freq_and_power')
 
 
 # Get the freqs and the intensities at that freq for all sound that are found clean in the sync file
@@ -459,7 +459,7 @@ freq = 5
 fig = plt.figure(1)
 args = [fig]
 out = None
-sl.connect_repl_var(globals(), 'freq', 'look_at_hists_of_intensities', 'out', 'args', slider_limits=[5, 15])
+sl.connect_repl_var(globals(), 'freq', 'out', 'look_at_hists_of_intensities', 'args', slider_limits=[5, 15])
 
 
 nominal_intensities_cutoffs = {5: [100, 3690, 6000, 8600, 100000],

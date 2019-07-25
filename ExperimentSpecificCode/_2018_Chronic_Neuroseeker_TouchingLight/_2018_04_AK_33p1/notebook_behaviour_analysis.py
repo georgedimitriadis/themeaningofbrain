@@ -121,7 +121,7 @@ def update_trajectory(f):
     return body_positions[:f, :]
 
 traj = None
-tr.connect_repl_var(globals(), 'frame', 'update_trajectory', 'traj')
+tr.connect_repl_var(globals(), 'frame', 'traj', 'update_trajectory')
 
 
 osv.graph(globals(), 'traj_y', 'traj_x')
@@ -224,7 +224,7 @@ slider_limits = [0, len(windows)]
 window_index = 0
 output = None
 transform_to_interpolate = dlc_pp.transform_to_interpolate
-sl.connect_repl_var(globals(), 'window_index', 'transform_to_interpolate', 'output', 'args', slider_limits)
+sl.connect_repl_var(globals(), 'window_index', 'output', 'transform_to_interpolate', 'args', slider_limits)
 
 
 # Clean all nans
@@ -302,7 +302,7 @@ frame = 2
 out = None
 args = [fig]
 slider_limits = [frames_to_average, len(body_velocities) - frames_to_average]
-sl.connect_repl_var(globals(), 'frame', 'update_trajectory', 'out', 'args', slider_limits)
+sl.connect_repl_var(globals(), 'frame', 'out', 'update_trajectory', 'args', slider_limits)
 
 
 # Look at the whole video with body trajectory superimposed
@@ -338,7 +338,7 @@ def update_trajectory_for_video(frame):
     return output
 
 
-tr.connect_repl_var(globals(), 'frame', 'update_trajectory_for_video', 'output')
+tr.connect_repl_var(globals(), 'frame', 'output', 'update_trajectory_for_video')
 sv.image_sequence(globals(), 'frame', 'full_video_file', 'traj')
 
 
@@ -368,7 +368,7 @@ def update_head_markers_for_video(frame):
     return output
 
 
-tr.connect_repl_var(globals(), 'frame', 'update_head_markers_for_video', 'output')
+tr.connect_repl_var(globals(), 'frame', 'output', 'update_head_markers_for_video')
 sv.image_sequence(globals(), 'frame', 'full_video_file', 'traj')
 
 

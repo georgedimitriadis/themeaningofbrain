@@ -167,6 +167,6 @@ def show_average_template(figure):
     return template_number
 
 
-tr.connect_repl_var(globals(), 'f', 'show_average_template', 'template_number')
+tr.connect_repl_var(globals(), 'f', 'template_number', 'show_average_template')
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------

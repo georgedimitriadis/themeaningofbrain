@@ -56,7 +56,7 @@ def spread_lfp_pane(p):
 
 
 pane_data = None
-tr.connect_repl_var(globals(), 'pane', 'spread_lfp_pane', 'pane_data')
+tr.connect_repl_var(globals(), 'pane', 'pane_data', 'spread_lfp_pane')
 
 one_v.graph(globals(), 'pane_data')
 
@@ -81,7 +81,7 @@ def pane_to_frame(x):
                                                                points_per_pulse, time_point)
 
 
-tr.connect_repl_var(globals(), 'pane', 'pane_to_frame', 'video_frame')
+tr.connect_repl_var(globals(), 'pane', 'video_frame', 'pane_to_frame')
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -179,7 +179,7 @@ def psd_only(point):
     return psd/100000
 
 
-tr.connect_repl_var(globals(), 'timepoint', 'psd_only', 'psd')
+tr.connect_repl_var(globals(), 'timepoint', 'psd', 'psd_only')
 
 
 one_v.graph(globals(), 'psd', 'fs')
@@ -381,7 +381,7 @@ sl.connect_repl_var(globals(), 'time', 'update_args', 'args', slider_limits=[100
 window = None
 
 
-sl.connect_repl_var(globals(), 'imf', 'get_windowed_imf', 'window', 'args', slider_limits=[0, 12])
+sl.connect_repl_var(globals(), 'imf', 'window', 'get_windowed_imf', 'args', slider_limits=[0, 12])
 
 
 osv.graph(globals(), 'window')

@@ -255,5 +255,5 @@ def change_nominal_intensity(nominal_intensity):
 
 sl.connect_repl_var(globals(), 'freq', 'change_freq', 'args', slider_limits=[5, 15])
 sl.connect_repl_var(globals(), 'nominal_intensity', 'change_nominal_intensity', 'args', slider_limits=[0, 3])
-sl.connect_repl_var(globals(), 'neuron_index', 'get_hist_for_neuron_freq_intensity_set', 'out', 'args',
+sl.connect_repl_var(globals(), 'neuron_index', 'out', 'get_hist_for_neuron_freq_intensity_set', 'args',
                     slider_limits=[0, 141])

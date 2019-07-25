@@ -868,7 +868,7 @@ c = 3
 def t(a, b):
     return a+b
 
-tr.connect_repl_var(globals(), 'a', 't', 'c', 'b')
+tr.connect_repl_var(globals(), 'a', 'c', 't', 'b')
 '''
 import drop_down as dd
 e = [1,2,3,4]
@@ -876,7 +876,7 @@ dd.connect_repl_var(globals(), 'e', 't', 'c', 'b')
 '''
 
 import slider as s
-s.connect_repl_var(globals(), 'a', 't', 'c', 'b', slider_limits=[0, 200])
+s.connect_repl_var(globals(), 'a', 'c', 't', 'b', slider_limits=[0, 200])
 
 
 

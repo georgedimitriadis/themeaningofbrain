@@ -117,8 +117,8 @@ markers_positions_no_large_movs_numpy = markers_positions_no_large_movs.values
 args = [markers_positions_no_large_movs_numpy, marker_size]
 update_markers_for_video = overlay_dots.update_markers_for_video
 
-tr.connect_repl_var(globals(), 'frame', 'update_markers_for_video', 'output', 'args')
-sv.image_sequence(globals(), 'frame', 'full_video_file', 'marker_dots')
+tr.connect_repl_var(globals(), 'frame', 'output', 'update_markers_for_video', 'args')
+sv.image_sequence(globals(), 'frame', 'marker_dots', 'full_video_file')
 
 
 # -------------------------------------------------
@@ -171,10 +171,10 @@ def update_head_trajectory(f):
     return head_positions[:f, :]
 
 body_traj = None
-tr.connect_repl_var(globals(), 'frame', 'update_body_trajectory', 'body_traj')
+tr.connect_repl_var(globals(), 'frame', 'body_traj', 'update_body_trajectory')
 
 head_traj = None
-tr.connect_repl_var(globals(), 'frame', 'update_head_trajectory', 'head_traj')
+tr.connect_repl_var(globals(), 'frame', 'head_traj', 'update_head_trajectory')
 
 osv.graph(globals(), 'body_traj_y', 'body_traj_x')
 osv.graph(globals(), 'head_traj_y', 'head_traj_x')

@@ -102,7 +102,7 @@ def raster_from_pane(p):
     return x, y
 
 raster = None
-tr.connect_repl_var(globals(), 'pane', 'raster_from_pane', 'raster')
+tr.connect_repl_var(globals(), 'pane', 'raster', 'raster_from_pane')
 
 
 osv.graph(globals(), 'y', 'x', True)
@@ -336,5 +336,5 @@ def show_average_template(figure):
     return template_number
 
 
-tr.connect_repl_var(globals(), 'f', 'show_average_template', 'template_number')
+tr.connect_repl_var(globals(), 'f', 'template_number', 'show_average_template')
 # ---------------------------

@@ -242,8 +242,8 @@ def get_phase_y_of_channel_for_spike(s):
 phase_x = None
 phase_y = None
 
-tr.connect_repl_var(globals(), 's', 'get_phase_x_of_channel_for_spike', 'phase_x')
-tr.connect_repl_var(globals(), 's', 'get_phase_y_of_channel_for_spike', 'phase_y')
+tr.connect_repl_var(globals(), 's', 'phase_x', 'get_phase_x_of_channel_for_spike')
+tr.connect_repl_var(globals(), 's', 'phase_y', 'get_phase_y_of_channel_for_spike')
 
 s = 1
 one_s_v.graph(globals(), 'phase_y', 'phase_x')

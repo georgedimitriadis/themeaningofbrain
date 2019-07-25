@@ -266,15 +266,15 @@ def get_dataframe_of_event_csv_file(data_folder, event_type, cam_ttl_pulse_perio
                                                                                 clean=True,
                                                                                 cam_ttl_pulse_period=cam_ttl_pulse_period)
 
-        if event_type is not 'BallTracking':
-            time_points = []
-            for datetime in df['ComputerTime']:
-                time_points.append(get_amp_time_point_from_computer_time(computer_time_amp_time, datetime))
-                if len(time_points) % 1000 == 0:
-                    print('Done {} points of {} points of file {}'.format(str(len(time_points)),
-                                                                          str(len(df)),
-                                                                          event_type))
-            df.insert(1, 'AmpTimePoints', time_points)
+        # if event_type is not 'BallTracking':
+        time_points = []
+        for datetime in df['ComputerTime']:
+            time_points.append(get_amp_time_point_from_computer_time(computer_time_amp_time, datetime))
+            if len(time_points) % 1000 == 0:
+                print('Done {} points of {} points of file {}'.format(str(len(time_points)),
+                                                                      str(len(df)),
+                                                                      event_type))
+        df.insert(1, 'AmpTimePoints', time_points)
 
     df.to_pickle(path.join(data_folder, 'events', event_type + '.pkl'))
 

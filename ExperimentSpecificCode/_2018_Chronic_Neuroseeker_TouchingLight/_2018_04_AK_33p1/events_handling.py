@@ -73,7 +73,7 @@ def time_point_to_frame(x):
                                           points_per_pulse, x)
 
 
-tr.connect_repl_var(globals(), 'sync_point', 'time_point_to_frame', 'video_frame')
+tr.connect_repl_var(globals(), 'sync_point', 'video_frame', 'time_point_to_frame')
 # ----------------------------------
 
 
@@ -83,7 +83,7 @@ def frame_to_time_point(x):
                                                      points_per_pulse, x)
 
 
-tr.connect_repl_var(globals(), 'video_frame', 'frame_to_time_point', 'sync_point')
+tr.connect_repl_var(globals(), 'video_frame', 'sync_point', 'frame_to_time_point')
 # ----------------------------------
 
 # Connect the video gui to a gui showing if the sound is on
@@ -101,7 +101,7 @@ def is_sound_on(x):
     return result
 
 
-tr.connect_repl_var(globals(), 'video_frame', 'is_sound_on', 'sound_on')
+tr.connect_repl_var(globals(), 'video_frame', 'sound_on', 'is_sound_on')
 # ----------------------------------
 
 # Connect the video gui to a gui showing if the beam is broken
@@ -119,7 +119,7 @@ def is_beam_broken(x):
     return result
 
 
-tr.connect_repl_var(globals(), 'video_frame', 'is_beam_broken', 'beam_broken')
+tr.connect_repl_var(globals(), 'video_frame', 'beam_broken', 'is_beam_broken')
 # ----------------------------------
 
 

@@ -71,7 +71,7 @@ def update_args(t):
 
 sl.connect_repl_var(globals(), 'time', 'update_args', 'args', slider_limits=[1000000, 1200000])
 window = None
-sl.connect_repl_var(globals(), 'imf', 'get_windowed_imf', 'window', 'args', slider_limits=[0, 12])
+sl.connect_repl_var(globals(), 'imf', 'window', 'get_windowed_imf', 'args', slider_limits=[0, 12])
 osv.graph(globals(), 'window')
 
 #  -------------------------------------------------
@@ -99,7 +99,7 @@ def show_one_channel(channel, figure):
     ax.plot(imf_data_for_ks[channel, start:end])
     return None
 
-sl.connect_repl_var(globals(), 'channel', 'show_one_channel', 'out', 'args', [0, 71])
+sl.connect_repl_var(globals(), 'channel', 'out', 'show_one_channel', 'args', [0, 71])
 #  -------------------------------------------------
 
 avg_spike_template = np.load(join(imf_kilosort_folder, 'imf_{}'.format(imf_for_ks), 'avg_spike_template.npy'))

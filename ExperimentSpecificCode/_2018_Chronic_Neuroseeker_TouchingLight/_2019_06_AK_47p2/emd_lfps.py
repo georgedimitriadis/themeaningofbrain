@@ -52,7 +52,7 @@ def spread_lfp_pane(p):
 
 
 pane_data = None
-tr.connect_repl_var(globals(), 'pane', 'spread_lfp_pane', 'pane_data')
+tr.connect_repl_var(globals(), 'pane', 'pane_data', 'spread_lfp_pane')
 
 one_v.graph(globals(), 'pane_data')
 
@@ -61,7 +61,7 @@ def do_nothing(p):
 
 nothing = None
 slider_limits = [0, lfp_data_panes.shape[0]-1]
-sl.connect_repl_var(globals(), 'pane', 'do_nothing', 'nothing', slider_limits=slider_limits)
+sl.connect_repl_var(globals(), 'pane', 'nothing', slider_limits=slider_limits)
 
 
 # ----------------------------------------------------------------------------------------------------------------------

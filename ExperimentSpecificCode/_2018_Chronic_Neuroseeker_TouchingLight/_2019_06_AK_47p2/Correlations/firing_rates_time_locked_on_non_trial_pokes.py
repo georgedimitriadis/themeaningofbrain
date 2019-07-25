@@ -29,6 +29,7 @@ events_folder = join(data_folder, "events")
 
 results_folder = join(analysis_folder, 'Results')
 poke_folder = join(results_folder, 'EventsCorrelations', 'Poke')
+event_definition_folder = join(results_folder, 'EventsDefinitions')
 
 event_dataframes = ns_funcs.load_events_dataframes(events_folder, sync_funcs.event_types)
 file_to_save_to = join(kilosort_folder, 'firing_rate_with_video_frame_window.npy')
@@ -43,37 +44,8 @@ spike_rates = np.load(video_frame_spike_rates_filename)
 # -------------------------------------------------
 # <editor-fold desc="GET TIMES AND FRAMES OF POKE TOUCHES WITHOUT TOUCHING THE BALL FIRST">
 
-camera_pulses, beam_breaks, sounds = \
-    sync_funcs.get_time_points_of_events_in_sync_file(data_folder, clean=True,
-                                                      cam_ttl_pulse_period=
-                                                      const.CAMERA_TTL_PULSES_TIMEPOINT_PERIOD)
-
-time_to_next_poke = np.diff(beam_breaks[:, 0])/const.SAMPLING_FREQUENCY
-minimum_delay = 5
-pokes_after_delay = np.squeeze(beam_breaks[np.argwhere(time_to_next_poke > minimum_delay)])
-start_pokes_after_delay = pokes_after_delay[:, 0]
-
-# Check if any of the pokes after delay are also in the spaces between touching the ball and the reward sound playing
-# and remove those
-sounds_dur = sounds[:, 1] - sounds[:, 0]
-reward_sounds = sounds[sounds_dur < 4000]
-start_reward_sounds = reward_sounds[:, 0]
-
-overlaps = []
-for r_sound in start_reward_sounds:
-    t = np.logical_and(start_pokes_after_delay > r_sound - 4*const.SAMPLING_FREQUENCY,
-                       start_pokes_after_delay < r_sound + 4*const.SAMPLING_FREQUENCY)
-    if np.any(t):
-        overlaps.append(np.squeeze(np.argwhere(t)))
-
-overlaps = np.squeeze(np.array(overlaps))
-print(overlaps)
-print(len(overlaps))
-
-np.save(join(poke_folder, 'time_points_of_non_trial_pokes.npy'),start_pokes_after_delay )
-
-start_pokes_after_delay = np.delete(start_pokes_after_delay, overlaps)
-start_pokes_after_delay = start_pokes_after_delay[2:]
+start_pokes_after_delay = np.load(join(event_definition_folder, 'events_first_pokes_after_5_delay_non_reward.npy'))
+start_pokes_after_delay = start_pokes_after_delay[1:]
 
 time_around_beam_break = 6
 avg_firing_rate_around_suc_trials = fr_funcs.get_avg_firing_rates_around_events(spike_rates=spike_rates,

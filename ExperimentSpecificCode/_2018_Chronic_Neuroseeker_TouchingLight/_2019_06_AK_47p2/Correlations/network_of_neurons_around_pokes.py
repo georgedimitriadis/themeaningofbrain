@@ -34,17 +34,21 @@ events_folder = join(data_folder, "events")
 
 results_folder = join(analysis_folder, 'Results')
 poke_folder = join(results_folder, 'EventsCorrelations', 'Poke')
+events_definitions_folder = join(results_folder, 'EventsDefinitions')
 
 ti_increasing_neurons_on_trial_pokes = np.load(join(poke_folder, 'ti_increasing_neurons_on_trial_pokes.df'),
                                                allow_pickle=True)
 ti_decreasing_neurons_on_trial_pokes = np.load(join(poke_folder, 'ti_decreasing_neurons_on_trial_pokes.df'),
                                                allow_pickle=True)
-ti_increasing_neurons_on_non_trial_pokes = np.load(join(poke_folder, 'ti_increasing_neurons_on_non_trial_pokes.df'),
+ti_increasing_neurons_on_non_trial_pokes = np.load(join(poke_folder,
+                                                        'ti_increasing_neurons_on_non_trial_pokes.df'),
                                                    allow_pickle=True)
-ti_decreasing_neurons_on_non_trial_pokes = np.load(join(poke_folder, 'ti_decreasing_neurons_on_non_trial_pokes.df'),
+ti_decreasing_neurons_on_non_trial_pokes = np.load(join(poke_folder,
+                                                        'ti_decreasing_neurons_on_non_trial_pokes.df'),
                                                    allow_pickle=True)
-time_points_of_trial_pokes = np.load(join(poke_folder, 'time_points_of_trial_pokes.npy'))
-time_points_of_non_trial_pokes = np.load(join(poke_folder, 'time_points_of_non_trial_pokes.npy'))
+time_points_of_trial_pokes = np.load(join(events_definitions_folder, 'events_pokes_of_successful_trial.npy'))
+time_points_of_non_trial_pokes = np.load(join(events_definitions_folder,
+                                              'events_first_pokes_after_5_delay_non_reward.npy'))
 time_points_of_touch_ball = np.load(join(poke_folder, 'time_points_of_touch_ball.npy'))
 
 event_dataframes = ns_funcs.load_events_dataframes(events_folder, sync_funcs.event_types)
@@ -219,7 +223,6 @@ sr_average_around_baseline_non_trials_smoothed_var = sr_baseline_non_trials_smoo
 
 
 #   Create the (non-equal variance) t-test for each time bin and neuron for each baseline vs non-baseline pair
-
 sigma_triangle_trials = np.sqrt((sr_average_around_trials_smoothed_var /
                                  number_of_trial_pokes) +
                                 (sr_average_around_baseline_trials_smoothed_var /
@@ -353,7 +356,7 @@ def show_trial(t):
 
 trial = 0
 out = None
-sl.connect_repl_var(globals(), 'trial', 'show_trial', 'out', slider_limits=[0, len(time_points_of_all_pokes) - 1])
+sl.connect_repl_var(globals(), 'trial', 'out', 'show_trial', slider_limits=[0, len(time_points_of_all_pokes) - 1])
 
 
 def bin2int(x):

@@ -305,7 +305,7 @@ out = None
 figure = plt.figure(0)
 args = [figure]
 
-sl.connect_repl_var(globals(), 'neuron', 'plot_firing_rate_on_arena_tiles', 'out', 'args',
+sl.connect_repl_var(globals(), 'neuron', 'out', 'plot_firing_rate_on_arena_tiles', 'args',
                     slider_limits=[0, len(spike_rates_0p25) - 1])
 
 #  -------------------------------------------------

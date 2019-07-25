@@ -99,7 +99,7 @@ def nothing(f):
     return f
 
 
-dd.connect_repl_var(globals(), 'switches_from_long_move_to_long_rest', 'nothing', 'frame')
+dd.connect_repl_var(globals(), 'switches_from_long_move_to_long_rest', 'frame')
 # </editor-fold>
 
 
@@ -201,7 +201,7 @@ def show_rasters_increase(index, fig1, fig2):
     return None
 
 
-sl.connect_repl_var(globals(), 'index', 'show_rasters_increase', 'output', 'args',
+sl.connect_repl_var(globals(), 'index', 'output', 'show_rasters_increase', 'args',
                     slider_limits=[0, len(increasing_firing_rates_neuron_index) - 1])
 # </editor-fold>
 

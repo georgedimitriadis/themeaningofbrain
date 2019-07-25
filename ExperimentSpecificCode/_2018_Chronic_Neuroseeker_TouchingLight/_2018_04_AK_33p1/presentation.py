@@ -109,7 +109,7 @@ def update_args(t):
 
 sl.connect_repl_var(globals(), 'time', 'update_args', 'args', slider_limits=[1000000, 1200000])
 window = None
-sl.connect_repl_var(globals(), 'imf', 'get_windowed_imf', 'window', 'args', slider_limits=[0, 12])
+sl.connect_repl_var(globals(), 'imf', 'window', 'get_windowed_imf', 'args', slider_limits=[0, 12])
 osv.graph(globals(), 'window')
 
 
@@ -162,7 +162,7 @@ def update_trajectory_for_video(frame):
     return output
 
 
-tr.connect_repl_var(globals(), 'frame', 'update_trajectory_for_video', 'output')
+tr.connect_repl_var(globals(), 'frame', 'output', 'update_trajectory_for_video')
 sv.image_sequence(globals(), 'frame', 'full_video_file', 'traj')
 # ------------------------------------------------------
 
