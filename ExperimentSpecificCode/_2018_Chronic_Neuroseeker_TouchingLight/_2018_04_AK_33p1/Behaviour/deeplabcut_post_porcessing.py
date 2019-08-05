@@ -2,14 +2,12 @@
 
 from os.path import join
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 
 
 import one_shot_viewer as osv
 import sequence_viewer as sv
 import transform as tr
-import slider as sl
 
 from BrainDataAnalysis import binning
 from BehaviorAnalysis import dlc_post_processing as dlc_pp
@@ -17,9 +15,7 @@ from BehaviorAnalysis import dlc_plotting
 
 from plotting_overlays import overlay_dots
 
-
-import ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions.events_sync_funcs as sync_funcs
-from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2019_06_AK_47p2 import constants as const
+from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_33p1 import constants as const
 
 #  -------------------------------------------------
 #  GET FOLDERS
@@ -28,21 +24,21 @@ analysis_folder = join(const.base_save_folder, const.rat_folder, const.date_fold
 
 dlc_folder = join(analysis_folder, 'Deeplabcut')
 
-dlc_project_folder = join(dlc_folder, 'projects', 'V1--2019-06-30')
+dlc_project_folder = join(dlc_folder, 'projects', 'V1--2019-05-07')
 
 
 data_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date_folder], 'Data')
-kilosort_folder = join(analysis_folder, 'Kilosort')
+kilosort_folder = join(analysis_folder, 'Denoised', 'Kilosort')
 
 mutual_information_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date_folder], 'Analysis',
                                  'Results', 'MutualInformation')
 
 events_folder = join(data_folder, "events")
 
-markers_file = join(dlc_project_folder, 'videos', r'Croped_videoDeepCut_resnet50_V1Jun30shuffle1_325000.h5')
+markers_file = join(dlc_project_folder, 'videos', r'Croped_videoDeepCut_resnet50_V1May7shuffle1_150000.h5')
 
 labeled_video_file = join(dlc_project_folder, 'videos',
-                          r'Croped_videoDeepCut_resnet50_V1Jun30shuffle1_325000_labeled.mp4')
+                          r'Croped_videoDeepCut_resnet50_V1May7shuffle1_150000_labeled.mp4')
 
 crop_window_position_file = join(dlc_folder, 'BonsaiCroping', 'Croped_Video_Coords.csv')
 
@@ -61,14 +57,10 @@ markers = dlc_pp.assign_croped_markers_to_full_arena(markers_croped, crop_window
 #  -------------------------------------------------
 # MARKER NAMES OF THE DIFFERENT BODY PARTS
 
-body_parts = ['Neck', 'Body', 'TailBase']
-head_parts = ['Nose', 'Ear Left', 'Ear Right', 'Implant_Bottom_Back', 'Implant_Bottom_Front', 'Implant_Top_Back',
-              'Implant_Top_Front', 'Implant_Top_Middle']
+body_parts = ['Neck', 'Mid Body', 'Tail Base']
+head_parts = ['Nose', 'Ear Left', 'Ear Right', 'Left Front Top Implant', 'Right Back Top Implant', 'Screw Tip Implant']
 head_parts_top_vector = ['Implant_Top_Back', 'Implant_Top_Front', 'Implant_Top_Middle']
-head_parts_bottom_vector = ['Nose', 'Implant_Bottom_Back', 'Implant_Bottom_Front', 'Neck']
-tail_parts = ['TailBase', 'TailMiddle', 'TailTip']
-good_parts = ['Implant_Top_Back', 'Implant_Top_Front', 'Implant_Top_Middle',
-              'Neck', 'Body', 'TailBase', 'TailMiddle', 'TailTip']
+tail_parts = ['Tail Base', 'Tail Mid', 'Tail Tip']
 
 
 # -------------------------------------------------
@@ -118,7 +110,7 @@ args = [markers_positions_no_large_movs_numpy, marker_size]
 update_markers_for_video = overlay_dots.update_markers_for_video
 
 tr.connect_repl_var(globals(), 'frame', 'output', 'update_markers_for_video', 'args')
-sv.image_sequence(globals(), 'frame', 'marker_dots', 'full_video_file')
+sv.image_sequence(globals(), 'frame', 'full_video_file', 'marker_dots')
 
 
 # -------------------------------------------------
@@ -128,10 +120,20 @@ sv.image_sequence(globals(), 'frame', 'marker_dots', 'full_video_file')
 # Then interpolate the nans of the TailBase
 # Finally average the body markers to get the body position
 updated_body_markers = dlc_pp.seperate_markers(markers_positions_no_large_movs, body_parts)
-tail_base = updated_body_markers.loc[:, updated_body_markers.columns.get_level_values(1) == 'TailBase']
+tail_base = updated_body_markers.loc[:, updated_body_markers.columns.get_level_values(1) == 'Tail Base']
 tail_base_cleaned = dlc_pp.clean_dlc_outpout(join(dlc_project_folder, 'post_processing', 'test.df'),
                                              tail_base, gap=1, order=2)
-updated_body_markers.loc[:, updated_body_markers.columns.get_level_values(1) == 'TailBase'] = tail_base_cleaned
+mid_body = updated_body_markers.loc[:, updated_body_markers.columns.get_level_values(1) == 'Mid Body']
+mid_body_cleaned = dlc_pp.clean_dlc_outpout(join(dlc_project_folder, 'post_processing', 'test.df'),
+                                            mid_body, gap=1, order=2)
+neck = updated_body_markers.loc[:, updated_body_markers.columns.get_level_values(1) == 'Neck']
+neck_cleaned = dlc_pp.clean_dlc_outpout(join(dlc_project_folder, 'post_processing', 'test.df'),
+                                        neck, gap=1, order=2)
+
+updated_body_markers.loc[:, updated_body_markers.columns.get_level_values(1) == 'Tail Base'] = tail_base_cleaned
+updated_body_markers.loc[:, updated_body_markers.columns.get_level_values(1) == 'Mid Body'] = mid_body_cleaned
+updated_body_markers.loc[:, updated_body_markers.columns.get_level_values(1) == 'Neck'] = neck_cleaned
+
 body_positions = dlc_pp.average_multiple_markers_to_single_one(updated_body_markers, flip=True)
 np.save(join(dlc_project_folder, 'post_processing', 'body_positions.npy'), body_positions)
 
@@ -179,25 +181,3 @@ tr.connect_repl_var(globals(), 'frame', 'head_traj', 'update_head_trajectory')
 osv.graph(globals(), 'body_traj_y', 'body_traj_x')
 osv.graph(globals(), 'head_traj_y', 'head_traj_x')
 
-
-# -------------------------------------------------
-# <editor-fold desc="GENERATE THE SPEED VECTOR">
-# Load the cleaned body positions
-body_positions = np.load(join(dlc_project_folder, 'post_processing', 'body_positions.npy'))
-
-# Use body position to create velocities (both linear and polar)
-conversion_const = const.PIXEL_PER_FRAME_TO_CM_PER_SECOND
-body_velocities = np.diff(body_positions, axis=0) * conversion_const
-body_velocities_polar = np.array([np.sqrt(np.power(body_velocities[:, 0], 2) + np.power(body_velocities[:, 1], 2)),
-                                 180 * (1/np.pi) * np.arctan2(body_velocities[:, 1], body_velocities[:, 0])]).transpose()
-
-# Correct the speeds by removing the very large spikes (replace them with the average speeds around them)
-speeds = body_velocities_polar[:, 0].copy()
-acc = np.diff(speeds)
-for i in np.arange(len(acc)):
-    if speeds[i] > 120:
-        speeds[i] = np.mean(speeds[i-10:i+10])
-
-np.save(join(dlc_project_folder, 'post_processing', 'speeds.npy'), speeds)
-# </editor-fold>
-# -------------------------------------------------

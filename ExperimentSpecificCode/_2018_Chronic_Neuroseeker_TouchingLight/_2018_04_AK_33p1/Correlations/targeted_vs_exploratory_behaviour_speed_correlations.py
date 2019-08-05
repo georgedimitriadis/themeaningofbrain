@@ -2,13 +2,14 @@
 from os.path import join
 import numpy as np
 import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
-from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2019_06_AK_47p2 import constants as const
+from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_33p1 import constants as const
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions \
     import events_sync_funcs as sync_funcs
 from BrainDataAnalysis.Spike_Sorting import positions_on_probe as spp
 from BrainDataAnalysis import binning
 
 from npeet.lnc import MI
+from npeet.entropy_estimators import *
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -27,14 +28,14 @@ data_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[
 events_folder = join(data_folder, "events")
 
 analysis_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date_folder], 'Analysis')
-kilosort_folder = join(analysis_folder, 'Kilosort')
+kilosort_folder = join(analysis_folder, 'Denoised', 'Kilosort')
 results_folder = join(analysis_folder, 'Results')
 events_definitions_folder = join(results_folder, 'EventsDefinitions')
 
 mutual_information_folder = join(analysis_folder, 'Results', 'MutualInformation')
 
 dlc_folder = join(analysis_folder, 'Deeplabcut')
-dlc_project_folder = join(dlc_folder, 'projects', 'V1--2019-06-30')
+dlc_project_folder = join(dlc_folder, 'projects', 'V1--2019-05-07')
 video_file = join(dlc_folder, 'BonsaiCroping', 'Full_video.avi')
 
 spike_rates_per_video_frame_filename = join(kilosort_folder, 'firing_rate_with_video_frame_window.npy')
@@ -51,7 +52,7 @@ ev_video = event_dataframes['ev_video']
 
 template_info = pd.read_pickle(join(kilosort_folder, 'template_info.df'))
 
-spike_info = pd.read_pickle(join(kilosort_folder, 'spike_info_after_cleaning.df'))
+spike_info = pd.read_pickle(join(kilosort_folder, 'spike_info_after_cortex_sorting.df'))
 
 spike_rates = np.load(spike_rates_per_video_frame_filename)
 spike_rates_0p25 = np.load(spike_rates_per_250ms_filename)
@@ -94,6 +95,9 @@ frames_before_tb = 1 * 120
 index_of_events_tb_followed_by_fast_p = np.squeeze(np.argwhere((events_successful_trial_pokes -
                                                                 events_touch_ball_successful_trial) /
                                            const.SAMPLING_FREQUENCY < time_between_tb_and_p))
+
+# The events with indices 3,4 and 5 are bonsai bugs where the ball appears and dissaperas immediately without touch
+index_of_events_tb_followed_by_fast_p = index_of_events_tb_followed_by_fast_p[3:]
 
 frames_tb_followed_by_fast_p = sync_funcs.time_point_to_frame_from_video_df(ev_video,
                                                                             events_touch_ball_successful_trial[
@@ -169,13 +173,13 @@ distances_rat_to_ball = np.sqrt(
     np.power(ball_and_rat_positions_in_frame['RatX'] - ball_and_rat_positions_in_frame['BallX'], 2) +
     np.power(ball_and_rat_positions_in_frame['RatY'] - ball_and_rat_positions_in_frame['BallY'], 2)).values
 
-distances_rat_to_poke = np.sqrt(
+distances_rat_to_poke_when_ball_in_on = np.sqrt(
     np.power(ball_and_rat_positions_in_frame['RatX'] - poke_position[0], 2) +
     np.power(ball_and_rat_positions_in_frame['RatY'] - poke_position[1], 2)).values
 
 index_of_frames_of_non_patterned_behaviour = np.squeeze(np.argwhere(np.logical_and(
-    distances_rat_to_poke > minimum_distance_of_rat_to_poke_or_ball,
-    distances_rat_to_ball >minimum_distance_of_rat_to_poke_or_ball)))
+    distances_rat_to_poke_when_ball_in_on > minimum_distance_of_rat_to_poke_or_ball,
+    distances_rat_to_ball > minimum_distance_of_rat_to_poke_or_ball)))
 
 frames_of_non_patterned_behaviour = ball_and_rat_positions_in_frame['frame'].\
                                     iloc[index_of_frames_of_non_patterned_behaviour].values
@@ -201,16 +205,18 @@ print(np.any(np.sort(lengths_of_windows_of_patterned_behaviour) -
 windows_of_non_patterned_behaviour = []
 for index_of_trial in np.arange(number_of_patterned_events):
     length_of_trial = np.sort(lengths_of_windows_of_patterned_behaviour)[index_of_trial]
-    index_of_frame_range_of_non_patterned_behaviour = np.argsort(lengths_of_non_patterned_behaviour_frame_ranges)[index_of_trial]
+    index_of_frame_range_of_non_patterned_behaviour = np.argsort(lengths_of_non_patterned_behaviour_frame_ranges)[4 + index_of_trial]
     frame_range_of_non_patterned_behaviour = long_continous_non_patterned_behaviour_frame_ranges[
         index_of_frame_range_of_non_patterned_behaviour]
     start_point_value = int(np.random.choice(frame_range_of_non_patterned_behaviour[: - length_of_trial]))
     windows_of_non_patterned_behaviour.append(np.arange(start_point_value, start_point_value + length_of_trial, 1))
 
+lengths_of_windows_of_non_patterned_behaviour = [len(w) for w in windows_of_non_patterned_behaviour]
+
+'''
 lengths_of_windows_of_non_patterned_behaviour = [len(windows_of_non_patterned_behaviour[i])
                                                  for i in np.arange(number_of_patterned_events)]
 
-'''
 # Code for just in case
 windows_of_patterned_behaviour_flat = np.array([windows_of_patterned_behaviour[trial][frame]
                                                for trial in np.arange(number_of_patterned_events)
@@ -230,6 +236,7 @@ windows_of_non_patterned_behaviour_flat = np.array([windows_of_non_patterned_beh
 speeds_patterned_behaviour_0p25 = [s for k in np.arange(number_of_patterned_events) for s in
                                    binning.rolling_window_with_step(speeds[windows_of_patterned_behaviour[k]],
                                                                     np.mean, 30, 30)]
+
 spike_rates_patterned_behaviour_0p25 = np.empty(1)
 for k in np.arange(number_of_patterned_events):
     smoothed_data = binning.rolling_window_with_step(spike_rates[:, windows_of_patterned_behaviour[k]], np.mean, 30, 30)
@@ -256,7 +263,7 @@ for k in np.arange(number_of_patterned_events):
 
 #   Check that the two speed distributions are roughly the same
 _ = plt.hist(speeds_non_patterned_behaviour_0p25)
-_ = plt.hist(speeds_patterned_behaviour_0p25)
+_ = plt.hist(speeds_patterned_behaviour_0p25, fc=(0.5, 0.5, 0, 0.5))
 
 # </editor-fold>
 # -------------------------------------------------
@@ -284,7 +291,8 @@ shuffled, mean, conf_intervals = MI.shuffle_test(MI.mi_LNC,  spike_rates_pattern
                                                  speeds_patterned_behaviour_0p25,
                                                  z=False, ns=1000, ci=0.95, k=10, base=np.exp(1), alpha=0.4,
                                                  intens=1e-10)
-np.save(join(mutual_information_folder, 'shuffled_mut_info_spike_rate_589_vs_speed_patterned_behaviour.npy'), shuffled)
+np.save(join(mutual_information_folder, 'shuffled_mut_info_spike_rate_{}_vs_speed_patterned_behaviour.npy'.
+             format(str(max_neuron))), shuffled)
 
 #   Do the non patterned behaviour
 n = 0
@@ -299,19 +307,116 @@ mi_non_pb_spikes_vs_speed = np.array(mi_non_pb_spikes_vs_speed)
 np.save(join(mutual_information_folder, 'mutual_infos_spikes_vs_speed_non_patterned_behaviour.npy'),
         mi_non_pb_spikes_vs_speed)
 
+
+#   Do the correlation between the distance between the rat and the poke and the firing rates
+distances_rat_to_poke_all_frames = np.sqrt(
+    np.power(body_positions_normalised[:, 0] - poke_position[0], 2) +
+    np.power(body_positions_normalised[:, 1] - poke_position[1], 2))
+
+distances_rat_to_poke_all_frames_0p25 = binning.rolling_window_with_step(distances_rat_to_poke_all_frames,
+                                                                         np.mean, 30, 30)
+
+n = 0
+mi_spikes_vs_distance_to_poke = []
+for rate in spike_rates_0p25:
+    mi_spikes_vs_distance_to_poke.append(MI.mi_LNC([rate.tolist(), distances_rat_to_poke_all_frames_0p25[:-1]],
+                                           k=10, base=np.exp(1), alpha=0.4, intens=1e-10))
+    n += 1
+    print('Done neuron {}'.format(str(n)))
+
+mi_spikes_vs_distance_to_poke = np.array(mi_spikes_vs_distance_to_poke)
+np.save(join(mutual_information_folder, 'mutual_infos_spikes_vs_distance_to_poke.npy'),
+        mi_spikes_vs_distance_to_poke)
+
+#   Do the shuffle of the best distance to poke
+max_neuron = np.argmax(mi_spikes_vs_distance_to_poke)
+
+shuffled, mean, conf_intervals = MI.shuffle_test(MI.mi_LNC,  spike_rates_0p25[max_neuron],
+                                                 distances_rat_to_poke_all_frames_0p25[:-1],
+                                                 z=False, ns=1000, ci=0.95, k=10, base=np.exp(1), alpha=0.4,
+                                                 intens=1e-10)
+np.save(join(mutual_information_folder, 'shuffled_mut_info_spike_rate_960_vs_distance_to_poke.npy'), shuffled)
+
+#   Do the correlation between the distance between rat and ball and the firing rates
+
+distances_rat_to_ball_0p25 = binning.rolling_window_with_step(distances_rat_to_ball, np.mean, 30, 30)
+
+frames_of_ball_on = ball_and_rat_positions_in_frame['frame'].values.astype(int)
+spike_rates_with_ball_on = spike_rates[:, frames_of_ball_on]
+spike_rates_with_ball_on_0p25 = binning.rolling_window_with_step(spike_rates_with_ball_on, np.mean, 30, 30)
+
+n = 0
+mi_spikes_vs_distance_to_ball = []
+for rate in spike_rates_with_ball_on_0p25:
+    mi_spikes_vs_distance_to_ball.append(MI.mi_LNC([rate.tolist(), distances_rat_to_ball_0p25],
+                                           k=10, base=np.exp(1), alpha=0.4, intens=1e-10))
+    n += 1
+    print('Done neuron {}'.format(str(n)))
+
+mi_spikes_vs_distance_to_ball = np.array(mi_spikes_vs_distance_to_ball)
+np.save(join(mutual_information_folder, 'mutual_infos_spikes_vs_distance_to_ball.npy'),
+        mi_spikes_vs_distance_to_ball)
+
+#   Do the shuffle of the best distance to ball
+max_neuron = np.argmax(mi_spikes_vs_distance_to_ball)
+
+shuffled, mean, conf_intervals = MI.shuffle_test(MI.mi_LNC,  spike_rates_with_ball_on_0p25[max_neuron],
+                                                 distances_rat_to_ball_0p25,
+                                                 z=False, ns=1000, ci=0.95, k=10, base=np.exp(1), alpha=0.4,
+                                                 intens=1e-10)
+np.save(join(mutual_information_folder, 'shuffled_mut_info_spike_rate_1060_vs_distance_to_ball.npy'), shuffled)
+
+
+#   Do the correlation between the distance of the rat to the ball with the spike rates conditioned on the distance
+#   of the rat to the poke
+
+frames_of_ball_on = ball_and_rat_positions_in_frame['frame'].values.astype(int)
+spike_rates_with_ball_on = spike_rates[:, frames_of_ball_on]
+spike_rates_with_ball_on_0p25 = binning.rolling_window_with_step(spike_rates_with_ball_on, np.mean, 30, 30)
+spike_rates_with_ball_on_0p25_cmi = np.expand_dims(spike_rates_with_ball_on_0p25, axis=2).tolist()
+
+distances_rat_to_poke_all_frames = np.sqrt(
+    np.power(body_positions_normalised[:, 0] - poke_position[0], 2) +
+    np.power(body_positions_normalised[:, 1] - poke_position[1], 2))
+distances_rat_to_poke_ball_on = distances_rat_to_poke_all_frames[frames_of_ball_on]
+distances_rat_to_poke_ball_on_0p25 = binning.rolling_window_with_step(distances_rat_to_poke_ball_on,
+                                                                         np.mean, 30, 30)
+distances_rat_to_poke_ball_on_0p25_cmi = np.expand_dims(distances_rat_to_poke_ball_on_0p25, axis=1)
+
+
+distances_rat_to_ball_0p25 = binning.rolling_window_with_step(distances_rat_to_ball, np.mean, 30, 30)
+distances_rat_to_ball_0p25_cmi = np.expand_dims(distances_rat_to_ball_0p25, axis=1).tolist()
+
+
+n = 0
+mi_spikes_vs_distance_to_ball_conditioned_on_poke = []
+for rate in spike_rates_with_ball_on_0p25:
+    mi_spikes_vs_distance_to_ball_conditioned_on_poke.append(mi(spike_rates_with_ball_on_0p25_cmi[0],
+                                                                distances_rat_to_ball_0p25_cmi,
+                                                                z=distances_rat_to_poke_ball_on_0p25_cmi,
+                                                             k=10, base=np.exp(1)))
+    n += 1
+    print('Done neuron {}'.format(str(n)))
+
+mi_spikes_vs_distance_to_ball_conditioned_on_poke = np.array(mi_spikes_vs_distance_to_ball_conditioned_on_poke)
+np.save(join(mutual_information_folder, 'mutual_infos_spikes_vs_distance_to_ball_conditioned_on_poke.npy'),
+        mi_spikes_vs_distance_to_ball_conditioned_on_poke)
+
 # </editor-fold>
 # -------------------------------------------------
 
 
 # -------------------------------------------------
-# <editor-fold desc="VISUALISE RESULTS">
+# <editor-fold desc="VISUALISE RESULTS FOR PATTERNED VS NON PATTERNED">
 mi_pb_spikes_vs_speed = np.load(join(mutual_information_folder, 'mutual_infos_spikes_vs_speed_patterned_behaviour.npy'))
 mi_non_pb_spikes_vs_speed = np.load(join(mutual_information_folder,
                                          'mutual_infos_spikes_vs_speed_non_patterned_behaviour.npy'))
 
 
 # Have a look at the MIs vs the chance level
-shuffled = np.load(join(mutual_information_folder, 'mutual_infos_spikes_vs_speed_patterned_behaviour.npy'))
+max_neuron = np.argmax(mi_pb_spikes_vs_speed)
+shuffled = np.load(join(mutual_information_folder, 'shuffled_mut_info_spike_rate_{}_vs_speed_patterned_behaviour.npy').
+             format(str(max_neuron)))
 mean_sh = np.mean(shuffled)
 confidence_level = 0.99
 confi_intervals = shuffled[int((1. - confidence_level) / 2 * 1000)], shuffled[int((1. + confidence_level) / 2 * 1000)]
@@ -333,6 +438,7 @@ spp.view_grouped_templates_positions(kilosort_folder, const.BRAIN_REGIONS, const
                                      const.POSITION_MULT, template_info=speed_corr_neurons_pb,
                                      dot_sizes=mi_pb_spikes_vs_speed[speed_corr_neurons_pb_index] * 4000,
                                      font_size=5)
+
 speed_corr_neurons_non_pb_index = np.squeeze(np.argwhere(mi_non_pb_spikes_vs_speed > mean_sh+confi_intervals[1]))
 speed_corr_neurons_non_pb = template_info.loc[speed_corr_neurons_non_pb_index]
 spp.view_grouped_templates_positions(kilosort_folder, const.BRAIN_REGIONS, const.PROBE_DIMENSIONS,
@@ -345,6 +451,8 @@ def draw1(index):
     plt.clf()
     plt.plot(speeds_patterned_behaviour_0p25)
     plt.plot(spike_rates_patterned_behaviour_0p25[speed_corr_neurons_pb_index[index], :])
+    plt.vlines(x=np.cumsum(lengths_of_windows_of_patterned_behaviour) / 30, ymin=0,
+               ymax=np.max(speeds_patterned_behaviour_0p25))
     return None
 
 
@@ -353,20 +461,105 @@ out = None
 sl.connect_repl_var(globals(), 'index', 'out', 'draw1', slider_limits=[0, len(speed_corr_neurons_pb_index) - 1])
 
 
+neuron_indices_that_change = speed_corr_neurons_pb_index[[0, 2, 3, 4, 5, 8, 9, 12, 13, 14, 17, 18, 20, 21, 22, 24, 26,
+                                                         27, 29]]
+
+
+def plot_fr_of_neurons_that_change(index, fig1, fig2):
+    fig1.clear()
+    fig2.clear()
+    ax1 = fig1.add_subplot(111)
+    ax2 = fig2.add_subplot(111)
+    ax1.plot(spike_rates_0p25[speed_corr_neurons_pb_index[index], :])
+    ax1.vlines(x=[57318/30, 212829/30], ymin=0, ymax=spike_rates_0p25[speed_corr_neurons_pb_index[index], :].max())
+    ax2.plot(speeds_patterned_behaviour_0p25)
+    ax2.plot(spike_rates_patterned_behaviour_0p25[speed_corr_neurons_pb_index[index], :])
+
+
+fig1 = plt.figure(1)
+fig2 = plt.figure(2)
+args = [fig1, fig2]
+sl.connect_repl_var(globals(), 'index', 'out', 'plot_fr_of_neurons_that_change', 'args',
+                    slider_limits=[0, len(neuron_indices_that_change) - 1])
+
+
 def draw2(index):
     plt.clf()
-    plt.plot(speeds_patterned_behaviour_0p25)
     plt.plot(speeds_non_patterned_behaviour_0p25)
-    plt.plot(spike_rates_non_patterned_behaviour_0p25[index, :])
-    plt.plot(spike_rates_patterned_behaviour_0p25[index, :])
+    plt.plot(spike_rates_non_patterned_behaviour_0p25[speed_corr_neurons_non_pb_index[index], :])
+    plt.vlines(x=np.cumsum(lengths_of_windows_of_non_patterned_behaviour) / 30, ymin=0,
+               ymax=np.max(speeds_non_patterned_behaviour_0p25))
     return None
+
 
 index = 0
 out = None
-sl.connect_repl_var(globals(), 'index', 'out', 'draw2', slider_limits=[0, len(spike_rates_patterned_behaviour_0p25) - 1])
+sl.connect_repl_var(globals(), 'index', 'out', 'draw2', slider_limits=[0, len(speed_corr_neurons_non_pb_index) - 1])
 
+np.intersect1d(speed_corr_neurons_pb_index, speed_corr_neurons_non_pb_index)
+print(speed_corr_neurons_non_pb_index[index])
+
+index_of_non_pb_neurons_that_show_modulation = [334, 623, 681, 960, 1060]
+frame_of_weirdness = windows_of_patterned_behaviour[14][-1]
 
 # </editor-fold>
 # -------------------------------------------------
 
-# THERE IS SOMETHING HAPPENING AT 328 INDEX OF THE PATTERNED WINDOWS! 
+
+# -------------------------------------------------
+# <editor-fold desc="VISUALISE RESULTS FOR DISTANCE TO BALL">
+mi_spikes_vs_distance_to_ball = np.load(join(mutual_information_folder, 'mutual_infos_spikes_vs_distance_to_ball.npy'))
+
+shuffled_to_ball = np.load(join(mutual_information_folder, 'shuffled_mut_info_spike_rate_{}_vs_distance_to_ball.npy').
+             format(str(max_neuron)))
+mean_sh = np.mean(shuffled_to_ball)
+confidence_level = 0.99
+confi_intervals = shuffled_to_ball[int((1. - confidence_level) / 2 * 1000)], shuffled_to_ball[int((1. + confidence_level) / 2 * 1000)]
+
+plt.hist(mi_spikes_vs_distance_to_ball, bins=200, fc=(0, 1, 0, 0.5))
+plt.hist(shuffled_to_ball, bins=200, color=(1, 0, 0, 0.4))
+plt.vlines([mean_sh, mean_sh+confi_intervals[0], mean_sh+confi_intervals[1]], 0, 20)
+
+speed_corr_neurons_d_ball_index = np.squeeze(np.argwhere(mi_spikes_vs_distance_to_ball > mean_sh+10*confi_intervals[1]))
+speed_corr_neurons_d_ball = template_info.loc[speed_corr_neurons_d_ball_index]
+spp.view_grouped_templates_positions(kilosort_folder, const.BRAIN_REGIONS, const.PROBE_DIMENSIONS,
+                                     const.POSITION_MULT, template_info=speed_corr_neurons_d_ball,
+                                     dot_sizes=mi_spikes_vs_distance_to_ball[speed_corr_neurons_d_ball_index] * 4000,
+                                     font_size=5)
+
+# </editor-fold>
+# -------------------------------------------------
+
+
+# -------------------------------------------------
+# <editor-fold desc="VISUALISE RESULTS FOR DISTANCE TO POKE">
+mi_spikes_vs_distance_to_poke = np.load(join(mutual_information_folder, 'mutual_infos_spikes_vs_distance_to_poke.npy'))
+
+
+shuffled_to_poke = np.load(join(mutual_information_folder, 'shuffled_mut_info_spike_rate_{}_vs_distance_to_poke.npy').
+             format(str(max_neuron)))
+mean_sh = np.mean(shuffled_to_poke)
+confidence_level = 0.99
+confi_intervals = shuffled_to_poke[int((1. - confidence_level) / 2 * 1000)], shuffled_to_poke[int((1. + confidence_level) / 2 * 1000)]
+
+plt.hist(mi_spikes_vs_distance_to_poke, bins=200, fc=(0, 1, 0, 0.5))
+plt.hist(shuffled_to_poke, bins=200, color=(1, 0, 0, 0.4))
+plt.vlines([mean_sh, mean_sh+confi_intervals[0], mean_sh+confi_intervals[1]], 0, 20)
+
+speed_corr_neurons_d_poke_index = np.squeeze(np.argwhere(mi_spikes_vs_distance_to_poke > mean_sh+10*confi_intervals[1]))
+speed_corr_neurons_d_poke = template_info.loc[speed_corr_neurons_d_poke_index]
+spp.view_grouped_templates_positions(kilosort_folder, const.BRAIN_REGIONS, const.PROBE_DIMENSIONS,
+                                     const.POSITION_MULT, template_info=speed_corr_neurons_d_poke,
+                                     dot_sizes=mi_spikes_vs_distance_to_ball[speed_corr_neurons_d_poke_index] * 4000,
+                                     font_size=5)
+
+plt.plot(spike_rates_0p25[np.argmax(mi_spikes_vs_distance_to_poke)])
+plt.plot(np.array(distances_rat_to_poke_all_frames_0p25) * 20)
+
+# </editor-fold>
+# -------------------------------------------------
+
+mi_spikes_vs_distance_to_ball_conditioned_on_poke = \
+    np.save(join(mutual_information_folder, 'mutual_infos_spikes_vs_distance_to_ball_conditioned_on_poke.npy'))
+
+plt.hist(mi_spikes_vs_distance_to_ball_conditioned_on_poke, bins=200, fc=(0, 1, 0, 0.5))
