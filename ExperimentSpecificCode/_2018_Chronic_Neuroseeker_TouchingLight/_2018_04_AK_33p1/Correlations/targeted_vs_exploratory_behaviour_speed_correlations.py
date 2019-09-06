@@ -1,6 +1,5 @@
 
 from os.path import join
-import numpy as np
 import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_33p1 import constants as const
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions \
@@ -41,6 +40,8 @@ video_file = join(dlc_folder, 'BonsaiCroping', 'Full_video.avi')
 spike_rates_per_video_frame_filename = join(kilosort_folder, 'firing_rate_with_video_frame_window.npy')
 spike_rates_per_250ms_filename = join(kilosort_folder, 'firing_rate_with_0p25s_window.npy')
 
+patterned_vs_non_patterned_folder = join(analysis_folder, 'Behaviour', 'PatternedVsNonPatterned')
+
 # Load data
 events_successful_trial_pokes = np.load(join(events_definitions_folder, 'events_pokes_of_successful_trial.npy'))
 
@@ -57,15 +58,14 @@ spike_info = pd.read_pickle(join(kilosort_folder, 'spike_info_after_cortex_sorti
 spike_rates = np.load(spike_rates_per_video_frame_filename)
 spike_rates_0p25 = np.load(spike_rates_per_250ms_filename)
 
+body_positions = np.load(join(dlc_project_folder, 'post_processing', 'body_positions.npy'))
+speeds = np.load(join(dlc_project_folder, 'post_processing', 'speeds.npy'))
 # </editor-fold>
 # -------------------------------------------------
 
 
 # -------------------------------------------------
-# <editor-fold desc="GENERATE THE SPEED VECTOR">
-# Load the cleaned body positions
-body_positions = np.load(join(dlc_project_folder, 'post_processing', 'body_positions.npy'))
-
+# <editor-fold desc="GENERATE THE SPEED VECTOR (SAVED. DO NOT RUN AGAIN)">
 # Use body position to create velocities (both linear and polar)
 conversion_const = const.PIXEL_PER_FRAME_TO_CM_PER_SECOND
 body_velocities = np.diff(body_positions, axis=0) * conversion_const
@@ -79,6 +79,7 @@ for i in np.arange(len(acc)):
     if speeds[i] > 120:
         speeds[i] = np.mean(speeds[i-10:i+10])
 
+np.save(join(dlc_project_folder, 'post_processing', 'speeds.npy'), speeds)
 # </editor-fold>
 # -------------------------------------------------
 
@@ -133,12 +134,13 @@ sv.image_sequence(globals(), 'frame', 'video_file')
 
 
 #   Look for periods of time where the rat is far away from the ball and the poke (assuming exploring)
-minimum_distance_of_rat_to_poke_or_ball = 0.5 # That means 25 cm vertical and 30 cm horizontal
+minimum_distance_of_rat_to_poke_or_ball = 0.7 # That means 25 cm vertical and 30 cm horizontal
 ball_positions_df = event_dataframes['ev_ball_tracking']
 body_positions_normalised = 2 * body_positions / 640 - 1
 
 
 # <editor-fold desc="Create the ball_and_rat_positions_in_frame dataframe (Do Not Run Again)">
+
 ball_and_rat_positions_in_frame = pd.DataFrame(columns=['frame', 'AmpTimePoint', 'RatX', 'RatY', 'BallX', 'BallY'])
 
 i = 0
@@ -152,7 +154,7 @@ for _, ball in ball_positions_df.iterrows():
             {'frame': nearest_frame,
              'AmpTimePoint': ev_video['AmpTimePoints'].iloc[nearest_frame],
              'RatX': body_positions_normalised[nearest_frame, 0],
-             'RatY': body_positions_normalised[nearest_frame, 1],
+             'RatY': -body_positions_normalised[nearest_frame, 1],
              'BallX': ball['X'], 'BallY': ball['Y']}, ignore_index=True)
     i += 1
     if i % 1000 == 0:
@@ -189,11 +191,41 @@ continous_non_patterned_behaviour_frame_ranges = \
     np.split(frames_of_non_patterned_behaviour, np.squeeze(np.argwhere(np.diff(frames_of_non_patterned_behaviour) > 2)
                                                            + 1))
 long_continous_non_patterned_behaviour_frame_ranges = [k for k in continous_non_patterned_behaviour_frame_ranges
-                                                       if len(k) > 1000]
+                                                       if len(k) > 100]
 
 lengths_of_non_patterned_behaviour_frame_ranges = [len(long_continous_non_patterned_behaviour_frame_ranges[j]) for j in
                                                    np.arange(len(long_continous_non_patterned_behaviour_frame_ranges))]
 
+
+windows_of_non_patterned_behaviour = []
+for index_of_trial in np.arange(number_of_patterned_events):
+    length_of_trial = np.sort(lengths_of_windows_of_patterned_behaviour)[index_of_trial]
+    if index_of_trial < len(lengths_of_non_patterned_behaviour_frame_ranges):
+        index_of_frame_range_of_non_patterned_behaviour = np.argsort(lengths_of_non_patterned_behaviour_frame_ranges)[
+            index_of_trial]
+        frame_range_of_non_patterned_behaviour = long_continous_non_patterned_behaviour_frame_ranges[
+            index_of_frame_range_of_non_patterned_behaviour]
+        windows_of_non_patterned_behaviour.append(np.arange(frame_range_of_non_patterned_behaviour[0],
+                                                            frame_range_of_non_patterned_behaviour[0] + length_of_trial,
+                                                            1))
+    else:
+        start = windows_of_non_patterned_behaviour[-1][-1]
+        windows_of_non_patterned_behaviour.append(np.arange(start+1, start + 1 + length_of_trial, 1))
+
+length_of_trial = np.sort(lengths_of_windows_of_patterned_behaviour)[10]
+windows_of_non_patterned_behaviour[10] = np.arange(80000, 80000 + length_of_trial, 1)
+
+length_of_trial = np.sort(lengths_of_windows_of_patterned_behaviour)[8]
+windows_of_non_patterned_behaviour[8] = np.arange(109000, 109000 + length_of_trial, 1)
+
+length_of_trial = np.sort(lengths_of_windows_of_patterned_behaviour)[0]
+windows_of_non_patterned_behaviour[0] = np.arange(356000, 356000 + length_of_trial, 1)
+
+length_of_trial = np.sort(lengths_of_windows_of_patterned_behaviour)[5]
+windows_of_non_patterned_behaviour[5] = np.arange(374000, 374000 + length_of_trial, 1)
+
+#   OLD CODE TO GET THE WINDOWS
+'''
 #   There are more (just about) continuous stretches than patterned behaviour trials so for each length of frames of a
 #   patterned behaviour trial pick the same length of frames from a different continuous stretch of non patterned
 #   behaviour (making sure the non patterned stretch has enough frames in it).
@@ -212,20 +244,30 @@ for index_of_trial in np.arange(number_of_patterned_events):
     windows_of_non_patterned_behaviour.append(np.arange(start_point_value, start_point_value + length_of_trial, 1))
 
 lengths_of_windows_of_non_patterned_behaviour = [len(w) for w in windows_of_non_patterned_behaviour]
-
 '''
+
+starts_of_windows_of_non_patterned_behaviour = [s[0] for s in windows_of_non_patterned_behaviour]
+
+windows_of_non_patterned_behaviour = [x.astype(np.int32) for _, x in sorted(zip(starts_of_windows_of_non_patterned_behaviour,
+                                                               windows_of_non_patterned_behaviour),
+                                                           key=lambda pair: pair[0])]
+
 lengths_of_windows_of_non_patterned_behaviour = [len(windows_of_non_patterned_behaviour[i])
                                                  for i in np.arange(number_of_patterned_events)]
 
-# Code for just in case
-windows_of_patterned_behaviour_flat = np.array([windows_of_patterned_behaviour[trial][frame]
-                                               for trial in np.arange(number_of_patterned_events)
-                                               for frame in np.arange(len(windows_of_patterned_behaviour[trial]))])
+# <editor-fold desc="Have a look at the selected non patterned behaviour events">
+frame = 0
+ev_video = event_dataframes['ev_video']
+starts_of_non_patterned_behaviour = [s[0] for s in windows_of_non_patterned_behaviour]
 
-windows_of_non_patterned_behaviour_flat = np.array([windows_of_non_patterned_behaviour[trial][frame]
-                                                   for trial in np.arange(number_of_patterned_events)
-                                                   for frame in np.arange(len(windows_of_non_patterned_behaviour[trial]))])
-'''
+
+def tp_to_frame(frame):
+    return sync_funcs.time_point_to_frame_from_video_df(ev_video, frame)[0] - frames_before_tb
+
+
+dd.connect_repl_var(globals(), 'starts_of_non_patterned_behaviour', 'frame')
+sv.image_sequence(globals(), 'frame', 'video_file')
+# </editor-fold>
 # </editor-fold>
 # -------------------------------------------------
 
@@ -233,37 +275,80 @@ windows_of_non_patterned_behaviour_flat = np.array([windows_of_non_patterned_beh
 # <editor-fold desc="USING THE GENERATED WINDOWS SMOOTH THE CORRESPONDING PARTS OF THE SPEED AND THE FIRING RATES">
 
 #   Smooth speeds and spike rates for each patterned behaviour
-speeds_patterned_behaviour_0p25 = [s for k in np.arange(number_of_patterned_events) for s in
-                                   binning.rolling_window_with_step(speeds[windows_of_patterned_behaviour[k]],
-                                                                    np.mean, 30, 30)]
+windows_of_patterned_behaviour_list = windows_of_patterned_behaviour[0]
+for k in np.arange(1, number_of_patterned_events):
+    windows_of_patterned_behaviour_list = np.concatenate((windows_of_patterned_behaviour_list,
+                                                          windows_of_patterned_behaviour[k]))
 
-spike_rates_patterned_behaviour_0p25 = np.empty(1)
-for k in np.arange(number_of_patterned_events):
-    smoothed_data = binning.rolling_window_with_step(spike_rates[:, windows_of_patterned_behaviour[k]], np.mean, 30, 30)
-    smoothed_data = np.array(smoothed_data)
-    if k == 0:
-        spike_rates_patterned_behaviour_0p25 = smoothed_data
-    else:
-        spike_rates_patterned_behaviour_0p25 = np.concatenate((spike_rates_patterned_behaviour_0p25, smoothed_data), axis=1)
+speeds_patterned_behaviour_0p25 = binning.rolling_window_with_step(speeds[windows_of_patterned_behaviour_list],
+                                                                    np.mean, 30, 30)
 
+distances_rat_to_poke_all_frames = np.sqrt(
+    np.power(body_positions_normalised[:, 0] - poke_position[0], 2) +
+    np.power(body_positions_normalised[:, 1] - poke_position[1], 2))
+
+distance_to_poke_patterned_behaviour_0p25 = \
+    binning.rolling_window_with_step(distances_rat_to_poke_all_frames[windows_of_patterned_behaviour_list],
+                                     np.mean, 30, 30)
+
+spike_rates_patterned_behaviour_all_frames = spike_rates[:, windows_of_patterned_behaviour_list]
+
+spike_rates_patterned_behaviour_0p25 = \
+    binning.rolling_window_with_step(spike_rates_patterned_behaviour_all_frames, np.mean, 30, 30)
 
 #   Smooth speeds and spike rates for each non patterned trial
-speeds_non_patterned_behaviour_0p25 = [s for k in np.arange(number_of_patterned_events) for s in
-                                       binning.rolling_window_with_step(speeds[windows_of_non_patterned_behaviour[k]],
-                                                                        np.mean, 30, 30)]
-spike_rates_non_patterned_behaviour_0p25 = np.empty(1)
-for k in np.arange(number_of_patterned_events):
-    smoothed_data = binning.rolling_window_with_step(spike_rates[:, windows_of_non_patterned_behaviour[k]], np.mean, 30, 30)
-    smoothed_data = np.array(smoothed_data)
-    if k == 0:
-        spike_rates_non_patterned_behaviour_0p25 = smoothed_data
-    else:
-        spike_rates_non_patterned_behaviour_0p25 = np.concatenate((spike_rates_non_patterned_behaviour_0p25,
-                                                                   smoothed_data), axis=1)
+windows_of_non_patterned_behaviour_list = windows_of_non_patterned_behaviour[0]
+for k in np.arange(1, number_of_patterned_events):
+    windows_of_non_patterned_behaviour_list = np.concatenate((windows_of_non_patterned_behaviour_list,
+                                                              windows_of_non_patterned_behaviour[k]))
+
+speeds_non_patterned_behaviour_0p25 = binning.rolling_window_with_step(speeds[windows_of_non_patterned_behaviour_list],
+                                                                        np.mean, 30, 30)
+distance_to_poke_non_patterned_behaviour_0p25 = \
+    binning.rolling_window_with_step(distances_rat_to_poke_all_frames[windows_of_non_patterned_behaviour_list],
+                                                                    np.mean, 30, 30)
+
+spike_rates_non_patterned_behaviour_all_frames = spike_rates[:, windows_of_non_patterned_behaviour_list]
+
+spike_rates_non_patterned_behaviour_0p25 = \
+    binning.rolling_window_with_step(spike_rates_non_patterned_behaviour_all_frames, np.mean, 30, 30)
+
 
 #   Check that the two speed distributions are roughly the same
 _ = plt.hist(speeds_non_patterned_behaviour_0p25)
-_ = plt.hist(speeds_patterned_behaviour_0p25, fc=(0.5, 0.5, 0, 0.5))
+_ = plt.hist(speeds_patterned_behaviour_0p25, fc=(0, 1, 0, 0.5))
+
+#   Save all the relevant patterned and non patterned arrays (speeds, distances, time ranges and firing rates)
+np.save(join(patterned_vs_non_patterned_folder, 'distances_rat_to_poke_all_frames.npy'),
+        distances_rat_to_poke_all_frames)
+np.save(join(patterned_vs_non_patterned_folder, 'spike_rates_patterned_behaviour_all_frames.npy'),
+        spike_rates_patterned_behaviour_all_frames)
+np.save(join(patterned_vs_non_patterned_folder, 'spike_rates_non_patterned_behaviour_all_frames.npy'),
+        spike_rates_non_patterned_behaviour_all_frames)
+
+np.save(join(patterned_vs_non_patterned_folder, 'windows_of_patterned_behaviour.npy'), windows_of_patterned_behaviour)
+np.save(join(patterned_vs_non_patterned_folder, 'windows_of_patterned_behaviour_list.npy'),
+        windows_of_patterned_behaviour_list)
+
+np.save(join(patterned_vs_non_patterned_folder, 'windows_of_non_patterned_behaviour.npy'),
+        windows_of_non_patterned_behaviour)
+np.save(join(patterned_vs_non_patterned_folder, 'windows_of_non_patterned_behaviour_list.npy'),
+        windows_of_non_patterned_behaviour_list)
+
+
+np.save(join(patterned_vs_non_patterned_folder, 'speeds_patterned_behaviour_0p25.npy'),
+        speeds_patterned_behaviour_0p25)
+np.save(join(patterned_vs_non_patterned_folder, 'distance_to_poke_patterned_behaviour_0p25.npy'),
+        distance_to_poke_patterned_behaviour_0p25)
+np.save(join(patterned_vs_non_patterned_folder, 'spike_rates_patterned_behaviour_0p25.npy'),
+        spike_rates_patterned_behaviour_0p25)
+
+np.save(join(patterned_vs_non_patterned_folder, 'speeds_non_patterned_behaviour_0p25.npy'),
+        speeds_non_patterned_behaviour_0p25)
+np.save(join(patterned_vs_non_patterned_folder, 'distance_to_poke_non_patterned_behaviour_0p25.npy'),
+        distance_to_poke_non_patterned_behaviour_0p25)
+np.save(join(patterned_vs_non_patterned_folder, 'spike_rates_non_patterned_behaviour_0p25.npy'),
+        spike_rates_non_patterned_behaviour_0p25)
 
 # </editor-fold>
 # -------------------------------------------------
@@ -272,7 +357,7 @@ _ = plt.hist(speeds_patterned_behaviour_0p25, fc=(0.5, 0.5, 0, 0.5))
 # -------------------------------------------------
 # <editor-fold desc="RUN THE MUTUAL INFORMATION">
 
-#   Do the patterned behaviour
+#   Do the patterned behaviour vs speed
 n = 0
 mi_pb_spikes_vs_speed = []
 for rate in spike_rates_patterned_behaviour_0p25:
@@ -284,7 +369,7 @@ for rate in spike_rates_patterned_behaviour_0p25:
 mi_pb_spikes_vs_speed = np.array(mi_pb_spikes_vs_speed)
 np.save(join(mutual_information_folder, 'mutual_infos_spikes_vs_speed_patterned_behaviour.npy'), mi_pb_spikes_vs_speed)
 
-#   Do the shuffle of the best patterned behaviour
+#   Do the shuffle of the best patterned behaviour vs speed
 max_neuron = np.argmax(mi_pb_spikes_vs_speed)
 
 shuffled, mean, conf_intervals = MI.shuffle_test(MI.mi_LNC,  spike_rates_patterned_behaviour_0p25[max_neuron],
@@ -294,7 +379,31 @@ shuffled, mean, conf_intervals = MI.shuffle_test(MI.mi_LNC,  spike_rates_pattern
 np.save(join(mutual_information_folder, 'shuffled_mut_info_spike_rate_{}_vs_speed_patterned_behaviour.npy'.
              format(str(max_neuron))), shuffled)
 
-#   Do the non patterned behaviour
+
+#   Do the patterned behaviour vs distance to poke
+n = 0
+mi_pb_spikes_vs_distance_to_poke = []
+for rate in spike_rates_patterned_behaviour_0p25:
+    mi_pb_spikes_vs_distance_to_poke.append(MI.mi_LNC([rate.tolist(), distance_to_poke_patterned_behaviour_0p25],
+                                           k=10, base=np.exp(1), alpha=0.4, intens=1e-10))
+    n += 1
+    print('Done neuron {}'.format(str(n)))
+
+mi_pb_spikes_vs_distance_to_poke = np.array(mi_pb_spikes_vs_distance_to_poke)
+np.save(join(mutual_information_folder, 'mutual_infos_spikes_vs_distance_to_poke_patterned_behaviour.npy'),
+        mi_pb_spikes_vs_distance_to_poke)
+
+#   Do the shuffle of the best patterned behaviour vs distance to poke
+max_neuron = np.argmax(mi_pb_spikes_vs_distance_to_poke)
+
+shuffled, mean, conf_intervals = MI.shuffle_test(MI.mi_LNC,  spike_rates_patterned_behaviour_0p25[max_neuron],
+                                                 distance_to_poke_patterned_behaviour_0p25,
+                                                 z=False, ns=1000, ci=0.95, k=10, base=np.exp(1), alpha=0.4,
+                                                 intens=1e-10)
+np.save(join(mutual_information_folder, 'shuffled_mut_info_spike_rate_{}_vs_distance_to_poke_patterned_behaviour.npy'.
+             format(str(max_neuron))), shuffled)
+
+#   Do the non patterned behaviour vs speed
 n = 0
 mi_non_pb_spikes_vs_speed = []
 for rate in spike_rates_non_patterned_behaviour_0p25:
@@ -306,6 +415,19 @@ for rate in spike_rates_non_patterned_behaviour_0p25:
 mi_non_pb_spikes_vs_speed = np.array(mi_non_pb_spikes_vs_speed)
 np.save(join(mutual_information_folder, 'mutual_infos_spikes_vs_speed_non_patterned_behaviour.npy'),
         mi_non_pb_spikes_vs_speed)
+
+#   Do the non patterned behaviour vs distance to poke
+n = 0
+mi_non_pb_spikes_vs_distance_to_poke = []
+for rate in spike_rates_non_patterned_behaviour_0p25:
+    mi_non_pb_spikes_vs_distance_to_poke.append(MI.mi_LNC([rate.tolist(), distance_to_poke_non_patterned_behaviour_0p25],
+                                           k=10, base=np.exp(1), alpha=0.4, intens=1e-10))
+    n += 1
+    print('Done neuron {}'.format(str(n)))
+
+mi_non_pb_spikes_vs_distance_to_poke = np.array(mi_non_pb_spikes_vs_distance_to_poke)
+np.save(join(mutual_information_folder, 'mutual_infos_spikes_vs_distance_to_poke_non_patterned_behaviour.npy'),
+        mi_non_pb_spikes_vs_distance_to_poke)
 
 
 #   Do the correlation between the distance between the rat and the poke and the firing rates
@@ -335,7 +457,8 @@ shuffled, mean, conf_intervals = MI.shuffle_test(MI.mi_LNC,  spike_rates_0p25[ma
                                                  distances_rat_to_poke_all_frames_0p25[:-1],
                                                  z=False, ns=1000, ci=0.95, k=10, base=np.exp(1), alpha=0.4,
                                                  intens=1e-10)
-np.save(join(mutual_information_folder, 'shuffled_mut_info_spike_rate_960_vs_distance_to_poke.npy'), shuffled)
+np.save(join(mutual_information_folder, 'shuffled_mut_info_spike_rate_{}_vs_distance_to_poke.npy'.
+             format(str(max_neuron))), shuffled)
 
 #   Do the correlation between the distance between rat and ball and the firing rates
 

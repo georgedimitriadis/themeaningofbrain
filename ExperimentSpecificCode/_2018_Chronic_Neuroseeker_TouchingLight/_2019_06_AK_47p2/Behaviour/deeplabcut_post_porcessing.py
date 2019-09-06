@@ -139,6 +139,7 @@ body_positions = np.load(join(dlc_project_folder, 'post_processing', 'body_posit
 
 updated_head_markers = dlc_pp.seperate_markers(markers_positions_no_large_movs, head_parts)
 head_positions = dlc_pp.average_multiple_markers_to_single_one(updated_head_markers, flip=True)
+np.save(join(dlc_project_folder, 'post_processing', 'head_positions.npy'), head_positions)
 
 
 # Plot the body positions ne

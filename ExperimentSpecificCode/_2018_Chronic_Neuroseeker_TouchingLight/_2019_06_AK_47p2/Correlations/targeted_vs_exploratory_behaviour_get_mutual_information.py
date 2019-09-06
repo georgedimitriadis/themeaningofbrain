@@ -78,9 +78,13 @@ index_of_events_tb_followed_by_fast_p = np.squeeze(np.argwhere((events_successfu
                                                                 events_touch_ball_successful_trial) /
                                            const.SAMPLING_FREQUENCY < time_between_tb_and_p))
 
+# The following delete is because during the 30th time span the rat just sits doing nothing
+index_of_events_tb_followed_by_fast_p = np.delete(index_of_events_tb_followed_by_fast_p, 30)
+
 frames_tb_followed_by_fast_p = sync_funcs.time_point_to_frame_from_video_df(ev_video,
                                                                             events_touch_ball_successful_trial[
                                                                                 index_of_events_tb_followed_by_fast_p])
+
 frames_fast_p = sync_funcs.time_point_to_frame_from_video_df(ev_video,
                                                              events_successful_trial_pokes[
                                                                 index_of_events_tb_followed_by_fast_p])
@@ -237,43 +241,44 @@ sv.image_sequence(globals(), 'frame', 'video_file')
 # <editor-fold desc="USING THE GENERATED WINDOWS SMOOTH THE CORRESPONDING PARTS OF THE SPEED AND THE FIRING RATES">
 
 #   Smooth speeds and spike rates for each patterned behaviour
-speeds_patterned_behaviour_0p25 = [s for k in np.arange(number_of_patterned_events) for s in
-                                   binning.rolling_window_with_step(speeds[windows_of_patterned_behaviour[k]],
-                                                                    np.mean, 30, 30)]
+windows_of_patterned_behaviour_list = windows_of_patterned_behaviour[0]
+for k in np.arange(1, number_of_patterned_events):
+    windows_of_patterned_behaviour_list = np.concatenate((windows_of_patterned_behaviour_list,
+                                                          windows_of_patterned_behaviour[k]))
+
+speeds_patterned_behaviour_0p25 = binning.rolling_window_with_step(speeds[windows_of_patterned_behaviour_list],
+                                                                    np.mean, 30, 30)
 
 distances_rat_to_poke_all_frames = np.sqrt(
     np.power(body_positions_normalised[:, 0] - poke_position[0], 2) +
     np.power(body_positions_normalised[:, 1] - poke_position[1], 2))
-distance_to_poke_patterned_behaviour_0p25 = [s for k in np.arange(number_of_patterned_events) for s in
-                                   binning.rolling_window_with_step(distances_rat_to_poke_all_frames[windows_of_patterned_behaviour[k]],
-                                                                    np.mean, 30, 30)]
 
-spike_rates_patterned_behaviour_0p25 = np.empty(1)
-for k in np.arange(number_of_patterned_events):
-    smoothed_data = binning.rolling_window_with_step(spike_rates[:, windows_of_patterned_behaviour[k]], np.mean, 30, 30)
-    smoothed_data = np.array(smoothed_data)
-    if k == 0:
-        spike_rates_patterned_behaviour_0p25 = smoothed_data
-    else:
-        spike_rates_patterned_behaviour_0p25 = np.concatenate((spike_rates_patterned_behaviour_0p25, smoothed_data), axis=1)
+distance_to_poke_patterned_behaviour_0p25 = \
+    binning.rolling_window_with_step(distances_rat_to_poke_all_frames[windows_of_patterned_behaviour_list],
+                                     np.mean, 30, 30)
 
+spike_rates_patterned_behaviour_all_frames = spike_rates[:, windows_of_patterned_behaviour_list]
+
+spike_rates_patterned_behaviour_0p25 = \
+    binning.rolling_window_with_step(spike_rates_patterned_behaviour_all_frames, np.mean, 30, 30)
 
 #   Smooth speeds and spike rates for each non patterned trial
-speeds_non_patterned_behaviour_0p25 = [s for k in np.arange(number_of_patterned_events) for s in
-                                       binning.rolling_window_with_step(speeds[windows_of_non_patterned_behaviour[k]],
-                                                                        np.mean, 30, 30)]
-distance_to_poke_non_patterned_behaviour_0p25 = [s for k in np.arange(number_of_patterned_events) for s in
-                                   binning.rolling_window_with_step(distances_rat_to_poke_all_frames[windows_of_non_patterned_behaviour[k]],
-                                                                    np.mean, 30, 30)]
-spike_rates_non_patterned_behaviour_0p25 = np.empty(1)
-for k in np.arange(number_of_patterned_events):
-    smoothed_data = binning.rolling_window_with_step(spike_rates[:, windows_of_non_patterned_behaviour[k]], np.mean, 30, 30)
-    smoothed_data = np.array(smoothed_data)
-    if k == 0:
-        spike_rates_non_patterned_behaviour_0p25 = smoothed_data
-    else:
-        spike_rates_non_patterned_behaviour_0p25 = np.concatenate((spike_rates_non_patterned_behaviour_0p25,
-                                                                   smoothed_data), axis=1)
+windows_of_non_patterned_behaviour_list = windows_of_non_patterned_behaviour[0]
+for k in np.arange(1, number_of_patterned_events):
+    windows_of_non_patterned_behaviour_list = np.concatenate((windows_of_non_patterned_behaviour_list,
+                                                              windows_of_non_patterned_behaviour[k]))
+
+speeds_non_patterned_behaviour_0p25 = binning.rolling_window_with_step(speeds[windows_of_non_patterned_behaviour_list],
+                                                                        np.mean, 30, 30)
+distance_to_poke_non_patterned_behaviour_0p25 = \
+    binning.rolling_window_with_step(distances_rat_to_poke_all_frames[windows_of_non_patterned_behaviour_list],
+                                                                    np.mean, 30, 30)
+
+spike_rates_non_patterned_behaviour_all_frames = spike_rates[:, windows_of_non_patterned_behaviour_list]
+
+spike_rates_non_patterned_behaviour_0p25 = \
+    binning.rolling_window_with_step(spike_rates_non_patterned_behaviour_all_frames, np.mean, 30, 30)
+
 
 #   Check that the two speed distributions are roughly the same
 _ = plt.hist(speeds_non_patterned_behaviour_0p25)
@@ -282,21 +287,34 @@ _ = plt.hist(speeds_patterned_behaviour_0p25, fc=(0, 1, 0, 0.5))
 #   Save all the relevant patterned and non patterned arrays (speeds, distances, time ranges and firing rates)
 np.save(join(patterned_vs_non_patterned_folder, 'distances_rat_to_poke_all_frames.npy'),
         distances_rat_to_poke_all_frames)
+np.save(join(patterned_vs_non_patterned_folder, 'spike_rates_patterned_behaviour_all_frames.npy'),
+        spike_rates_patterned_behaviour_all_frames)
+np.save(join(patterned_vs_non_patterned_folder, 'spike_rates_non_patterned_behaviour_all_frames.npy'),
+        spike_rates_non_patterned_behaviour_all_frames)
+
+np.save(join(patterned_vs_non_patterned_folder, 'windows_of_patterned_behaviour.npy'), windows_of_patterned_behaviour)
+np.save(join(patterned_vs_non_patterned_folder, 'windows_of_patterned_behaviour_list.npy'),
+        windows_of_patterned_behaviour_list)
+
+np.save(join(patterned_vs_non_patterned_folder, 'windows_of_non_patterned_behaviour.npy'),
+        windows_of_non_patterned_behaviour)
+np.save(join(patterned_vs_non_patterned_folder, 'windows_of_non_patterned_behaviour_list.npy'),
+        windows_of_non_patterned_behaviour_list)
+
+
 np.save(join(patterned_vs_non_patterned_folder, 'speeds_patterned_behaviour_0p25.npy'),
         speeds_patterned_behaviour_0p25)
 np.save(join(patterned_vs_non_patterned_folder, 'distance_to_poke_patterned_behaviour_0p25.npy'),
         distance_to_poke_patterned_behaviour_0p25)
 np.save(join(patterned_vs_non_patterned_folder, 'spike_rates_patterned_behaviour_0p25.npy'),
         spike_rates_patterned_behaviour_0p25)
+
 np.save(join(patterned_vs_non_patterned_folder, 'speeds_non_patterned_behaviour_0p25.npy'),
         speeds_non_patterned_behaviour_0p25)
 np.save(join(patterned_vs_non_patterned_folder, 'distance_to_poke_non_patterned_behaviour_0p25.npy'),
         distance_to_poke_non_patterned_behaviour_0p25)
 np.save(join(patterned_vs_non_patterned_folder, 'spike_rates_non_patterned_behaviour_0p25.npy'),
         spike_rates_non_patterned_behaviour_0p25)
-np.save(join(patterned_vs_non_patterned_folder, 'windows_of_patterned_behaviour.npy'), windows_of_patterned_behaviour)
-np.save(join(patterned_vs_non_patterned_folder, 'windows_of_non_patterned_behaviour.npy'),
-        windows_of_non_patterned_behaviour)
 
 
 # </editor-fold>

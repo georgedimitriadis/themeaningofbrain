@@ -1,14 +1,18 @@
 
 from os.path import join
 import numpy as np
+import pickle
+
 import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2019_06_AK_47p2 import constants as const
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions \
     import events_sync_funcs as sync_funcs
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
 from sklearn import linear_model
+from sklearn import pipeline
 from sklearn import preprocessing
+from sklearn import svm
 
 from BrainDataAnalysis import binning
 
@@ -34,6 +38,8 @@ results_folder = join(analysis_folder, 'Results')
 events_definitions_folder = join(results_folder, 'EventsDefinitions')
 
 mutual_information_folder = join(analysis_folder, 'Results', 'MutualInformation')
+
+regressions_folder = join(results_folder, 'Regressions')
 
 dlc_folder = join(analysis_folder, 'Deeplabcut')
 dlc_project_folder = join(dlc_folder, 'projects', 'V1--2019-06-30')
@@ -75,9 +81,9 @@ distance_to_poke_non_patterned_behaviour_0p25 = np.load(join(patterned_vs_non_pa
 spike_rates_non_patterned_behaviour_0p25 = np.load(join(patterned_vs_non_patterned_folder,
                                                         'spike_rates_non_patterned_behaviour_0p25.npy'))
 windows_of_patterned_behaviour = np.load(join(patterned_vs_non_patterned_folder,
-                                              'windows_of_patterned_behaviour.npy'), allow_pickle=True)
+                                              'windows_of_patterned_behaviour_list.npy'), allow_pickle=True)
 windows_of_non_patterned_behaviour = np.load(join(patterned_vs_non_patterned_folder,
-                                                  'windows_of_non_patterned_behaviour.npy'), allow_pickle=True)
+                                                  'windows_of_non_patterned_behaviour_list.npy'), allow_pickle=True)
 
 mi_pb_spikes_vs_speed = np.load(join(mutual_information_folder, 'mutual_infos_spikes_vs_speed_patterned_behaviour.npy'))
 mi_non_pb_spikes_vs_speed = np.load(join(mutual_information_folder,
@@ -130,69 +136,287 @@ for s in mis_shuffled:
 # <editor-fold desc="SPEED REGRESSION">
 X = spike_rates_0p25[correlated_neuron_indices['speed']].transpose()
 Y = binning.rolling_window_with_step(speeds, np.nanmean, 30, 30)[:-1]
-X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
+#X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
 
+
+X_train = X[:10000, :]
+y_train = Y[:10000]
+X_test = X[10000:, :]
+y_test = Y[10000:]
+
+#   Linear
 regressor_speed = linear_model.LinearRegression(normalize=True)
 regressor_speed.fit(X_train, y_train)
 print(regressor_speed.score(X_train, y_train))
+print(regressor_speed.score(X_test, y_test))
 
 Y_pred = regressor_speed.predict(X_test)
+
+#   Polynomial
+model_speed = pipeline.make_pipeline(PolynomialFeatures(2), linear_model.LinearRegression())
+model_speed.fit(X_train, y_train)
+
+print(model_speed.score(X_train, y_train))
+print(model_speed.score(X_test, y_test))
+
+Y_pred = model_speed.predict(X_test)
+
 plt.plot(Y_pred)
 plt.plot(y_test)
 plt.scatter(Y_pred, y_test)
 plt.plot([0, 10, 20, 30, 40], [0, 10, 20, 30, 40], c='k')
+
+plt.scatter(np.diff(Y_pred), np.diff(y_test))
+plt.plot([-25, -10, 0, 10, 25], [-25, -10, 0, 10, 25], c='k')
 # </editor-fold>
 
 # <editor-fold desc="FULL DISTANCE TO POKE REGRESSION">
 X = spike_rates_0p25[correlated_neuron_indices['dtp']].transpose()
+X = spike_rates_0p25[correlated_neuron_indices['pb_dtp']].transpose()
 Y = binning.rolling_window_with_step(distances_rat_to_poke_all_frames, np.nanmean, 30, 30)[:-1]
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
 
+X_train = X[:10000, :]
+y_train = Y[:10000]
+X_test = X[10000:, :]
+y_test = Y[10000:]
+
+#   Linear
 regressor_dtp = linear_model.LinearRegression(normalize=True)
 regressor_dtp.fit(X_train, y_train)
 print(regressor_dtp.score(X_train, y_train))
+print(regressor_dtp.score(X_test, y_test))
 
 Y_pred = regressor_dtp.predict(X_test)
-plt.plot(Y_pred)
+
+#   Polynomial
+model_dtp = pipeline.make_pipeline(PolynomialFeatures(2), linear_model.LinearRegression())
+file_model_dtp = join(regressions_folder, 'regression_dtp_Linear_2nd_Order.pcl')
+
+model_dtp = pipeline.make_pipeline(PolynomialFeatures(2),
+                                   linear_model.RidgeCV(alphas=np.array([1.e-06, 1.e-05, 1.e-04, 1.e-03, 1.e-02, 1.e-01,
+                                                                         1.e+00, 1.e+01, 1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06]),
+                                                        cv=None, fit_intercept=True, gcv_mode=None, normalize=False,
+                                                        scoring=None, store_cv_values=False))
+
+model_dtp = pipeline.make_pipeline(PolynomialFeatures(2), linear_model.LassoCV(cv=5, fit_intercept=True))
+file_model_dtp = join(regressions_folder, 'regression_dtp_Lasso_2nd_Order.pcl')
+
+
+model_dtp.fit(X_train, y_train)
+
+
+pickle.dump(model_dtp, open(file_model_dtp, "wb"))
+
+print(model_dtp.score(X_train, y_train))
+print(model_dtp.score(X_test, y_test))
+
+Y_pred = model_dtp.predict(X_test)
+
 plt.plot(y_test)
+plt.plot(Y_pred)
+plt.plot(binning.rolling_window_with_step(Y_pred, np.mean, 20, 1))
+
+plt.plot(y_train)
+plt.plot(model_dtp.predict(X_train))
+
 plt.scatter(Y_pred, y_test)
 plt.plot([0, 1, 2], [0, 1, 2], c='k')
+
+plt.scatter(np.diff(Y_pred), np.diff(y_test))
+plt.plot([-2, 0, 2], [-2, 0, 2], c='k')
+
+#   Regression using random neurons that do not have any mutual info with the dtp
+non_correlated_neurons_to_dtp = np.random.choice([d for d in np.arange(correlated_neuron_indices['dtp'].max())
+                                                  if d not in correlated_neuron_indices['dtp']],
+                                                 len(correlated_neuron_indices['dtp']), replace=False)
+X = spike_rates_0p25[non_correlated_neurons_to_dtp].transpose()
+Y = binning.rolling_window_with_step(distances_rat_to_poke_all_frames, np.nanmean, 30, 30)[:-1]
+
+X_train = X[:10000, :]
+y_train = Y[:10000]
+X_test = X[10000:, :]
+y_test = Y[10000:]
+
+model_random_dtp = pipeline.make_pipeline(PolynomialFeatures(2), linear_model.LinearRegression())
+file_model_random_dtp = join(regressions_folder, 'regression_random_dtp_Linear_2nd_Order.pcl')
+
+model_random_dtp = pipeline.make_pipeline(PolynomialFeatures(2),
+                                   linear_model.RidgeCV(alphas=np.array([1.e-06, 1.e-05, 1.e-04, 1.e-03, 1.e-02, 1.e-01,
+                                                                         1.e+00, 1.e+01, 1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06]),
+                                                        cv=None, fit_intercept=True, gcv_mode=None, normalize=False,
+                                                        scoring=None, store_cv_values=False))
+model_random_dtp = pipeline.make_pipeline(PolynomialFeatures(2),
+                                   linear_model.LassoCV(alphas=np.array([1.e-06, 1.e-05, 1.e-04, 1.e-03, 1.e-02, 1.e-01,
+                                                                         1.e+00, 1.e+01, 1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06]),
+                                                        cv=None, fit_intercept=True))
+file_model_random_dtp = join(regressions_folder, 'regression_random_dtp_Lasso_2nd_Order.pcl')
+
+model_random_dtp.fit(X_train, y_train)
+
+
+pickle.dump(model_random_dtp, open(file_model_random_dtp, "wb"))
+
+model_random_dtp = pickle.load(open(file_model_random_dtp, "rb"))
+print(model_random_dtp.score(X_train, y_train))
+print(model_random_dtp.score(X_test, y_test))
+
+Y_pred = model_random_dtp.predict(X_test)
+plt.plot(y_test)
+plt.plot(Y_pred)
+plt.plot(binning.rolling_window_with_step(Y_pred, np.mean, 10, 1))
+
+plt.plot(y_train)
+plt.plot(model_dtp.predict(X_train))
+
 # </editor-fold>
 
 # <editor-fold desc="PB VS NON PB DISTANCE TO POKE REGRESSION">
-X_pb = spike_rates_patterned_behaviour_0p25[correlated_neuron_indices['pb_dtp']].transpose()
-Y_pb = distance_to_poke_patterned_behaviour_0p25
-X_pb_train, X_pb_test, y_pb_train, y_pb_test = train_test_split(X_pb, Y_pb, test_size=0.2, random_state=0)
+smoothing_time = 0.2
+smoothing_frames = int(smoothing_time / 0.00833)
+spike_rates_patterned_behaviour_smoothed = \
+    binning.rolling_window_with_step(spike_rates[:, windows_of_patterned_behaviour],
+                                     np.mean, smoothing_frames, smoothing_frames)
+distance_to_poke_patterned_behaviour_smoothed = \
+    binning.rolling_window_with_step(distances_rat_to_poke_all_frames[windows_of_patterned_behaviour],
+                                     np.mean, smoothing_frames, smoothing_frames)
 
+spike_rates_patterned_behaviour_smoothed = \
+    binning.rolling_window_with_step(spike_rates_patterned_behaviour_smoothed, np.mean, 5, 1)
+distance_to_poke_patterned_behaviour_smoothed = \
+    np.array(distance_to_poke_patterned_behaviour_smoothed[len(distance_to_poke_patterned_behaviour_smoothed)
+             - spike_rates_patterned_behaviour_smoothed.shape[1]:])
+
+#   Patterned Behaviour
+X_pb_dtp = spike_rates_patterned_behaviour_smoothed[correlated_neuron_indices['pb_dtp']].transpose()
+Y_pb_dtp = distance_to_poke_patterned_behaviour_smoothed
+
+# X_pb_dtp_train, X_pb_dtp_test, y_pb_dtp_train, y_pb_dtp_test = train_test_split(X_pb_dtp, Y_pb_dtp, test_size=0.3, random_state=0)
+
+train_size = int(0.7 * spike_rates_patterned_behaviour_smoothed.shape[1])
+X_pb_dtp_train = X_pb_dtp[:train_size, :]
+y_pb_dtp_train = Y_pb_dtp[:train_size]
+X_pb_dtp_test = X_pb_dtp[train_size:, :]
+y_pb_dtp_test = Y_pb_dtp[train_size:]
+
+s = len(distance_to_poke_patterned_behaviour_smoothed)
+test_size = int(0.1 * s / 2)
+starts = [int(np.random.choice(np.arange(s/2 - test_size))), int(np.random.choice(np.arange(s/2, s - test_size)))]
+test_samples = np.concatenate((np.arange(starts[0], starts[0] + test_size), np.arange(starts[1], starts[1] + test_size)))
+train_samples = np.delete(np.arange(s), test_samples)
+
+X_pb_dtp_train = X_pb_dtp[train_samples, :]
+y_pb_dtp_train = np.array(Y_pb_dtp)[train_samples]
+X_pb_dtp_test = X_pb_dtp[test_samples, :]
+y_pb_dtp_test = np.array(Y_pb_dtp)[test_samples]
+
+
+#   Linear Patterned Behaviour
 regressor_pb_dtp = linear_model.LinearRegression(normalize=True)
-regressor_pb_dtp.fit(X_pb_train, y_pb_train)
-print(regressor_pb_dtp.score(X_pb_train, y_pb_train))
+regressor_pb_dtp.fit(X_pb_dtp_train, y_pb_dtp_train)
+print(regressor_pb_dtp.score(X_pb_dtp_train, y_pb_dtp_train))
+print(regressor_pb_dtp.score(X_pb_dtp_test, y_pb_dtp_test))
 
-Y_pb_pred = regressor_pb_dtp.predict(X_pb_test)
-plt.plot(Y_pb_pred)
-plt.plot(y_pb_test)
-plt.scatter(Y_pb_pred, y_pb_test)
+Y_pb_dtp_pred = regressor_pb_dtp.predict(X_pb_dtp_test)
+
+#   Polynomial Patterned Behaviour
+model_pb_dtp = pipeline.make_pipeline(PolynomialFeatures(2), linear_model.LinearRegression())
+model_pb_dtp = pipeline.make_pipeline(PolynomialFeatures(2), linear_model.LassoCV(cv=None, fit_intercept=True))
+model_pb_dtp = svm.SVR(kernel='poly', degree=2, C=1, gamma=0.1, epsilon=.001)
+
+model_pb_dtp.fit(X_pb_dtp_train, y_pb_dtp_train)
+
+print(model_pb_dtp.score(X_pb_dtp_train, y_pb_dtp_train))
+print(model_pb_dtp.score(X_pb_dtp_test, y_pb_dtp_test))
+
+Y_pb_dtp_pred = model_pb_dtp.predict(X_pb_dtp_test)
+
+plt.plot(Y_pb_dtp_pred)
+plt.plot(y_pb_dtp_test)
+plt.plot(binning.rolling_window_with_step(Y_pb_dtp_pred, np.mean, 10, 1))
+
+plt.plot(y_pb_dtp_train)
+plt.plot(model_pb_dtp.predict(X_pb_dtp_train))
+
+plt.scatter(Y_pb_dtp_pred, y_pb_dtp_test)
 plt.plot([0, 1, 2], [0, 1, 2], c='k')
 
+#   Do Patterned Behaviour in a loop (leave a few out) to generate the prediction for the whole series
 
-X_npb = spike_rates_patterned_behaviour_0p25[correlated_neuron_indices['npb_dtp']].transpose()
-Y_npb = distance_to_poke_patterned_behaviour_0p25
-X_npb_train, X_npb_test, y_npb_train, y_npb_test = train_test_split(X_npb, Y_npb, test_size=0.2, random_state=0)
+X_pb_dtp = spike_rates_patterned_behaviour_smoothed[correlated_neuron_indices['pb_dtp']].transpose()
+X_pb_dtp = spike_rates_patterned_behaviour_smoothed[correlated_neuron_indices['dtp']].transpose()
 
+Y_pb_dtp = distance_to_poke_patterned_behaviour_smoothed
+model_pb_dtp = pipeline.make_pipeline(PolynomialFeatures(2), linear_model.LinearRegression())
+
+leave_percentage_out = 0.001
+s = len(distance_to_poke_patterned_behaviour_smoothed)
+leave_amount_out = int(leave_percentage_out * s)
+
+Y_pb_dtp_pred = np.empty(0)
+start_sample = 0
+while start_sample + leave_amount_out <= s:
+    test_samples = np.arange(start_sample, start_sample + leave_amount_out)
+    train_samples = np.delete(np.arange(s), test_samples)
+    start_sample += leave_amount_out
+    print(start_sample, start_sample+leave_amount_out)
+
+    X_pb_dtp_train = X_pb_dtp[train_samples, :]
+    y_pb_dtp_train = np.array(Y_pb_dtp)[train_samples]
+    X_pb_dtp_test = X_pb_dtp[test_samples, :]
+    y_pb_dtp_test = np.array(Y_pb_dtp)[test_samples]
+
+    model_pb_dtp.fit(X_pb_dtp_train, y_pb_dtp_train)
+    Y_pb_dtp_pred = np.concatenate((Y_pb_dtp_pred, model_pb_dtp.predict(X_pb_dtp_test)))
+
+error = np.linalg.norm(Y_pb_dtp[:len(Y_pb_dtp_pred)] - Y_pb_dtp_pred)
+print(error)
+
+dtp_true_line = plt.plot(Y_pb_dtp)
+pb_dtp_pred_line = plt.plot(Y_pb_dtp_pred)
+
+#   Non Patterned Behaviour
+X_npb = spike_rates_non_patterned_behaviour_0p25[correlated_neuron_indices['npb_dtp']].transpose()
+X_npb = spike_rates_non_patterned_behaviour_0p25[correlated_neuron_indices['dtp']].transpose()
+
+Y_npb = distance_to_poke_non_patterned_behaviour_0p25
+
+X_npb_train = X_npb[:700, :]
+y_npb_train = Y_npb[:700]
+X_npb_test = X_npb[700:, :]
+y_npb_test = Y_npb[700:]
+
+#   Linear Non Patterned Behaviour
 regressor_npb_dtp = linear_model.LinearRegression(normalize=True)
 regressor_npb_dtp.fit(X_npb_train, y_npb_train)
 print(regressor_npb_dtp.score(X_npb_train, y_npb_train))
+print(regressor_npb_dtp.score(X_npb_test, y_npb_test))
 
 Y_npb_pred = regressor_npb_dtp.predict(X_npb_test)
+
+#   Polynomial Non Patterned Behaviour
+model_npb_dtp = pipeline.make_pipeline(PolynomialFeatures(2), linear_model.LinearRegression())
+model_npb_dtp = pipeline.make_pipeline(PolynomialFeatures(2), linear_model.LassoCV(cv=None, fit_intercept=True))
+model_npb_dtp = svm.SVR(kernel='rbf', degree=2, C=0.001, gamma=0.1, epsilon=.1)
+
+model_npb_dtp.fit(X_npb_train, y_npb_train)
+
+print(model_npb_dtp.score(X_npb_train, y_npb_train))
+print(model_npb_dtp.score(X_npb_test, y_npb_test))
+
+Y_npb_pred = model_npb_dtp.predict(X_npb_test)
+
+
 plt.plot(Y_npb_pred)
 plt.plot(y_npb_test)
+
+plt.plot(y_npb_train)
+plt.plot(model_npb_dtp.predict(X_npb_train))
+
 plt.scatter(Y_npb_pred, y_npb_test)
 plt.plot([0, 1, 2], [0, 1, 2], c='k')
-# </editor-fold>
 
-# </editor-fold>
-# -------------------------------------------------
-
+#   Unique patterned and non patterned beahviour
 
 common_pb_npb_dtp_neuron_indices = np.intersect1d(correlated_neuron_indices['pb_dtp'], correlated_neuron_indices['npb_dtp'])
 
@@ -203,10 +427,94 @@ correlated_neuron_indices_unique_npb_dtp = np.delete(correlated_neuron_indices['
                                                     np.argwhere(np.isin(correlated_neuron_indices['npb_dtp'],
                                                                         common_pb_npb_dtp_neuron_indices)))
 
-X_pb = spike_rates_patterned_behaviour_0p25[correlated_neuron_indices_unique_npb_dtp].transpose()
-Y_pb = distance_to_poke_patterned_behaviour_0p25
-X_pb_train, X_pb_test, y_pb_train, y_pb_test = train_test_split(X_pb, Y_pb, test_size=0.2, random_state=0)
+#   Patterned unique
+X_pb_unique_dtp = spike_rates_patterned_behaviour_0p25[common_pb_npb_dtp_neuron_indices].transpose()
+Y_pb_unique_dtp = distance_to_poke_patterned_behaviour_0p25
 
-regressor_pb_dtp = linear_model.LinearRegression(normalize=True)
-regressor_pb_dtp.fit(X_pb_train, y_pb_train)
-print(regressor_pb_dtp.score(X_pb_train, y_pb_train))
+
+X_pb_unique_train = X_pb_unique_dtp[:700, :]
+y_pb_unique_train = Y_pb_unique_dtp[:700]
+X_pb_unique_test = X_pb_unique_dtp[700:, :]
+y_pb_unique_test = Y_pb_unique_dtp[700:]
+
+#    Linear
+regressor_pb_uniqu_dtp = linear_model.LinearRegression(normalize=True)
+regressor_pb_uniqu_dtp.fit(X_pb_unique_train, y_pb_unique_train)
+print(regressor_pb_uniqu_dtp.score(X_pb_unique_train, y_pb_unique_train))
+print(regressor_pb_uniqu_dtp.score(X_pb_unique_test, y_pb_unique_test))
+
+
+Y_pb_uniqu_dtp_pred = regressor_npb_dtp.predict(X_pb_unique_test)
+
+#   Polynomial
+model_pb_uniqu_dtp = pipeline.make_pipeline(PolynomialFeatures(2), linear_model.LinearRegression())
+model_pb_uniqu_dtp = pipeline.make_pipeline(PolynomialFeatures(2), linear_model.LassoCV(cv=3, fit_intercept=True))
+
+model_pb_uniqu_dtp.fit(X_pb_unique_train, y_pb_unique_train)
+print(model_pb_uniqu_dtp.score(X_pb_unique_train, y_pb_unique_train))
+print(model_pb_uniqu_dtp.score(X_pb_unique_test, y_pb_unique_test))
+
+Y_pb_uniqu_dtp_pred = model_pb_uniqu_dtp.predict(X_pb_unique_test)
+
+
+plt.plot(Y_pb_uniqu_dtp_pred)
+plt.plot(y_pb_unique_test)
+
+
+#   Non patterned unique
+X_npb_unique_dtp = spike_rates_patterned_behaviour_0p25[correlated_neuron_indices_unique_npb_dtp].transpose()
+Y_npb_unique_dtp = distance_to_poke_non_patterned_behaviour_0p25
+
+
+X_npb_unique_train = X_npb_unique_dtp[:700, :]
+y_npb_unique_train = Y_npb_unique_dtp[:700]
+X_npb_unique_test = X_npb_unique_dtp[700:, :]
+y_npb_unique_test = Y_npb_unique_dtp[700:]
+
+
+#    Linear
+regressor_npb_unique_dtp = linear_model.LinearRegression(normalize=True)
+regressor_npb_unique_dtp.fit(X_npb_unique_train, y_npb_unique_train)
+print(regressor_npb_unique_dtp.score(X_npb_unique_train, y_npb_unique_train))
+print(regressor_npb_unique_dtp.score(X_npb_unique_test, y_npb_unique_test))
+
+Y_npb_unique_dtp_pred = regressor_npb_unique_dtp.predict(X_npb_unique_test)
+
+#   Polynomial
+model_npb_unique_dtp = pipeline.make_pipeline(PolynomialFeatures(2), linear_model.LinearRegression())
+model_npb_unique_dtp.fit(X_npb_unique_train, y_npb_unique_train)
+print(model_npb_unique_dtp.score(X_npb_unique_train, y_npb_unique_train))
+print(model_npb_unique_dtp.score(X_npb_unique_test, y_npb_unique_test))
+
+Y_npb_unique_dtp_pred = model_npb_unique_dtp.predict(X_npb_unique_test)
+
+plt.plot(Y_npb_unique_dtp_pred)
+plt.plot(y_npb_unique_test)
+
+#   Mixed X (firing rates) = patterned, Y (dtp) = non patterned
+
+#    Linear
+regressor_pb_npb_dtp = linear_model.LinearRegression(normalize=True)
+regressor_pb_npb_dtp.fit(X_pb_unique_train, y_npb_unique_train)
+print(regressor_pb_npb_dtp.score(X_pb_unique_train, y_npb_unique_train))
+print(regressor_pb_npb_dtp.score(X_pb_unique_test, y_npb_unique_test))
+
+Y_pb_npb_dtp_pred = regressor_pb_npb_dtp.predict(X_pb_unique_test)
+
+#   Polynomial
+model_pb_npb_dtp = pipeline.make_pipeline(PolynomialFeatures(2), linear_model.LinearRegression())
+model_pb_npb_dtp.fit(X_pb_unique_train, y_npb_unique_train)
+print(model_pb_npb_dtp.score(X_pb_unique_train, y_npb_unique_train))
+print(model_pb_npb_dtp.score(X_pb_unique_test, y_npb_unique_test))
+
+Y_pb_npb_dtp_pred = model_pb_npb_dtp.predict(X_pb_unique_test)
+
+plt.plot(Y_pb_npb_dtp_pred)
+plt.plot(y_npb_unique_test)
+
+# </editor-fold>
+
+# </editor-fold>
+# -------------------------------------------------
+
+

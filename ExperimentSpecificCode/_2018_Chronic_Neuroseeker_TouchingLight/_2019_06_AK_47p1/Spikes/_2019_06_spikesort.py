@@ -9,6 +9,8 @@ from os.path import join
 import matplotlib.pyplot as plt
 
 from BrainDataAnalysis.Spike_Sorting import positions_on_probe as spp
+from BrainDataAnalysis import neuroseeker_specific_functions as ns_funcs
+
 from spikesorting_tsne_guis import clean_kilosort_templates as clean
 from spikesorting_tsne import preprocessing_kilosort_results as preproc_kilo
 
@@ -27,7 +29,7 @@ binary_data_filename = join(const.base_save_folder, const.rat_folder, const.date
                             'Data', 'Amplifier_APs.bin')
 analysis_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date],
                        'Analysis')
-data_filename = join(analysis_folder, 'Data', 'Amplifier_APs_Denoised.bin')
+
 kilosort_folder = join(analysis_folder, 'Kilosort')
 
 tsne_exe_dir = r'E:\Software\Develop\Source\Repos\spikesorting_tsne_bhpart\Barnes_Hut\win\x64\Release'

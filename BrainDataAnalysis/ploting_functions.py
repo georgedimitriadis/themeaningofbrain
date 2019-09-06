@@ -580,13 +580,25 @@ def plot_tsne(tsne, labels_dict=None, cm=None, cm_remapping=None, subtitle=None,
         pass
 
 
-def show_clustered_tsne(dbscan_result, X, juxta_cluster_indices_grouped=None, threshold_legend=None):
+def show_clustered_tsne(dbscan_result, X, juxta_cluster_indices_grouped=None, threshold_legend=None,
+                        func_to_exec_on_pick=None, args_of_func_on_pick=None):
     core_samples_mask = np.zeros_like(dbscan_result.labels_, dtype=bool)
     core_samples_mask[dbscan_result.core_sample_indices_] = True
     labels = dbscan_result.labels_
 
+    def on_pick(event):
+        ind = event.ind[0]
+        label = labels[ind]
+        if func_to_exec_on_pick is not None:
+            func_to_exec_on_pick(ind, *args_of_func_on_pick)
+        print('Index = {}, Label = {}'.format(str(ind), str(label)))
+
     fig = plt.figure()
     ax = fig.add_subplot(111)
+    fig.canvas.mpl_connect('pick_event', on_pick)
+
+    ax.scatter(X[:, 0], X[:, 1], facecolor=(1, 1, 1, 0), edgecolor=(1, 1, 1, 0), s=8, picker=5)
+
     unique_labels = set(labels)
     colors = plt.cm.nipy_spectral(np.linspace(0, 1, len(unique_labels)))
     for k, col in zip(unique_labels, colors):
@@ -613,7 +625,7 @@ def show_clustered_tsne(dbscan_result, X, juxta_cluster_indices_grouped=None, th
         juxta_scatters = []
         for g in range(1, len(juxta_cluster_indices_grouped)+1):
             line, = ax.plot(X[juxta_cluster_indices_grouped[g], 0], X[juxta_cluster_indices_grouped[g], 1], '*',
-                            markersize=4.5, markerfacecolor=c[g-1], markeredgecolor=c[g-1])
+                            markersize=4.5, markerfacecolor=c[g-1], markeredgecolor=c[g-1], picker=5)
             juxta_scatters.append(line)
         if threshold_legend is not None:
             ax.legend(juxta_scatters, threshold_legend)

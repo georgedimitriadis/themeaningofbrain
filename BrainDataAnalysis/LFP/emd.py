@@ -16,7 +16,7 @@ def emd_in_blocks(signal, result_filename, result_dtype=np.int16, block_length=1
     n_timepoints = signal.shape[1]
     emd_shape = (n_channels, num_imfs, n_timepoints)  # channels X imfs X time points
 
-    imfs = np.memmap(result_filename, dtype=result_dtype, mode='w+', shape=emd_shape)
+    imfs = np.memmap(result_filename, dtype=result_dtype, mode='r+', shape=emd_shape)
 
     if n_timepoints < block_length:
         block_length = n_timepoints
@@ -60,6 +60,8 @@ def emd_per_channel(channel, channel_data, result_filename, result_dtype, emd_sh
                                num_siftings=num_siftings)
 
     imfs[channel, :, :] = channel_imfs
+    del channel_imfs
+    del imfs
     print('Channel {} imfs finished after {} minutes'.format(str(channel), str((time.process_time() - t0)/60)))
 
 
@@ -71,10 +73,10 @@ def emd(signal, result_filename, result_dtype=np.int16,
     n_timepoints = signal.shape[1]
     emd_shape = (n_channels, num_imfs, n_timepoints)  # channels X imfs X time points
 
-    imfs = np.memmap(result_filename, dtype=result_dtype, mode='w+', shape=emd_shape)
-    del imfs
+    #imfs = np.memmap(result_filename, dtype=result_dtype, mode='r+', shape=emd_shape)
+    #del imfs
 
-    Parallel(n_jobs=6)(delayed(emd_per_channel)(channel,
+    Parallel(n_jobs=5)(delayed(emd_per_channel)(channel,
                                                 signal[channel, :],
                                                 result_filename,
                                                 result_dtype,
@@ -84,7 +86,7 @@ def emd(signal, result_filename, result_dtype=np.int16,
                                                 noise_strength,
                                                 S_number,
                                                 num_siftings)
-                        for channel in np.arange(n_channels))
+                        for channel in np.arange(64, n_channels))
 
 
 def run_emd(args):

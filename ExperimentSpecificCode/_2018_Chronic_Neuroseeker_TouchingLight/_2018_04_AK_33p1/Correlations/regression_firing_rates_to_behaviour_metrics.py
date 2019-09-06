@@ -1,13 +1,16 @@
 
 from os.path import join
 import numpy as np
+import pickle
+
 import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_33p1 import constants as const
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions \
     import events_sync_funcs as sync_funcs
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
 from sklearn import linear_model
+from sklearn import pipeline
 from sklearn import preprocessing
 
 from BrainDataAnalysis import binning
@@ -29,14 +32,16 @@ data_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[
 events_folder = join(data_folder, "events")
 
 analysis_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date_folder], 'Analysis')
-kilosort_folder = join(analysis_folder, 'Kilosort')
+kilosort_folder = join(analysis_folder, 'Denoised', 'Kilosort')
 results_folder = join(analysis_folder, 'Results')
 events_definitions_folder = join(results_folder, 'EventsDefinitions')
 
 mutual_information_folder = join(analysis_folder, 'Results', 'MutualInformation')
 
+regressions_folder = join(results_folder, 'Regressions')
+
 dlc_folder = join(analysis_folder, 'Deeplabcut')
-dlc_project_folder = join(dlc_folder, 'projects', 'V1--2019-06-30')
+dlc_project_folder = join(dlc_folder, 'projects', 'V1--2019-05-07')
 video_file = join(dlc_folder, 'BonsaiCroping', 'Full_video.avi')
 
 spike_rates_per_video_frame_filename = join(kilosort_folder, 'firing_rate_with_video_frame_window.npy')
@@ -44,7 +49,7 @@ spike_rates_per_250ms_filename = join(kilosort_folder, 'firing_rate_with_0p25s_w
 
 patterned_vs_non_patterned_folder = join(analysis_folder, 'Behaviour', 'PatternedVsNonPatterned')
 
-shuffled_filenames = {'pb_dtp':'shuffled_mut_info_spike_rate_912_vs_distance_to_poke_patterned_behaviour.npy',
+shuffled_filenames = {'pb_dtp':'shuffled_mut_info_spike_rate_35_vs_distance_to_poke_patterned_behaviour.npy',
                       'pb_speed': 'shuffled_mut_info_spike_rate_522_vs_speed_patterned_behaviour.npy',
                       'dtp': 'shuffled_mut_info_spike_rate_33_vs_distance_to_poke.npy',
                       'speed': 'shuffled_mut_info_spike_rate_522_vs_speed.npy'}
@@ -53,7 +58,7 @@ event_dataframes = ns_funcs.load_events_dataframes(events_folder, sync_funcs.eve
 ev_video = event_dataframes['ev_video']
 
 template_info = pd.read_pickle(join(kilosort_folder, 'template_info.df'))
-spike_info = pd.read_pickle(join(kilosort_folder, 'spike_info_after_cleaning.df'))
+spike_info = pd.read_pickle(join(kilosort_folder, 'spike_info_after_cortex_sorting.df'))
 
 spike_rates = np.load(spike_rates_per_video_frame_filename)
 spike_rates_0p25 = np.load(spike_rates_per_250ms_filename)
@@ -127,8 +132,44 @@ for s in mis_shuffled:
 # -------------------------------------------------
 # <editor-fold desc="SIMPLE LINEAR REGRESSIONS">
 
-# <editor-fold desc="SPEED REGRESSION">
+# <editor-fold desc="SPEED REGRESSION V0">
 X = spike_rates_0p25[correlated_neuron_indices['speed']].transpose()
+X = spike_rates_0p25[522].transpose()
+Y = binning.rolling_window_with_step(speeds, np.nanmean, 30, 30)[:-1]
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
+
+regressor_speed = linear_model.LinearRegression(normalize=True)
+regressor_speed.fit(np.transpose([X_train]), y_train)
+print(regressor_speed.score(np.transpose([X_train]), y_train))
+
+Y_pred = regressor_speed.predict(np.transpose([X_test]))
+plt.plot(Y_pred)
+plt.plot(y_test)
+plt.scatter(np.diff(Y_pred), np.diff(y_test))
+plt.plot([0, 10, 20, 30, 40], [0, 10, 20, 30, 40], c='k')
+# </editor-fold>
+
+# <editor-fold desc="SPEED REGRESSION V1">
+X = spike_rates_0p25[522].transpose()
+Y = binning.rolling_window_with_step(speeds, np.nanmean, 30, 30)[:-1]
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
+
+regressor_speed = linear_model.LinearRegression(normalize=True)
+regressor_speed.fit(np.transpose([X_train]), y_train)
+print(regressor_speed.score(np.transpose([X_train]), y_train))
+
+Y_pred = regressor_speed.predict(np.transpose([X_test]))
+plt.plot(Y_pred)
+plt.plot(y_test)
+plt.scatter(np.diff(Y_pred), np.diff(y_test))
+plt.plot([0, 10, 20, 30, 40], [0, 10, 20, 30, 40], c='k')
+# </editor-fold>
+
+# <editor-fold desc="SPEED REGRESSION V2">
+from sklearn.preprocessing import StandardScaler
+X = spike_rates_0p25[correlated_neuron_indices['speed']].transpose()
+scaler = StandardScaler()
+X = scaler.fit_transform(X)
 Y = binning.rolling_window_with_step(speeds, np.nanmean, 30, 30)[:-1]
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
 
@@ -143,70 +184,170 @@ plt.scatter(Y_pred, y_test)
 plt.plot([0, 10, 20, 30, 40], [0, 10, 20, 30, 40], c='k')
 # </editor-fold>
 
+
+# <editor-fold desc="SPEED REGRESSION V3">
+X = spike_rates_0p25[correlated_neuron_indices['speed']].transpose()
+Y = binning.rolling_window_with_step(speeds, np.nanmean, 30, 30)[:-1]
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
+
+regressor_speed = linear_model.LinearRegression(normalize=True)
+regressor_speed.fit(X_train, y_train)
+print(regressor_speed.score(X_train, y_train))
+
+Y_pred = regressor_speed.predict(X_test)
+plt.plot(Y_pred)
+plt.plot(np.array(y_test))
+plt.scatter(np.diff(Y_pred), np.diff(y_test))
+plt.plot([-25, -10, 0, 10, 25], [-25, -10, 0, 10, 25], c='k')
+
+plt.scatter(Y_pred, 1.2 * np.array(y_test))
+plt.plot([0, 10, 20, 30, 40], [0, 10, 20, 30, 40], c='k')
+# </editor-fold>
+
+# <editor-fold desc="SPEED REGRESSION V4 POLYNOMIAL">
+X = spike_rates_0p25[correlated_neuron_indices['speed']].transpose()
+Y = binning.rolling_window_with_step(speeds, np.nanmean, 30, 30)[:-1]
+
+X_train = X[:10000, :]
+y_train = Y[:10000]
+X_test = X[:-10000, :]
+y_test = Y[:-10000]
+
+model = pipeline.make_pipeline(PolynomialFeatures(2), linear_model.LinearRegression())
+model.fit(X_train, y_train)
+
+print(model.score(X_train, y_train))
+print(model.score(X_test, y_test))
+
+Y_pred = model.predict(X_test)
+plt.plot(Y_pred)
+plt.plot(np.array(y_test))
+plt.scatter(np.diff(Y_pred), np.diff(y_test))
+plt.plot([-25, -10, 0, 10, 25], [-25, -10, 0, 10, 25], c='k')
+
+plt.scatter(Y_pred, y_test)
+plt.plot([0, 10, 20, 30, 40], [0, 10, 20, 30, 40], c='k')
+# </editor-fold>
+
 # <editor-fold desc="FULL DISTANCE TO POKE REGRESSION">
 X = spike_rates_0p25[correlated_neuron_indices['dtp']].transpose()
 Y = binning.rolling_window_with_step(distances_rat_to_poke_all_frames, np.nanmean, 30, 30)[:-1]
-X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
+# X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
 
+X_train = X[:10000, :]
+y_train = Y[:10000]
+X_test = X[10000:, :]
+y_test = Y[10000:]
+
+#   Linear
 regressor_dtp = linear_model.LinearRegression(normalize=True)
 regressor_dtp.fit(X_train, y_train)
 print(regressor_dtp.score(X_train, y_train))
+print(regressor_dtp.score(X_test, y_test))
 
 Y_pred = regressor_dtp.predict(X_test)
+
+#   Polynomial
+model_dtp = pipeline.make_pipeline(PolynomialFeatures(2), linear_model.LinearRegression())
+file_model_dtp = join(regressions_folder, 'regression_dtp_Linear_2nd_Order.pcl')
+
+
+model_dtp = pipeline.make_pipeline(PolynomialFeatures(2), linear_model.LassoCV(cv=None, fit_intercept=True))
+file_model_dtp = join(regressions_folder, 'regression_dtp_Lasso_2nd_Order.pcl')
+
+model_dtp.fit(X_train, y_train)
+
+pickle.dump(model_dtp, open(file_model_dtp, "wb"))
+
+print(model_dtp.score(X_train, y_train))
+print(model_dtp.score(X_test, y_test))
+
+Y_pred = model_dtp.predict(X_test)
+
+
 plt.plot(Y_pred)
 plt.plot(y_test)
+
+plt.plot(y_train)
+plt.plot(model_dtp.predict(X_train))
+
 plt.scatter(Y_pred, y_test)
 plt.plot([0, 1, 2], [0, 1, 2], c='k')
+
+plt.scatter(np.diff(Y_pred), np.diff(y_test))
+plt.plot([-2, 0, 2], [-2, 0, 2], c='k')
+
+
+#   Regression using random neurons that do not have any mutual info with the dtp
+non_correlated_neurons_to_dtp = np.random.choice([d for d in np.arange(correlated_neuron_indices['dtp'].max())
+                                                  if d not in correlated_neuron_indices['dtp']],
+                                                 len(correlated_neuron_indices['dtp']), replace=False)
+X = spike_rates_0p25[non_correlated_neurons_to_dtp].transpose()
+Y = binning.rolling_window_with_step(distances_rat_to_poke_all_frames, np.nanmean, 30, 30)[:-1]
+
+X_train = X[:10000, :]
+y_train = Y[:10000]
+X_test = X[:-10000, :]
+y_test = Y[:-10000]
+
+model_random_dtp = pipeline.make_pipeline(PolynomialFeatures(2), linear_model.LinearRegression())
+model_random_dtp = pipeline.make_pipeline(PolynomialFeatures(2),
+                                   linear_model.LassoCV(cv=None, fit_intercept=True))
+model_random_dtp.fit(X_train, y_train)
+
+file_model_random_dtp = join(regressions_folder, 'regression_random_dtp_Lasso_2nd_Order.pcl')
+pickle.dump(model_random_dtp, open(file_model_random_dtp, "wb"))
+
+model_random_dtp = pickle.load(open(file_model_random_dtp, "rb"))
+print(model_random_dtp.score(X_train, y_train))
+print(model_random_dtp.score(X_test, y_test))
+
+Y_pred = model_random_dtp.predict(X_test)
+plt.plot(y_test)
+plt.plot(Y_pred)
+
+
 # </editor-fold>
 
 # <editor-fold desc="PB VS NON PB DISTANCE TO POKE REGRESSION">
-X_pb = spike_rates_patterned_behaviour_0p25[correlated_neuron_indices['pb_dtp']].transpose()
-Y_pb = distance_to_poke_patterned_behaviour_0p25
-X_pb_train, X_pb_test, y_pb_train, y_pb_test = train_test_split(X_pb, Y_pb, test_size=0.2, random_state=0)
+X_pb_dtp = spike_rates_patterned_behaviour_0p25[correlated_neuron_indices['pb_dtp']].transpose()
+Y_pb_dtp = distance_to_poke_patterned_behaviour_0p25
+# X_pb_train, X_pb_test, y_pb_train, y_pb_test = train_test_split(X_pb_dtp, Y_pb_dtp, test_size=0.2, random_state=0)
 
+X_pb_dtp_train = X_pb_dtp[:200, :]
+y_pb_dtp_train = Y_pb_dtp[:200]
+X_pb_dtp_test = X_pb_dtp[200:, :]
+y_pb_dtp_test = Y_pb_dtp[200:]
+
+#   Linear Patterned Behaviour
 regressor_pb_dtp = linear_model.LinearRegression(normalize=True)
-regressor_pb_dtp.fit(X_pb_train, y_pb_train)
-print(regressor_pb_dtp.score(X_pb_train, y_pb_train))
+regressor_pb_dtp.fit(X_pb_dtp_train, y_pb_dtp_train)
+print(regressor_pb_dtp.score(X_pb_dtp_train, y_pb_dtp_train))
+print(regressor_pb_dtp.score(X_pb_dtp_test, y_pb_dtp_test))
 
-Y_pb_pred = regressor_pb_dtp.predict(X_pb_test)
-plt.plot(Y_pb_pred)
-plt.plot(y_pb_test)
-plt.scatter(Y_pb_pred, y_pb_test)
+Y_pb_dtp_pred = regressor_pb_dtp.predict(X_pb_dtp_train)
+
+#   Polynomial Patterned Behaviour
+model_pb_dtp = pipeline.make_pipeline(PolynomialFeatures(2), linear_model.LinearRegression())
+model_pb_dtp = pipeline.make_pipeline(PolynomialFeatures(2), linear_model.LassoCV(cv=None, fit_intercept=True))
+
+model_pb_dtp.fit(X_pb_dtp_train, y_pb_dtp_train)
+
+print(model_pb_dtp.score(X_pb_dtp_train, y_pb_dtp_train))
+print(model_pb_dtp.score(X_pb_dtp_test, y_pb_dtp_test))
+
+Y_pb_dtp_pred = model_pb_dtp.predict(X_pb_dtp_test)
+
+plt.plot(Y_pb_dtp_pred)
+plt.plot(y_pb_dtp_test)
+
+plt.plot(y_pb_dtp_train)
+plt.plot(model_pb_dtp.predict(X_pb_dtp_train))
+
+plt.scatter(Y_pb_dtp_pred, y_pb_dtp_test)
 plt.plot([0, 1, 2], [0, 1, 2], c='k')
 
-
-X_npb = spike_rates_patterned_behaviour_0p25[correlated_neuron_indices['npb_dtp']].transpose()
-Y_npb = distance_to_poke_patterned_behaviour_0p25
-X_npb_train, X_npb_test, y_npb_train, y_npb_test = train_test_split(X_npb, Y_npb, test_size=0.2, random_state=0)
-
-regressor_npb_dtp = linear_model.LinearRegression(normalize=True)
-regressor_npb_dtp.fit(X_npb_train, y_npb_train)
-print(regressor_npb_dtp.score(X_npb_train, y_npb_train))
-
-Y_npb_pred = regressor_npb_dtp.predict(X_npb_test)
-plt.plot(Y_npb_pred)
-plt.plot(y_npb_test)
-plt.scatter(Y_npb_pred, y_npb_test)
-plt.plot([0, 1, 2], [0, 1, 2], c='k')
 # </editor-fold>
 
 # </editor-fold>
 # -------------------------------------------------
-
-
-common_pb_npb_dtp_neuron_indices = np.intersect1d(correlated_neuron_indices['pb_dtp'], correlated_neuron_indices['npb_dtp'])
-
-correlated_neuron_indices_unique_pb_dtp = np.delete(correlated_neuron_indices['pb_dtp'],
-                                                    np.argwhere(np.isin(correlated_neuron_indices['pb_dtp'],
-                                                                        common_pb_npb_dtp_neuron_indices)))
-correlated_neuron_indices_unique_npb_dtp = np.delete(correlated_neuron_indices['npb_dtp'],
-                                                    np.argwhere(np.isin(correlated_neuron_indices['npb_dtp'],
-                                                                        common_pb_npb_dtp_neuron_indices)))
-
-X_pb = spike_rates_patterned_behaviour_0p25[correlated_neuron_indices_unique_npb_dtp].transpose()
-Y_pb = distance_to_poke_patterned_behaviour_0p25
-X_pb_train, X_pb_test, y_pb_train, y_pb_test = train_test_split(X_pb, Y_pb, test_size=0.2, random_state=0)
-
-regressor_pb_dtp = linear_model.LinearRegression(normalize=True)
-regressor_pb_dtp.fit(X_pb_train, y_pb_train)
-print(regressor_pb_dtp.score(X_pb_train, y_pb_train))

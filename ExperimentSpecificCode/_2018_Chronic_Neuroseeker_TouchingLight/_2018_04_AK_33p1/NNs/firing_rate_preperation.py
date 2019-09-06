@@ -37,7 +37,7 @@ basic_spike_info = basic_spike_info.values
 video_times = video_events.values
 
 spike_times_in_all_neurons = []
-for template in templates:
+for template in np.arange(len(templates)):
     neuron_spike_times = basic_spike_info[np.squeeze(np.argwhere(basic_spike_info[:, 1] == template)), 0]
     spike_times_in_all_neurons.append(neuron_spike_times)
 
@@ -63,3 +63,39 @@ def get_spike_count_of_all_neurons_in_frame(frame):
 
 # </editor-fold>
 
+# -------------------------------------------------
+# <editor-fold desc="3) Check if the results look ok
+import matplotlib.pyplot as plt
+frames = 3000
+start_frame = 10000
+
+m = []
+for f in np.arange(start_frame, start_frame + frames):
+    m.append(get_spike_count_of_all_neurons_in_frame(f))
+m = np.array(m)
+
+print(m.max())
+plt.imshow(m)
+
+# </editor-fold>
+
+
+# -------------------------------------------------
+# <editor-fold desc="4) Make a matrix with the counts for all neurons X all frames
+
+#   Load the memmaped file
+file = r'E:\Software\Develop\Source\Repos\Python35Projects\TheMeaningOfBrain\ExperimentSpecificCode\_2018_Chronic_Neuroseeker_TouchingLight\_2018_04_AK_33p1\NNs\full_matrix.npy'
+full_matrix = np.memmap(file, dtype=np.int16, mode='r', shape=(len(templates), len(video_times)))
+
+
+
+#   Make the matrix (DO NOT RUN AGAIN)
+full_matrix = np.memmap(file, dtype=np.int16, mode='w+', shape=(len(templates), len(video_times)))
+
+for f in np.arange(0, len(video_times)):
+    full_matrix[:, f] = get_spike_count_of_all_neurons_in_frame(f)
+    if f%1000==0:
+        print(f)
+
+
+# </editor-fold>

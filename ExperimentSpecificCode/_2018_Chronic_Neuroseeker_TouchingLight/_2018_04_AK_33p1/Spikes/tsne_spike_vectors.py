@@ -18,6 +18,7 @@ import cv2
 
 import sequence_viewer as sv
 import transform as tr
+import slider as sl
 
 # -------------------------------------------------
 # <editor-fold desc="LOAD FOLDERS">
@@ -34,6 +35,8 @@ tsne_folder_base = join(const.base_save_folder, const.rat_folder, const.date_fol
 barnes_hut_exe_dir = r'E:\Software\Develop\Source\Repos\spikesorting_tsne_bhpart\Barnes_Hut\win\x64\Release'
 
 analysis_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date_folder], 'Analysis')
+
+patterned_vs_non_patterned_folder = join(analysis_folder, 'Behaviour', 'PatternedVsNonPatterned')
 
 events_folder = join(data_folder, "events")
 event_dataframes = ns_funcs.load_events_dataframes(events_folder, sync_funcs.event_types)
@@ -248,7 +251,7 @@ ax2 = ax1.twinx()
 ax2.set_axis_off()
 seconds_to_track = 1
 
-for frame in np.arange(0, total_frames, 12):
+for frame in np.arange(0, 405000, 12):
     opencv_rat_video.set(cv2.CAP_PROP_POS_FRAMES, frame)
     _, rat_video_frame = opencv_rat_video.read()
     rat_video_frame = rat_video_frame[64:576, :, :]
@@ -259,6 +262,7 @@ for frame in np.arange(0, total_frames, 12):
     rvf_w = rat_video_frame.shape[1]
 
     ax2.clear()
+
     ax2.set_xlim(ax1.get_xlim())
     ax2.set_ylim(ax1.get_ylim())
     ax1.set_axis_off()
@@ -274,6 +278,7 @@ for frame in np.arange(0, total_frames, 12):
             ax2.plot(tsne_spike_rates_count_pcs_0p1[start + s:start + s + 2, 0],
                      tsne_spike_rates_count_pcs_0p1[start + s:start + s + 2, 1],
                      c=colors[s])
+        #ax1.text(frame_size_of_video_out[0]-100, frame_size_of_video_out[1]-100, str(frame))
 
     fig_scat.canvas.draw()
     w, h = fig_scat.canvas.get_width_height()
@@ -343,6 +348,72 @@ distances_rat_to_poke_all_frames_0p1_norm = (distances_rat_to_poke_all_frames_0p
 jet = cm.jet
 colors = jet (distances_rat_to_poke_all_frames_0p1_norm)
 plt.scatter(tsne_spike_rates_count_pcs_0p1[:, 0], tsne_spike_rates_count_pcs_0p1[:, 1], c=colors, s=3)
+
+# </editor-fold>
+# -------------------------------------------------
+
+
+
+# -------------------------------------------------
+# <editor-fold desc="SHOW TSNE CORRELATED WITH PATTERNED OR NON PATTERNED BEHAVIOUR">
+
+
+windows_of_patterned_behaviour = np.unique((np.load(join(patterned_vs_non_patterned_folder,
+                                              'windows_of_patterned_behaviour_list.npy'), allow_pickle=True) / 12).astype(np.int))
+windows_of_non_patterned_behaviour = np.unique((np.load(join(patterned_vs_non_patterned_folder,
+                                                  'windows_of_non_patterned_behaviour_list.npy'), allow_pickle=True) / 12).astype(np.int))
+
+patterned_vs_non_patterned_colours = np.array([(0.2, 0.2, 0.2, 0.2)] * tsne.shape[0])
+patterned_vs_non_patterned_sizes = np.array([3] * tsne.shape[0])
+
+patterned_vs_non_patterned_colours[windows_of_patterned_behaviour] = (0, 0, 1, 1)
+patterned_vs_non_patterned_colours[windows_of_non_patterned_behaviour] = (1, 0, 0, 1)
+patterned_vs_non_patterned_sizes[windows_of_patterned_behaviour] = 50
+patterned_vs_non_patterned_sizes[windows_of_non_patterned_behaviour] = 50
+
+
+plt.scatter(tsne[:, 0], tsne[:, 1],
+            c=patterned_vs_non_patterned_colours, s=patterned_vs_non_patterned_sizes)
+
+
+jet = cm.jet
+patterned_time_colors = np.array([(0.2, 0.2, 0.2, 0.3)] * tsne.shape[0])
+patterned_time_colors[windows_of_patterned_behaviour] = jet(windows_of_patterned_behaviour / tsne.shape[0])
+plt.scatter(tsne[:, 0], tsne[:, 1],
+            c=patterned_time_colors, s=patterned_vs_non_patterned_sizes)
+
+# </editor-fold>
+# -------------------------------------------------
+
+
+# -------------------------------------------------
+# <editor-fold desc="SHOW PATTERNED AND NON PATTERNED TRAJECTORIES ON TSNE">
+
+
+windows_of_patterned_behaviour = np.load(join(patterned_vs_non_patterned_folder, 'windows_of_patterned_behaviour.npy'),
+                                         allow_pickle=True)
+windows_of_patterned_behaviour = [np.unique(np.array(windows_of_patterned_behaviour[l]/12).astype(np.int))
+                                  for l in np.arange(len(windows_of_patterned_behaviour))]
+
+windows_of_non_patterned_behaviour = np.load(join(patterned_vs_non_patterned_folder, 'windows_of_non_patterned_behaviour.npy'),
+                                             allow_pickle=True)
+windows_of_non_patterned_behaviour = [np.unique(np.array(windows_of_non_patterned_behaviour[l]/12).astype(np.int))
+                                      for l in np.arange(len(windows_of_non_patterned_behaviour))]
+
+
+
+def show_traj(traj):
+    win = windows_of_patterned_behaviour[traj]
+    t = tsne[win, :]
+    plt.clf()
+    plt.plot(t[:, 0], t[:, 1])
+    plt.scatter(tsne[:, 0], tsne[:, 1], c=[(0.2, 0.2, 0.2, 0.5)]*tsne.shape[0], s=3)
+    plt.scatter(tsne[win, 0], tsne[win, 1], c=[(1, 0, 0, 1)] * win.shape[0], s=50)
+    return None
+
+traj = 0
+out = None
+sl.connect_repl_var(globals(), 'traj', 'out', 'show_traj', slider_limits=[0, 11])
 
 # </editor-fold>
 # -------------------------------------------------
