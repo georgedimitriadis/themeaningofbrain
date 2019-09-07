@@ -30,6 +30,10 @@ kilosort_folder = join(const.base_save_folder, const.rat_folder, const.date_fold
 
 events_folder = join(data_folder, "events")
 
+analysis_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date_folder], 'Analysis')
+results_folder = join(analysis_folder, 'Results')
+poke_folder = join(results_folder, 'EventsCorrelations', 'Poke')
+
 event_dataframes = ns_funcs.load_events_dataframes(events_folder, sync_funcs.event_types)
 file_to_save_to = join(kilosort_folder, 'firing_rate_with_video_frame_window.npy')
 template_info = pd.read_pickle(join(kilosort_folder, 'template_info.df'))
@@ -74,7 +78,7 @@ increasing_firing_rates_neuron_index, increasing_firing_rates = \
     fr_funcs.get_neurons_following_pattern_around_an_event(avg_firing_rate_around_event=avg_firing_rate_around_suc_trials,
                                                            time_around_pattern=time_around_beam_break,
                                                            pattern_regions_to_compare=[0, 0.6, 0.8, 1.2],
-                                                           comparison_factor=3, comparison_direction='increase',
+                                                           comparison_factor=4, comparison_direction='increase',
                                                            baserate=0.1)
 
 fr_funcs.show_firing_rates_around_event(increasing_firing_rates)
@@ -84,13 +88,15 @@ template_info_increasing_fr_neurons = template_info.iloc[increasing_firing_rates
 spp.view_grouped_templates_positions(kilosort_folder, const.BRAIN_REGIONS, const.PROBE_DIMENSIONS,
                                      const.POSITION_MULT, template_info=template_info_increasing_fr_neurons)
 
+pd.to_pickle(template_info_increasing_fr_neurons, join(poke_folder, 'ti_increasing_neurons_on_trial_pokes.df'))
+
 # Have a detailed look at the neuron with the largest increase
 # largest_increase_neuron_index = increasing_firing_rates_neuron_index[np.argmax(increasing_firing_rates_ratio)]
 index = 0
-fig1 = plt.figure(0)
-fig2 = plt.figure(1)
+fig1 = plt.figure(1)
+fig2 = plt.figure(2)
 output = None
-frames_around_beam_break = 120 * time_around_beam_break
+frames_around_beam_break = 120 * 2*time_around_beam_break
 time_points_around_beam_break = const.SAMPLING_FREQUENCY * time_around_beam_break
 args = [increasing_firing_rates_neuron_index, avg_firing_rate_around_suc_trials, template_info, spike_info,
         succesful_trials, frames_around_beam_break, fig1, fig2]
@@ -110,7 +116,7 @@ decreasing_firing_rates_neuron_index, decreasing_firing_rates = \
     fr_funcs.get_neurons_following_pattern_around_an_event(avg_firing_rate_around_event=avg_firing_rate_around_suc_trials,
                                                            time_around_pattern=time_around_beam_break,
                                                            pattern_regions_to_compare=[0, 0.6, 0.8, 1.2],
-                                                           comparison_factor=3, comparison_direction='decrease',
+                                                           comparison_factor=4, comparison_direction='decrease',
                                                            baserate=0.5)
 
 fr_funcs.show_firing_rates_around_event(decreasing_firing_rates)
@@ -120,12 +126,15 @@ template_info_decreasing_fr_neurons = template_info.iloc[decreasing_firing_rates
 spp.view_grouped_templates_positions(kilosort_folder, const.BRAIN_REGIONS, const.PROBE_DIMENSIONS,
                                      const.POSITION_MULT, template_info=template_info_decreasing_fr_neurons)
 
+pd.to_pickle(template_info_decreasing_fr_neurons, join(poke_folder, 'ti_decreasing_neurons_on_trial_pokes.df'))
+
 # Have a look at the neuron with the largest decrease
+
 index = 0
-fig1 = plt.figure(0)
-fig2 = plt.figure(1)
+fig1 = plt.figure(1)
+fig2 = plt.figure(2)
 output = None
-frames_around_beam_break = 120 * time_around_beam_break
+frames_around_beam_break = 120 * 2 *time_around_beam_break
 args = [decreasing_firing_rates_neuron_index, avg_firing_rate_around_suc_trials, template_info, spike_info,
         succesful_trials, frames_around_beam_break, fig1, fig2]
 

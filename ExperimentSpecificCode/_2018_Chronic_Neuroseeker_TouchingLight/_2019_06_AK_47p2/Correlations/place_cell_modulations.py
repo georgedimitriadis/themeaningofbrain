@@ -286,5 +286,6 @@ venn3([set(modulating_neuron_indices['trial_inc']),
       set_labels=('Successful trials poke', 'Non successful trials poke', 'Starts of ballistic trajectory'))
 plt.title('Neurons that increase activity')
 
+
 # </editor-fold>
 # -------------------------------------------------

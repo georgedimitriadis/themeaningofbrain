@@ -353,7 +353,7 @@ import common_data_transforms as cdts
 
 imf = 0
 time = 1000000
-buffer = 5000
+buffer = 20000
 factor = 2
 args = [factor, time, buffer, imfs]
 
@@ -375,7 +375,7 @@ def update_args(t):
     return [factor, t, buffer, imfs]
 
 
-sl.connect_repl_var(globals(), 'time', 'update_args', 'args', slider_limits=[1000000, 1200000])
+sl.connect_repl_var(globals(), 'time', 'args', 'update_args', slider_limits=[1, imfs.shape[2]-1])
 
 
 window = None

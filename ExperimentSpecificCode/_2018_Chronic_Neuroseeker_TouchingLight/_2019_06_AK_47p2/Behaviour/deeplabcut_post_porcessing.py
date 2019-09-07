@@ -141,10 +141,14 @@ updated_head_markers = dlc_pp.seperate_markers(markers_positions_no_large_movs, 
 head_positions = dlc_pp.average_multiple_markers_to_single_one(updated_head_markers, flip=True)
 np.save(join(dlc_project_folder, 'post_processing', 'head_positions.npy'), head_positions)
 
+head_positions = np.load(join(dlc_project_folder, 'post_processing', 'head_positions.npy'))
 
 # Plot the body positions ne
 
+frame = 3
 sv.image_sequence(globals(), 'frame', 'labeled_video_file')
+
+sv.image_sequence(globals(), 'frame', 'full_video_file')
 
 global body_traj_x
 body_traj_x = 0
@@ -159,8 +163,8 @@ head_traj_y = 0
 def update_body_trajectory(f):
     global body_traj_x
     global body_traj_y
-    body_traj_x = body_positions[:f, 0]
-    body_traj_y = body_positions[:f, 1]
+    body_traj_x = body_positions[4070:f, 0]
+    body_traj_y = body_positions[4070:f, 1]
     return body_positions[:f, :]
 
 

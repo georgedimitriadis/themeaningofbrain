@@ -38,6 +38,14 @@ def load_binary_amplifier_data(file, number_of_channels=1440):
     return raw_extracellular_data
 
 
+def load_imfs(file, number_of_channels=72, number_of_imfs=13, dtype=np.int16):
+    imfs = np.memmap(file, dtype=dtype, mode='r')
+    number_of_timepoints = int(imfs.shape[0] / (number_of_channels * number_of_imfs))
+    imfs = np.memmap(file, dtype=dtype, mode='r', shape=(number_of_channels, number_of_imfs, number_of_timepoints))
+
+    return imfs
+
+
 def load_sync_binary_data(data_folder):
     sync = np.fromfile(join(data_folder, 'Sync.bin'), dtype=np.uint16).astype(np.int32)
     sync -= sync.min()

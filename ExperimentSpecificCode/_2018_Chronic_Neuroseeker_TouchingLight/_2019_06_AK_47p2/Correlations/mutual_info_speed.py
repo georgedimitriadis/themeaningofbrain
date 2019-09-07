@@ -275,6 +275,7 @@ plt.hist(maxima, 50, density=True)
 plt.plot(pdf_x, pdf_y, 'k--')
 plt.title('Mean = {}'.format(str(avg)))
 
+
 ims = np.array(ims)
 index = 0
 x = np.arange(-100*8.33, 100*8.33, 8.33)

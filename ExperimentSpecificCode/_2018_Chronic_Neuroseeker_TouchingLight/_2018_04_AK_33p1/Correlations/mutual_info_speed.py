@@ -145,8 +145,26 @@ largest_cor_neuron_index = 522
 plt.plot(np.array(spike_rates_0p25[largest_cor_neuron_index, :]).T)
 
 
-plt.plot(speeds_0p25)
-plt.plot(spike_rates_0p25[largest_cor_neuron_index, :].T)
+plt.plot(np.linspace(0, len(speeds_0p25) / 4, len(speeds_0p25)), speeds_0p25)
+plt.plot(np.linspace(0, spike_rates_0p25.shape[1] / 4, spike_rates_0p25.shape[1]),
+         spike_rates_0p25[largest_cor_neuron_index, :].T)
+
+large_corr_neuron_in_cortex = template_info[template_info['template number'] == 213].index.values
+speeds_0p25_norm = (np.array(speeds_0p25) - np.min(speeds_0p25)) / \
+                   (np.max(speeds_0p25) - np.min(speeds_0p25))
+sr_cortex_neuron_norm = (spike_rates_0p25[large_corr_neuron_in_cortex, :] -
+                         spike_rates_0p25[large_corr_neuron_in_cortex, :].min()) / \
+                        (spike_rates_0p25[large_corr_neuron_in_cortex, :].max() -
+                         spike_rates_0p25[large_corr_neuron_in_cortex, :].min())
+sr_thal_neuron_norm = (spike_rates_0p25[largest_cor_neuron_index, :] -
+                         spike_rates_0p25[largest_cor_neuron_index, :].min()) / \
+                        (spike_rates_0p25[largest_cor_neuron_index, :].max() -
+                         spike_rates_0p25[largest_cor_neuron_index, :].min())
+plt.plot(np.linspace(0, len(speeds_0p25) / 4, len(speeds_0p25)), speeds_0p25_norm)
+plt.plot(np.linspace(0, spike_rates_0p25.shape[1] / 4, spike_rates_0p25.shape[1]),
+         sr_cortex_neuron_norm.T)
+plt.plot(np.linspace(0, spike_rates_0p25.shape[1] / 4, spike_rates_0p25.shape[1]),
+         sr_thal_neuron_norm.T)
 
 plt.plot(speeds)
 plt.plot(spike_rates[largest_cor_neuron_index, :].T)
@@ -176,12 +194,12 @@ mean_sh = np.mean(shuffled)
 confidence_level = 0.99
 confi_intervals = shuffled[int((1. - confidence_level) / 2 * 1000)], shuffled[int((1. + confidence_level) / 2 * 1000)]
 # Log
-plt.hist(mutual_infos_spikes_vs_speed_corrected_only_mov, bins=np.logspace(np.log10(0.0001), np.log10(1), 50))
+plt.hist(mutual_infos_spikes_vs_speed_corrected, bins=np.logspace(np.log10(0.0001), np.log10(1), 50))
 plt.hist(shuffled, bins=np.logspace(np.log10(0.0001), np.log10(1), 50), color=(1, 0, 0, 0.4))
 plt.vlines([mean_sh, mean_sh+confi_intervals[0], mean_sh+confi_intervals[1]], 0, 60)
 plt.gca().set_xscale("log")
 # Linear
-plt.hist(mutual_infos_spikes_vs_speed_corrected_only_mov, bins= 200)
+plt.hist(mutual_infos_spikes_vs_speed_corrected, bins= 200)
 plt.hist(shuffled, bins=50, color=(1, 0, 0, 0.4))
 plt.vlines([mean_sh, mean_sh+confi_intervals[0], mean_sh+confi_intervals[1]], 0, 60)
 

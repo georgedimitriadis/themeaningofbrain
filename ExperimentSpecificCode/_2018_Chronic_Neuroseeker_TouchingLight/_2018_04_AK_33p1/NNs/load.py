@@ -66,12 +66,12 @@ def process_frame(frame_data):
     return frame_data
 
 
-def generate_mini_batch_dataset(from_frame, to_frame, mini_batch_size):
+def generate_chunked_dataset(from_frame, to_frame, mini_batch_size):
     import progressbar
 
-    X_minibatch = []
-    Y_minibatch = []
-    r_minibatch = []
+    X_chunk = []
+    Y_chunk = []
+    r_chunk = []
 
     frames_per_packet = const.frames_per_packet
 
@@ -81,7 +81,7 @@ def generate_mini_batch_dataset(from_frame, to_frame, mini_batch_size):
         Y_current_buffer = []
 
         r_int = np.random.randint(from_frame, to_frame - frames_per_packet - 1)
-        r_minibatch.append(r_int)
+        r_chunk.append(r_int)
 
         for j in range(frames_per_packet):
 
@@ -93,16 +93,16 @@ def generate_mini_batch_dataset(from_frame, to_frame, mini_batch_size):
                 ret, frame = cap.read()
                 y = process_frame(frame)
                 Y_current_buffer.append(np.array(y, dtype=np.float32, copy=False))
-        X_minibatch.append(X_current_buffer)
-        Y_minibatch.append(Y_current_buffer)
+        X_chunk.append(X_current_buffer)
+        Y_chunk.append(Y_current_buffer)
         if i%1000 == 0:
             bar.update(i)
 
-    X_minibatch = np.array(X_minibatch, dtype=np.float32, copy=False)
-    Y_minibatch = np.array(Y_minibatch, dtype=np.float32, copy=False)
-    r_minibatch = np.array(r_minibatch, dtype=np.float32, copy=False)
+    X_chunk = np.array(X_chunk, dtype=np.float32, copy=False)
+    Y_chunk = np.array(Y_chunk, dtype=np.float32, copy=False)
+    r_chunk = np.array(r_chunk, dtype=np.float32, copy=False)
 
-    return X_minibatch, Y_minibatch, r_minibatch
+    return X_chunk, Y_chunk, r_chunk
 
 
 def generate_full_train_test_dataset(num_of_mini_batches=3, mini_batch_size=6000):
@@ -142,14 +142,14 @@ def generate_full_train_test_dataset(num_of_mini_batches=3, mini_batch_size=6000
 
     for i in np.arange(num_of_mini_batches):
         print(train_start_end_frames[i])
-        X_m_tr, Y_m_tr, r_m_tr = generate_mini_batch_dataset(train_start_end_frames[i][0], train_start_end_frames[i][1],
-                                                    mini_batch_size)
+        X_m_tr, Y_m_tr, r_m_tr = generate_chunked_dataset(train_start_end_frames[i][0], train_start_end_frames[i][1],
+                                                          mini_batch_size)
         print('')
         print('Finished making TRAIN mini batch number {}'.format(i))
         print('----')
         print(test_start_end_frames[i])
-        X_m_te, Y_m_te, r_m_te = generate_mini_batch_dataset(test_start_end_frames[i][0], test_start_end_frames[i][1],
-                                                             mini_batch_size)
+        X_m_te, Y_m_te, r_m_te = generate_chunked_dataset(test_start_end_frames[i][0], test_start_end_frames[i][1],
+                                                          mini_batch_size)
         print('')
         print('Finished making TEST mini batch number {}'.format(i))
         print('---------')

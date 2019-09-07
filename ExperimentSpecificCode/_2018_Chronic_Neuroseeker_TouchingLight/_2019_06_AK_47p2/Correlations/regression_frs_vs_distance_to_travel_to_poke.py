@@ -620,8 +620,8 @@ start_of_ballistic_traj_frames_hand_picked = frame_windows_away_from_poke[start_
 start_of_ballistic_traj_time_points = ev_video['AmpTimePoints'].iloc[start_of_ballistic_traj_frames_hand_picked].values
 
 
-time_around_start_of_bal_mov = 5
-frames_around_start_of_bal_mov = time_around_start_of_bal_mov * 120
+time_around_start_of_bal_mov = 6
+frames_around_start_of_bal_mov = time_around_start_of_bal_mov * 2 * 120
 
 avg_firing_rate_around_start_bal_mov = fr_funcs.get_avg_firing_rates_around_events(spike_rates=spike_rates,
                                                                                 event_time_points=start_of_ballistic_traj_time_points,
@@ -633,7 +633,7 @@ decreasing_firing_rates_neuron_index, decreasing_firing_rates = \
                                                            time_around_pattern=time_around_start_of_bal_mov,
                                                            pattern_regions_to_compare=[0, 0.6, 0.8, 1.2],
                                                            comparison_factor=3, comparison_direction='decrease',
-                                                           baserate=0.15)
+                                                           baserate=0.1)
 
 fr_funcs.show_firing_rates_around_event(decreasing_firing_rates)
 
@@ -661,7 +661,7 @@ pd.to_pickle(template_info_increasing_fr_neurons, join(ballistic_mov_folder, 'ti
 
 # ------
 # Have a look at the individual raster plots of the neurons with the largest change
-frs = decreasing_firing_rates_neuron_rand_index  # decreasing_firing_rates_neuron_index or increasing_firing_rates_neuron_index
+frs = increasing_firing_rates_neuron_index  # decreasing_firing_rates_neuron_index or increasing_firing_rates_neuron_index
 index = 0
 fig1 = plt.figure(0)
 fig2 = plt.figure(1)
