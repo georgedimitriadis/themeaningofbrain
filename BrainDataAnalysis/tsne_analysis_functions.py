@@ -1,8 +1,7 @@
 
 
 import numpy as np
-from os.path import dirname, exists, join
-import BrainDataAnalysis.ploting_functions as pf
+import BrainDataAnalysis.Graphics.ploting_functions as pf
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN
 from sklearn import metrics
@@ -10,8 +9,6 @@ import BrainDataAnalysis.Utilities as ut
 import IO.ephys as ephys
 import BrainDataAnalysis.timelocked_analysis_functions as tf
 import h5py as h5
-from spikesorting_tsne import tsne, preprocessing_kilosort_results as preproc_kilo, constants as ct
-import os
 
 
 def select_spikes_in_certain_channels(spike_threshold, raw_data_file, common_spikes, indices_of_common_spikes_in_extra,

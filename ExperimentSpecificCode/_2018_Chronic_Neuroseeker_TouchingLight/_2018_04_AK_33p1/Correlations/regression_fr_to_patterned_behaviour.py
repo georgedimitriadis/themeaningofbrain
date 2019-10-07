@@ -1,20 +1,17 @@
 
 from os.path import join
 import numpy as np
-import pickle
 
 import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_33p1 import constants as const
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions \
     import events_sync_funcs as sync_funcs, regression_functions as reg_funcs
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn import linear_model
 from sklearn import pipeline
 from sklearn import preprocessing
-from sklearn import svm
 
-from BrainDataAnalysis import binning
+from BrainDataAnalysis.Statistics import binning
 
 import pandas as pd
 import matplotlib.pyplot as plt

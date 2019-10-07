@@ -9,13 +9,10 @@ import itertools
 
 from npeet.lnc import MI
 
-import one_shot_viewer as osv
 import sequence_viewer as sv
-import transform as tr
-import slider as sl
 import common_data_transforms as cdt
 
-from BrainDataAnalysis import binning
+from BrainDataAnalysis.Statistics import binning
 from BehaviorAnalysis import dlc_post_processing as dlc_pp
 
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_33p1 import constants as const
@@ -170,11 +167,13 @@ plt.plot(speeds)
 plt.plot(spike_rates[largest_cor_neuron_index, :].T)
 
 plt.plot(binning.rolling_window_with_step(speeds_0p25, np.mean, 100, 1))
-plt.plot(binning.rolling_window_with_step(spike_rates_0p25[speed_very_corr_neurons_index[0], :].T / 200, np.mean, 100, 1))
+plt.plot(
+    binning.rolling_window_with_step(spike_rates_0p25[speed_very_corr_neurons_index[0], :].T / 200, np.mean, 100, 1))
 
 s_20 = np.array(binning.rolling_window_with_step(speeds_0p25, np.mean, 8, 1))
 plt.plot((s_20 - s_20.mean()) /s_20.std())
-f_20 = np.array(binning.rolling_window_with_step(spike_rates_0p25[speed_very_corr_neurons_index, :].T * 2, np.mean, 8, 1))
+f_20 = np.array(
+    binning.rolling_window_with_step(spike_rates_0p25[speed_very_corr_neurons_index, :].T * 2, np.mean, 8, 1))
 plt.plot((f_20 - f_20.mean()) / f_20.std())
 
 # Shuffle the spike rates of one of the best correlated neurons and calculate MI between the shuffled frs and speed
@@ -422,7 +421,6 @@ ims = np.array(ims)
 index = 0
 x = np.arange(-100*8.33, 100*8.33, 8.33)
 sv.graph_pane(globals(), 'index', 'ims', 'x')
-
 
 
 #  -------------------------------------------------

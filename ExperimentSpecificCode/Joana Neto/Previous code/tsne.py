@@ -7,7 +7,7 @@ from os.path import join
 import numpy as np
 import matplotlib.pyplot as plt
 from spikesorting_tsne import io_with_cpp as io
-from BrainDataAnalysis import ploting_functions as pf
+from BrainDataAnalysis.Graphics import ploting_functions as pf
 
 base_folder = r'Z:\n\Neuroseeker Probe Recordings\Neuroseeker_2017_08_08\Analysis\kilosort\18_26_30_afterREFeachGroup'
 

@@ -7,9 +7,6 @@ Created on Fri Nov 22 15:07:35 2013
 import numpy as np
 import scipy.signal as signal
 import warnings
-import BrainDataAnalysis.Constants as ct
-from BrainDataAnalysis.Structures import Data as Data
-from BrainDataAnalysis.Structures import DataDimensions as dm
 import BrainDataAnalysis.filters as filt
 import math
 
@@ -273,7 +270,7 @@ def subsample_data(data, timeAxis, oldFreq, newFreq, filterType='Default', filte
 
 def baseline_correct_basis(data, beginSample=0, endSample=-1):
     if np.size(np.shape(data)) > 1:
-        baseline = np.mean(data[:, [beginSample, endSample]], 1)
+        baseline = np.mean(data[:, beginSample:endSample], 1)
     else:
         baseline = np.mean(data[beginSample:endSample])
     return np.transpose(np.transpose(data) - np.transpose(baseline))

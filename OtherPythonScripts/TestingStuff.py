@@ -354,7 +354,7 @@ from t_sne_bhcuda import tsne_cluster
 from t_sne_bhcuda import bhtsne_cuda as TSNE
 import pickle
 import pandas as pd
-import BrainDataAnalysis.ploting_functions as pf
+import BrainDataAnalysis.Graphics.ploting_functions as pf
 
 
 kilosort_experiment_folder = r'thres4_10_10_Fe16_Pc12'  # thres4_10_10_Fe16_Pc12 OR thres4_10_10_Fe256_Pc128 OR thres6_12_12_Fe256_Pc128
@@ -505,7 +505,7 @@ selected_spikes_data_cube_filtered = np.zeros((num_ivm_channels, num_of_points_i
                                                  len(spike_times_of_indices_all)))
 for spike in np.arange(len(spike_times_of_indices_all)):
     selected_spikes_data_cube_filtered[:, :, spike] = filters.high_pass_filter(selected_spikes_data_cube[:, :, spike],
-                                                                                  30000, 30000 / 128) # removes the slant in each trial
+                                                                               30000, 30000 / 128) # removes the slant in each trial
 
 selected_spikes_concatenated_filtered = np.reshape(selected_spikes_data_cube_filtered, ((num_ivm_channels *
                                                                       num_of_points_in_spike_trig),
@@ -691,8 +691,6 @@ t2 = np.cov(m2, m2)
 #-------------------------------------------------
 
 
-
-import numpy as np
 import pandas as pd
 import os.path as path
 
@@ -726,13 +724,6 @@ events_with_frame_df.reset_index(level=0, inplace=True)
 
 import matplotlib.pyplot as plt
 plt.scatter(events_df['X'], events_df['Y'])
-
-
-
-from os.path import join
-
-
-
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -785,11 +776,10 @@ img2.scale(10, 10)
 
 
 
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets
 import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.widgets import RawImageWidget
-import sys
 
 data1 = (100*pg.np.random.random(size=(100,100,4))).astype(np.int8)
 data1[:,:,3] = 20
@@ -878,13 +868,6 @@ dd.connect_repl_var(globals(), 'e', 't', 'c', 'b')
 import slider as s
 s.connect_repl_var(globals(), 'a', 'c', 't', 'b', slider_limits=[0, 200])
 
-
-
-
-from sklearn.decomposition import pca
-
-
-import re
 import pandas as pd
 
 events_file = r'Y:\swc\kampff\George\DataAndResults\Experiments\Awake\NeuroSeeker\AK_47.2\2019_06_29-11_36\Events_worked_on.csv'

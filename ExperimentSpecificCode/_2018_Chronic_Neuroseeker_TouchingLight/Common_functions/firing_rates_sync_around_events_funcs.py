@@ -82,35 +82,65 @@ def show_firing_rates_around_event(firing_rates):
     ax.set_aspect(200)
 
 
-def show_rasters(index, firing_rates_neuron_index, firing_rates, template_info, spike_info,
-                 event_times, frames_around_event, fig1, fig2):
+def show_rasters_for_live_update(index, firing_rates_neuron_index, firing_rates, template_info, spike_info,
+                                 event_times, frames_around_event, fig1=None, fig2=None):
     neuron_index = firing_rates_neuron_index[index]
     firing_rate = firing_rates[neuron_index]
 
-    fig1.clear()
-    ax1 = fig1.add_subplot(111)
-    ax1.plot(firing_rate)
-    ax1.vlines(x=frames_around_event, ymin=firing_rate.min(),
-               ymax=firing_rate.max())
+    if fig1 is not None:
+        fig1.clear()
+        ax1 = fig1.add_subplot(111)
+        ax1.plot(firing_rate)
+        ax1.vlines(x=frames_around_event, ymin=firing_rate.min(),
+                   ymax=firing_rate.max())
 
-    largest_decrease_neurons_spikes = template_info.iloc[neuron_index]['spikes in template']
-    largest_decrease_neurons_spike_times = spike_info.loc[np.isin(spike_info['original_index'],
-                                                                  largest_decrease_neurons_spikes)]['times'].values.\
+    if fig2 is not None:
+        neurons_spikes = template_info.iloc[neuron_index]['spikes in template']
+        neurons_spike_times = spike_info.loc[np.isin(spike_info['original_index'],
+                                                                      neurons_spikes)]['times'].values. \
+            astype(np.int64)
+
+        neuron_raster = []
+        for trial in event_times:
+            neuron_raster.append((neurons_spike_times - trial) / SAMPLING_FREQUENCY)
+
+        neuron_raster = np.array(neuron_raster)
+
+        fig2.clear()
+        ax2 = fig2.add_subplot(111)
+        neuron_scatter = neuron_raster.flatten(order='F')
+        ax2.scatter(neuron_scatter, np.tile(np.arange(len(neuron_raster)), neuron_raster.shape[1]),
+                    s=10)
+
+        seconds_around_event = frames_around_event / VIDEO_FRAME_RATE
+        ax2.set_xlim(-seconds_around_event,
+                     seconds_around_event)
+
+    return None
+
+
+def show_rasters(neuron_index, template_info, spike_info,
+                 event_times, frames_around_event, fig):
+
+    neurons_spikes = template_info.iloc[neuron_index]['spikes in template']
+    neurons_spike_times = spike_info.loc[np.isin(spike_info['original_index'],
+                                                                  neurons_spikes)]['times'].values. \
         astype(np.int64)
 
     neuron_raster = []
     for trial in event_times:
-        neuron_raster.append((largest_decrease_neurons_spike_times - trial) / SAMPLING_FREQUENCY)
+        neuron_raster.append((neurons_spike_times - trial) / SAMPLING_FREQUENCY)
 
     neuron_raster = np.array(neuron_raster)
 
-    fig2.clear()
-    ax2 = fig2.add_subplot(111)
-    ax2.scatter(neuron_raster, np.tile(np.arange(len(neuron_raster)),
-                                                        neuron_raster.shape[1]),
+    fig.clear()
+    ax2 = fig.add_subplot(111)
+    neuron_scatter = neuron_raster.flatten(order='F')
+    ax2.scatter(neuron_scatter, np.tile(np.arange(len(neuron_raster)), neuron_raster.shape[1]),
                 s=10)
-    time_points_around_event = frames_around_event * VIDEO_FRAME_RATE
-    ax2.set_xlim(-time_points_around_event / SAMPLING_FREQUENCY,
-                 time_points_around_event / SAMPLING_FREQUENCY)
 
-    return None
+    seconds_around_event = frames_around_event / VIDEO_FRAME_RATE
+    ax2.set_xlim(-seconds_around_event,
+                 seconds_around_event)
+
+    return fig

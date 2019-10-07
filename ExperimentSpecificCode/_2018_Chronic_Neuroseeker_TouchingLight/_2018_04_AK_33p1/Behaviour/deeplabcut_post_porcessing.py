@@ -9,9 +9,7 @@ import one_shot_viewer as osv
 import sequence_viewer as sv
 import transform as tr
 
-from BrainDataAnalysis import binning
 from BehaviorAnalysis import dlc_post_processing as dlc_pp
-from BehaviorAnalysis import dlc_plotting
 
 from plotting_overlays import overlay_dots
 

@@ -6,7 +6,7 @@ import matplotlib.pylab as pylab
 from tsne_for_spikesort import gpu
 from tsne_for_spikesort import io_with_cpp as io
 from os.path import join
-from BrainDataAnalysis import ploting_functions as pf
+from BrainDataAnalysis.Graphics import ploting_functions as pf
 import matplotlib.pyplot as plt
 from ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda import tsne_cluster as tsne_cl
 

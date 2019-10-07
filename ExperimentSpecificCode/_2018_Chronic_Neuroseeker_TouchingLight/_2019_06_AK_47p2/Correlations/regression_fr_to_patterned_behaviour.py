@@ -1,19 +1,16 @@
 
 from os.path import join
 import numpy as np
-import pickle
 
 import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2019_06_AK_47p2 import constants as const
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions \
     import events_sync_funcs as sync_funcs, regression_functions as reg_funcs
 
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn import linear_model, metrics, pipeline, preprocessing
-from sklearn.feature_selection import SelectFromModel, RFE
 
-from BrainDataAnalysis import binning
+from BrainDataAnalysis.Statistics import binning
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -364,7 +361,7 @@ spike_counts_full_smoothed = np.ceil(spike_counts_full_smoothed).astype(np.int)
 
 X_full = spike_counts_full_smoothed[high_mi_dtp_neurons, :].transpose()
 Y_full = binning.rolling_window_with_step(distances_rat_to_poke_all_frames,
-                                     np.mean, smoothing_frames, smoothing_frames)
+                                          np.mean, smoothing_frames, smoothing_frames)
 Y_full = preprocessing.StandardScaler().fit_transform(np.reshape(Y_full, (-1, 1))).reshape(-1)
 
 X_full_poly = X_poly_model.fit_transform(X_full)

@@ -8,9 +8,8 @@ import numpy as np
 import pandas as pd
 import IO.ephys as ephys
 import BrainDataAnalysis.timelocked_analysis_functions as tlf
-import BrainDataAnalysis.ploting_functions as pf
+import BrainDataAnalysis.Graphics.ploting_functions as pf
 import pylab as pl
-import GUIs.DataFrameViewer.gui_data_frame_viewer as dfv
 import BehaviorAnalysis.generating_shuttling_trajectories as st
 import mne as mne
 import pickle

@@ -2,7 +2,7 @@
 
 from os.path import join
 import numpy as np
-from BrainDataAnalysis import binning
+from BrainDataAnalysis.Statistics import binning
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2019_06_AK_47p2 import constants as const
 
 import sequence_viewer as sv
@@ -57,7 +57,7 @@ for i in np.arange(len(acc)):
 
 num_of_frames_to_average = 1/(1/120)
 speeds_smoothed = binning.rolling_window_with_step(speeds, np.mean,
-                                               num_of_frames_to_average, 1)
+                                                   num_of_frames_to_average, 1)
 speeds_smoothed[0] = 0
 
 speeds_smoothed = np.array(speeds_smoothed)

@@ -8,7 +8,7 @@ import h5py as h5
 import numpy as np
 import BrainDataAnalysis.Utilities as ut
 import BrainDataAnalysis.timelocked_analysis_functions as tf
-import BrainDataAnalysis.ploting_functions as pf
+import BrainDataAnalysis.Graphics.ploting_functions as pf
 import matplotlib.pyplot as plt
 import IO.ephys as ephys
 import ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda.t_sne_spikes as tsne_spikes

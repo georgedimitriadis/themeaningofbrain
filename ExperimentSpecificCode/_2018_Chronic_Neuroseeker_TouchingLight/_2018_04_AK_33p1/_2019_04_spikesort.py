@@ -126,7 +126,7 @@ spp.view_grouped_templates_positions(kilosort_folder_denoised, const.BRAIN_REGIO
 
 # b) Create the template_info.df dataframe (or load it if you already have it)
 # template_info = preproc_kilo.generate_template_info_after_cleaning(kilosort_folder_denoised, sampling_freq)
-template_info = np.load(join(kilosort_folder_denoised, 'template_info.df'))
+template_info = np.load(join(kilosort_folder_denoised, 'template_info.df'), allow_pickle=True)
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
 

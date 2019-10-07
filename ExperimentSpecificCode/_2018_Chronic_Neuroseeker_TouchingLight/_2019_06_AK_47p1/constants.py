@@ -22,6 +22,7 @@ BINARY_FILE_ENCODING = np.int16
 CAMERA_TTL_PULSES_TIMEPOINT_PERIOD = 158
 SAMPLING_FREQUENCY = 20000
 
+LFP_DOWNSAMPLE_FACTOR = 4
 NUMBER_OF_IMFS = 13
 
 PROBE_DIMENSIONS = [100, 8100]
@@ -35,3 +36,5 @@ BRAIN_REGIONS = {'Cortex MPA': 7220, 'CA1': 5460, 'CA3': 4475,
                  'Thalamus LDVL': 3735, 'Thalamus Po': 2730, 'Thalamus VPM': 2400,
                  'Zona Incerta': 720}
 
+BRAIN_REGIONS = {'Cortex MPA': 7220, 'CA1': 5460, 'CA3': 4475,
+                 'Thalamus LDVL': 3735, 'Thalamus Po': 2730, 'Thalamus VPM': 2400}

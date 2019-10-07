@@ -8,7 +8,7 @@ from spikesorting_tsne import preprocessing_kilosort_results as preproc
 from spikesorting_tsne import tsne as TSNE
 from spikesorting_tsne import io_with_cpp as io
 from BrainDataAnalysis.Spike_Sorting import positions_on_probe as pos
-from BrainDataAnalysis import ploting_functions as pf
+from BrainDataAnalysis.Graphics import ploting_functions as pf
 
 kilosort_folder = r'F:\JoanaPaired\128ch\2015-09-03\Analysis\kilosort\thres4_10_10_Fe16_Pc12\kilosort output'
 tsne_folder = r'F:\JoanaPaired\128ch\2015-09-03\Analysis\kilosort\thres4_10_10_Fe16_Pc12\tsne\tsne_cleaned'

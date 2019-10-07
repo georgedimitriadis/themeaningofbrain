@@ -4,7 +4,6 @@ import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import mne.filter as filters
 import numpy as np
-import scipy.signal as signal
 import scipy.stats as stats
 from matplotlib import mlab
 import IO.ephys as ephys
@@ -1469,10 +1468,8 @@ temp_filtered_uV = highpass(temp_unfiltered_uV[:, index1:index2], F_HIGH = (samp
 #Low pass filter--------------------------------------------------------------------------------------------------------
 low_pass_freq = 5000
 
-import numpy as np
 import scipy.signal as signal
-from BrainDataAnalysis import Constants as ct
-
+from BrainDataAnalysis._Old_Structures import Constants as ct
 
 
 def low_pass_filter(data, Fsampling, Fcutoff, filterType='but', filterOrder=None, filterDirection='twopass'):
@@ -1516,17 +1513,11 @@ temp_filtered_uV = low_pass_filter(temp_unfiltered_uV, sampling_freq, low_pass_f
 
 # Built-in Python libraries
 import os # functions for interacting w operating system
-import sys # access to functions/variables at the level of the interpreter
 
 # 3rd-party libraries
 import numpy as np # module for low-level scientific computing
-import scipy as sp # library for working with NumPy arrays
-import scipy.io as sio # read/write data to various formats
-import scipy.signal # signal processing module
-import pandas as pd # data manipulation tools. built on NumPy library
 import matplotlib.pyplot as plt # makes matplotlib work like MATLAB. ’pyplot’ functions.
 import matplotlib.cm as cm
-import seaborn as sns # based on matplotlib. high-level interface for visualization.
 
 samp_spec = range(0,200000)
 f, t, Sxx = signal.spectrogram(temp_unfiltered_uV[22,samp_spec], sampling_freq, window='hanning', nperseg=1000, noverlap=1000-1, mode='psd')

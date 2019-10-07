@@ -35,6 +35,10 @@ camera_pulses, beam_breaks, sounds = \
     sync_funcs.get_time_points_of_events_in_sync_file(data_folder, clean=True,
                                                       cam_ttl_pulse_period=
                                                       const.CAMERA_TTL_PULSES_TIMEPOINT_PERIOD)
+
+sync = np.fromfile(join(data_folder, 'Sync.bin'), dtype=np.uint16).astype(np.int32)
+sync -= sync.min()
+
 # </editor-fold>
 # -------------------------------------------------
 
@@ -68,6 +72,21 @@ successful_trial_pokes = np.array(successful_trial_pokes)
 # </editor-fold>
 # -------------------------------------------------
 
+# -------------------------------------------------
+# <editor-fold desc="SANITY CHECK THAT THE POKE EVENTS MAKE SENSE">
+
+sync_window = 0.5
+sync_window_timepoints = int(sync_window * const.SAMPLING_FREQUENCY)
+
+sync_around_trial_pokes = np.empty((len(successful_trial_pokes), 2 * sync_window_timepoints))
+for st in np.arange(len(successful_trial_pokes)):
+    sync_around_trial_pokes[st, :] = sync[successful_trial_pokes[st] - sync_window_timepoints:
+                                    successful_trial_pokes[st] + sync_window_timepoints]
+
+f = plt.figure(0)
+_ = plt.plot(np.mean(sync_around_trial_pokes, axis=0))
+# </editor-fold>
+# -------------------------------------------------
 
 # -------------------------------------------------
 # <editor-fold desc="EVENT TIMES OF POKES THAT WERE NOT PART OF A TRIAL (FIRST POKES AFTER A PERIOD OF NOT POKING)">
@@ -96,6 +115,22 @@ first_pokes_after_delay = np.delete(first_pokes_after_delay, overlaps)
 # np.save(join(events_definitions_folder, 'events_first_pokes_after_{}_delay_non_reward.npy'.format(str(minimum_delay)))
 #         , first_pokes_after_delay)
 
+# </editor-fold>
+# -------------------------------------------------
+
+
+# -------------------------------------------------
+# <editor-fold desc="SANITY CHECK THAT THE POKE EVENTS MAKE SENSE">
+
+sync_window = 0.5
+sync_window_timepoints = int(sync_window * const.SAMPLING_FREQUENCY)
+
+sync_around_non_trial_pokes = np.empty((len(first_pokes_after_delay), 2 * sync_window_timepoints))
+for st in np.arange(len(first_pokes_after_delay)):
+    sync_around_non_trial_pokes[st, :] = sync[first_pokes_after_delay[st] - sync_window_timepoints:
+                                    first_pokes_after_delay[st] + sync_window_timepoints]
+
+_ = plt.plot(np.mean(sync_around_non_trial_pokes, axis=0))
 # </editor-fold>
 # -------------------------------------------------
 

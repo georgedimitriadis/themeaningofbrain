@@ -3,8 +3,7 @@ __author__ = 'George Dimitriadis'
 
 import numpy as np
 import scipy.signal as signal
-from BrainDataAnalysis import Constants as ct
-
+from BrainDataAnalysis._Old_Structures import Constants as ct
 
 
 def low_pass_filter(data, Fsampling, Fcutoff, filterType='but', filterOrder=None, filterDirection='twopass'):

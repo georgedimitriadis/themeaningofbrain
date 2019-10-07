@@ -5,7 +5,7 @@ Created on Tue Jan 21 16:49:57 2014
 @author: George Dimitriadis
 """
 
-from BrainDataAnalysis.Constants import Dimension as dm
+from BrainDataAnalysis._Old_Structures.Constants import Dimension as dm
 import numpy as np
 
 class DataDimensions:

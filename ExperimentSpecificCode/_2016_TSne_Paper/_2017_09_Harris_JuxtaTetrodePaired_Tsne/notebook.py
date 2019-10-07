@@ -6,7 +6,7 @@ import BrainDataAnalysis.timelocked_analysis_functions as tf
 import mne.filter as filters
 import Layouts.Probes.klustakwik_prb_generator as prb_gen
 import h5py as h5
-import BrainDataAnalysis.ploting_functions as pf
+import BrainDataAnalysis.Graphics.ploting_functions as pf
 from spikesorting_tsne import tsne as TSNE
 import matplotlib.pyplot as plt
 from tsne_for_spikesort_old import io_with_cpp as io

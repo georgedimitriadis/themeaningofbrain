@@ -12,7 +12,7 @@ from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_funct
 import sequence_viewer as sv
 import transform as tr
 
-from BrainDataAnalysis import binning
+from BrainDataAnalysis.Statistics import binning
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -80,7 +80,7 @@ poking_threshold = 0.149
 
 
 distances_rat_head_to_poke_smoothed = np.array(binning.rolling_window_with_step(distances_rat_head_to_poke_all_frames,
-                                                                       np.mean, smooth_frames, 1))
+                                                                                np.mean, smooth_frames, 1))
 
 np.save(join(regressions_folder, 'distances_rat_head_to_poke_smoothed.npy'), distances_rat_head_to_poke_smoothed)
 # </editor-fold>

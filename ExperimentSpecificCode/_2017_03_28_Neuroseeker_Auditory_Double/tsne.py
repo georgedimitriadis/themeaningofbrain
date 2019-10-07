@@ -79,7 +79,7 @@ tsne = io.load_tsne_result(exe_folder)
 from spikesorting_tsne import preprocessing_kilosort_results as preproc
 from spikesorting_tsne import tsne as TSNE
 from os.path import join
-from BrainDataAnalysis import ploting_functions as pf
+from BrainDataAnalysis.Graphics import ploting_functions as pf
 import numpy as np
 from ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda import tsne_cluster as tsne_cl
 import matplotlib.pyplot as plt

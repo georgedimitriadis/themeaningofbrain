@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import Layouts.Probes.probes_imec as pr_im
-import BrainDataAnalysis.ploting_functions as pf
+import BrainDataAnalysis.Graphics.ploting_functions as pf
 import mne.filter as filters
 import scipy.ndimage.measurements as sp_m
 

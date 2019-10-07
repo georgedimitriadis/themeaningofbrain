@@ -1,8 +1,8 @@
 __author__ = 'George Dimitriadis'
 
 import numpy as np
-import BrainDataAnalysis.Structures as dm
-import BrainDataAnalysis.Constants as ct
+import BrainDataAnalysis._Old_Structures.Structures as dm
+import BrainDataAnalysis._Old_Structures.Constants as ct
 
 
 voltage_step_size = 0.195e-6

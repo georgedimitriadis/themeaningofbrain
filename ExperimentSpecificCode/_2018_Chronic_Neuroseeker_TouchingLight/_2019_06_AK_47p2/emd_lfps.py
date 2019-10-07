@@ -71,7 +71,7 @@ sl.connect_repl_var(globals(), 'pane', 'nothing', slider_limits=slider_limits)
 ds_filename = join(const.base_save_folder, const.rat_folder, const.date_folders[date],
                             'Data', 'Amplifier_LFPs_Downsampled_x4.bin')
 
-downsampled_lfp = ns_funcs.downsample(filename=ds_filename, data=raw_lfp, factor=4)
+downsampled_lfp = ns_funcs.downsample(filename=ds_filename, data=raw_lfp, factor=const.LFP_DOWNSAMPLE_FACTOR)
 
 
 ds_numpy_filename = join(const.base_save_folder, const.rat_folder, const.date_folders[date],

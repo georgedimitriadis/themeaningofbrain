@@ -6,7 +6,7 @@ from os import makedirs
 from shutil import copyfile
 from Layouts.Probes import probes_imec as pi
 import ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda.t_sne_spikes as tsne_spikes
-import BrainDataAnalysis.ploting_functions as pf
+import BrainDataAnalysis.Graphics.ploting_functions as pf
 import BrainDataAnalysis.tsne_analysis_functions as taf
 import matplotlib.pyplot as plt
 import h5py as h5

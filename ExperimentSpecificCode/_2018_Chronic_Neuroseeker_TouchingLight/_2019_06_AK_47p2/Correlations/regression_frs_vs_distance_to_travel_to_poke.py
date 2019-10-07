@@ -11,7 +11,6 @@ from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_funct
 from BrainDataAnalysis.Spike_Sorting import positions_on_probe as spp
 
 from sklearn import linear_model, metrics, model_selection, preprocessing
-from scipy import stats
 import statsmodels.stats.api as sms
 
 from npeet.lnc import MI
@@ -23,7 +22,7 @@ import transform as tr
 import drop_down as dd
 import slider as sl
 
-from BrainDataAnalysis import binning
+from BrainDataAnalysis.Statistics import binning
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -110,7 +109,7 @@ spike_rates_away_from_poke_smoothed = binning.rolling_window_with_step(spike_rat
                                                                        np.mean, fr_smooth_frames, fr_smooth_frames)
 
 distance_to_travel_to_poke_smoothed = binning.rolling_window_with_step(distance_to_travel_to_poke,
-                                                              np.mean, fr_smooth_frames, fr_smooth_frames)
+                                                                       np.mean, fr_smooth_frames, fr_smooth_frames)
 
 # </editor-fold>
 # -------------------------------------------------
@@ -177,7 +176,7 @@ high_corr_neurons_index = np.squeeze(np.argwhere(mi_spike_rates_vs_distance_to_t
 high_corr_neurons = template_info.loc[high_corr_neurons_index]
 spp.view_grouped_templates_positions(kilosort_folder, const.BRAIN_REGIONS, const.PROBE_DIMENSIONS,
                                      const.POSITION_MULT, template_info=high_corr_neurons,
-                                     dot_sizes=mi_spike_rates_vs_distance_to_travel_to_poke[high_corr_neurons_index] * 4000,
+                                     dot_sizes=(mi_spike_rates_vs_distance_to_travel_to_poke[high_corr_neurons_index] + 0.027) * 4000,
                                      font_size=5)
 
 #   Look at individual spike rates vs the distance traveled
@@ -349,6 +348,12 @@ for i in np.arange(len(sig_neurons_index)):
     x_axis = model.generate_X_grid(term=t)
     ax.plot(x_axis[:, t], model.partial_dependence(t, x_axis))
     ax.plot(x_axis[:, t], model.partial_dependence(t, x_axis, width=0.99)[1], c='r', ls='--')
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.yaxis.set_ticks_position('left')
+    ax.xaxis.set_ticks_position('bottom')
+    ax.set_xlabel('Firing rate / 0.1 x Hz')
+
 
 # Do a lasso only with the significant neurons from the GAM
 X_train = X_used[train_periods, :]
@@ -631,7 +636,7 @@ avg_firing_rate_around_start_bal_mov = fr_funcs.get_avg_firing_rates_around_even
 decreasing_firing_rates_neuron_index, decreasing_firing_rates = \
     fr_funcs.get_neurons_following_pattern_around_an_event(avg_firing_rate_around_event=avg_firing_rate_around_start_bal_mov,
                                                            time_around_pattern=time_around_start_of_bal_mov,
-                                                           pattern_regions_to_compare=[0, 0.6, 0.8, 1.2],
+                                                           pattern_regions_to_compare=[0, 0.9, 1.0, 1.2],
                                                            comparison_factor=3, comparison_direction='decrease',
                                                            baserate=0.1)
 
@@ -647,7 +652,7 @@ pd.to_pickle(template_info_decreasing_fr_neurons, join(ballistic_mov_folder, 'ti
 increasing_firing_rates_neuron_index, increasing_firing_rates = \
     fr_funcs.get_neurons_following_pattern_around_an_event(avg_firing_rate_around_event=avg_firing_rate_around_start_bal_mov,
                                                            time_around_pattern=time_around_start_of_bal_mov,
-                                                           pattern_regions_to_compare=[0, 0.6, 0.8, 1.2],
+                                                           pattern_regions_to_compare=[0, 0.9, 1.0, 1.2],
                                                            comparison_factor=3, comparison_direction='increase',
                                                            baserate=0.1)
 fr_funcs.show_firing_rates_around_event(increasing_firing_rates)
@@ -661,6 +666,7 @@ pd.to_pickle(template_info_increasing_fr_neurons, join(ballistic_mov_folder, 'ti
 
 # ------
 # Have a look at the individual raster plots of the neurons with the largest change
+time_around_start_of_bal_mov = 8
 frs = increasing_firing_rates_neuron_index  # decreasing_firing_rates_neuron_index or increasing_firing_rates_neuron_index
 index = 0
 fig1 = plt.figure(0)
@@ -669,7 +675,7 @@ output = None
 args = [frs, avg_firing_rate_around_start_bal_mov, template_info, spike_info,
         start_of_ballistic_traj_time_points, frames_around_start_of_bal_mov, fig1, fig2]
 
-show_rasters_decrease = fr_funcs.show_rasters
+show_rasters_decrease = fr_funcs.show_rasters_for_live_update
 
 sl.connect_repl_var(globals(), 'index', 'output', 'show_rasters_decrease', 'args',
                     slider_limits=[0, len(frs) - 1])

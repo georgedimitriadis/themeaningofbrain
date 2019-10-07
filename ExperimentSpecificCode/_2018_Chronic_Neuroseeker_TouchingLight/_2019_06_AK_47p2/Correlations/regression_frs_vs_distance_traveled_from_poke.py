@@ -2,25 +2,20 @@
 from os.path import join
 import numpy as np
 import pickle
-import bisect
 
 import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2019_06_AK_47p2 import constants as const
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions \
-    import events_sync_funcs as sync_funcs, regression_functions as reg_funcs
+    import events_sync_funcs as sync_funcs
 from BrainDataAnalysis.Spike_Sorting import positions_on_probe as spp
 
-from sklearn import linear_model, metrics, model_selection, preprocessing
+from sklearn import preprocessing
 
 from npeet.lnc import MI
 
 import pygam as pg
 
-import sequence_viewer as sv
-import transform as tr
-import drop_down as dd
-
-from BrainDataAnalysis import binning
+from BrainDataAnalysis.Statistics import binning
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -103,7 +98,7 @@ spike_rates_away_from_poke_smoothed = binning.rolling_window_with_step(spike_rat
                                                                        np.mean, fr_smooth_frames, fr_smooth_frames)
 
 distance_traveled_from_poke_smoothed = binning.rolling_window_with_step(distance_traveled_from_poke,
-                                                              np.mean, fr_smooth_frames, fr_smooth_frames)
+                                                                        np.mean, fr_smooth_frames, fr_smooth_frames)
 
 # </editor-fold>
 # -------------------------------------------------

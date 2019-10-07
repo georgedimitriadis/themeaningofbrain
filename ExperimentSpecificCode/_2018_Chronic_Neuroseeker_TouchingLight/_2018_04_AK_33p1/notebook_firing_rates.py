@@ -4,7 +4,6 @@ from os.path import join
 import numpy as np
 import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_33p1 import constants as const
-from BrainDataAnalysis import ploting_functions as pf
 
 from BrainDataAnalysis.Spike_Sorting import positions_on_probe as spp
 

@@ -12,16 +12,11 @@ from npeet.lnc import MI
 
 from idtxl.multivariate_te import MultivariateTE
 from idtxl.data import Data
-from idtxl.visualise_graph import plot_network
 
-import one_shot_viewer as osv
-import sequence_viewer as sv
-import transform as tr
 import slider as sl
 
-from BrainDataAnalysis import binning
+from BrainDataAnalysis.Statistics import binning
 from BehaviorAnalysis import dlc_post_processing as dlc_pp
-from BrainDataAnalysis import neuroseeker_specific_functions as ns_funcs
 
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_33p1 import constants as const
 
@@ -119,7 +114,8 @@ plt.plot(speeds_0p25)
 plt.plot(spike_rates_0p25[speed_very_corr_neurons_index, :].T / 200)
 
 plt.plot(binning.rolling_window_with_step(speeds_0p25, np.mean, 100, 1))
-plt.plot(binning.rolling_window_with_step(spike_rates_0p25[speed_very_corr_neurons_index[0], :].T / 200, np.mean, 100, 1))
+plt.plot(
+    binning.rolling_window_with_step(spike_rates_0p25[speed_very_corr_neurons_index[0], :].T / 200, np.mean, 100, 1))
 
 # Shuffle the spike rates of one of the best correlated neurons and calculate MI between the shuffled frs and speed
 # (1000 times) to generate the basic chance base of MI
@@ -200,9 +196,9 @@ body_positions = dlc_pp.clean_large_movements_single_axis(body_positions, maximu
 
 # Discretize positions
 body_positions_x_0p25 = np.array(binning.rolling_window_with_step(body_positions[:, 0], np.mean,
-                                               num_of_frames_to_average, num_of_frames_to_average))
+                                                                  num_of_frames_to_average, num_of_frames_to_average))
 body_positions_y_0p25 = np.array(binning.rolling_window_with_step(body_positions[:, 1], np.mean,
-                                               num_of_frames_to_average, num_of_frames_to_average))
+                                                                  num_of_frames_to_average, num_of_frames_to_average))
 body_positions_0p25 = np.array([[body_positions_x_0p25[i], body_positions_y_0p25[i]]
                                 for i in np.arange(len(body_positions_x_0p25))])
 # binned_body_positions_0p25 = binning.bin_2d_array(body_positions_0p25, bins=[10, 10]).get_values()

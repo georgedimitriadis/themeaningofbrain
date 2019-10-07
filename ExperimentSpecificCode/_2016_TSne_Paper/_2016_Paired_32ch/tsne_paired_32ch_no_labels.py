@@ -6,7 +6,7 @@ from os.path import join
 from IO import ephys as ioep
 from IO import klustakwik as iokl
 import ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda.t_sne_spikes as tsne_spikes
-import BrainDataAnalysis.ploting_functions as pf
+import BrainDataAnalysis.Graphics.ploting_functions as pf
 
 
 base_folder = r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_32ch'

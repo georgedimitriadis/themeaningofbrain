@@ -11,7 +11,7 @@ import pandas as pd
 import scipy.ndimage.measurements as sp_m
 import scipy.signal as signal
 
-import BrainDataAnalysis.ploting_functions as pf
+import BrainDataAnalysis.Graphics.ploting_functions as pf
 import IO.ephys as ephys
 import Layouts.Probes.klustakwik_prb_generator as prb_gen
 

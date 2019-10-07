@@ -3,12 +3,8 @@ import matplotlib
 matplotlib.use('Qt5Agg')
 import os
 import numpy as np
-import BrainDataAnalysis.ploting_functions as pf
 import IO.ephys as ephys
 import matplotlib.pyplot as plt
-import Layouts.Probes.probes_imec as pr_imec
-import h5py as h5
-
 
 base_folder = r'F:\JoanaPaired\128ch'
 rat = 97

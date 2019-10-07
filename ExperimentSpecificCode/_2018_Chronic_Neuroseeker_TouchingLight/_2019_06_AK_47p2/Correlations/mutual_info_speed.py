@@ -9,12 +9,9 @@ from npeet.lnc import MI
 
 import itertools
 
-import one_shot_viewer as osv
 import sequence_viewer as sv
-import transform as tr
-import slider as sl
 
-from BrainDataAnalysis import binning
+from BrainDataAnalysis.Statistics import binning
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2019_06_AK_47p2 import constants as const
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions \
     import events_sync_funcs as sync_funcs
@@ -104,7 +101,8 @@ plt.plot(binning.rolling_window_with_step(spike_rates_0p25[speed_very_corr_neuro
 
 s_20 = np.array(binning.rolling_window_with_step(speeds_0p25, np.mean, 8, 1))
 plt.plot((s_20 - s_20.mean()) /s_20.std())
-f_20 = np.array(binning.rolling_window_with_step(spike_rates_0p25[speed_very_corr_neurons_index, :].T * 2, np.mean, 8, 1))
+f_20 = np.array(
+    binning.rolling_window_with_step(spike_rates_0p25[speed_very_corr_neurons_index, :].T * 2, np.mean, 8, 1))
 plt.plot((f_20 - f_20.mean()) / f_20.std())
 
 

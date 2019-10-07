@@ -4,21 +4,15 @@ from os.path import join
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from npeet.lnc import MI
-
-from mpl_toolkits import mplot3d
 
 import one_shot_viewer as osv
 import sequence_viewer as sv
 import transform as tr
 import slider as sl
 
-from BrainDataAnalysis import binning
+from BrainDataAnalysis.Statistics import binning
 from BehaviorAnalysis import dlc_post_processing as dlc_pp
-from BrainDataAnalysis import neuroseeker_specific_functions as ns_funcs
 
-
-import ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions.events_sync_funcs as sync_funcs
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_33p1 import constants as const
 
 #  -------------------------------------------------

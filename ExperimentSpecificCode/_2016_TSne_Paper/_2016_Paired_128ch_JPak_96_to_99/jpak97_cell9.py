@@ -4,7 +4,7 @@ import os
 import numpy as np
 from IO import ephys as ioep
 import BrainDataAnalysis.timelocked_analysis_functions as tf
-import BrainDataAnalysis.ploting_functions as pf
+import BrainDataAnalysis.Graphics.ploting_functions as pf
 import IO.ephys as ephys
 import mne.filter as filters
 from sklearn.manifold import TSNE as tsne
@@ -726,7 +726,7 @@ pf.make_video_of_tsne_iterations(iterations, video_dir, data_file_name='interim_
 # KILOSORT UNITS ON TSNE PLOT (made from old phy's masked PCs)
 
 from BrainDataAnalysis import Utilities as util
-from BrainDataAnalysis import ploting_functions as pf
+from BrainDataAnalysis.Graphics import ploting_functions as pf
 import matplotlib.pyplot as plt
 import numpy as np
 import h5py as h5

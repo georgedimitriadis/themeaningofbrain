@@ -7,7 +7,7 @@ from scipy.spatial.distance import cdist
 from numba import cuda
 from ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda import bhtsne_cuda as tsne_exe, tsne_cluster as tsne_cl, \
     tsne_cluster
-from BrainDataAnalysis import ploting_functions as pl
+from BrainDataAnalysis.Graphics import ploting_functions as pl
 
 
 def get_some_data(base_folder, binary_data_filename, number_of_spikes):

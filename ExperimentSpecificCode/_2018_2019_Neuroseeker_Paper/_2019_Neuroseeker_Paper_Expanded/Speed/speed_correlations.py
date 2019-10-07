@@ -1,27 +1,6 @@
 
 
 from os.path import join
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-from scipy.stats import sem, t
-from sklearn.decomposition import pca
-import pickle
-
-from npeet.lnc import MI
-
-from idtxl.multivariate_te import MultivariateTE
-from idtxl.data import Data
-from idtxl.visualise_graph import plot_network
-
-import one_shot_viewer as osv
-import sequence_viewer as sv
-import transform as tr
-import slider as sl
-
-from BrainDataAnalysis import binning
-from BehaviorAnalysis import dlc_post_processing as dlc_pp
-from BrainDataAnalysis import neuroseeker_specific_functions as ns_funcs
 
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_33p1 import constants as const
 

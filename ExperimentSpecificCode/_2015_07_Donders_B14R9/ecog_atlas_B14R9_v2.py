@@ -1,15 +1,8 @@
-import sys
 from IO import lynxio as lio
 import pylab as pl
-import numpy as np
-import pandas as pd
 import os
-from BrainDataAnalysis import ploting_functions as pf
-from BrainDataAnalysis import timelocked_analysis_functions as tf
 from BrainDataAnalysis import filters as filters
 import scipy.signal as signal
-import scipy as sp
-from Layouts.Grids import grids as grids
 
 f_sampling = 32556
 f_hp_cutoff = 500
@@ -37,7 +30,7 @@ data_probe = data[64:,:]
 
 data_probe_hp = pl.memmap(os.path.join(memap_folder,'data_probe_hp.dat'), dtype='int16', mode='w+', shape=pl.shape(data_probe))
 for i in pl.arange(0, pl.shape(data_probe)[0]):
-    data_probe_hp[i,:] = filters.high_pass_filter(data_probe[i,:], Fsampling=f_sampling, Fcutoff=f_hp_cutoff)
+    data_probe_hp[i,:] = filters.high_pass_filter(data_probe[i, :], Fsampling=f_sampling, Fcutoff=f_hp_cutoff)
     data_probe_hp.flush()
     print(i)
 pl.save(os.path.join(memap_folder, 'data_probe_hp.npy'), data_probe_hp)
@@ -46,7 +39,8 @@ pl.save(os.path.join(memap_folder, 'data_probe_hp.npy'), data_probe_hp)
 shape_data_ss = (pl.shape(data_ecog)[0], pl.shape(data_ecog)[1]/int(f_sampling/f_subsample))
 data_ecog_lp_ss = pl.memmap(os.path.join(memap_folder, 'data_ecog_lp_ss.dat'), dtype='int16', mode='w+', shape=shape_data_ss)
 for i in pl.arange(0, pl.shape(data_ecog)[0]):
-    data_ecog_lp_ss[i,:] = signal.decimate(filters.low_pass_filter(data_ecog[i,:], Fsampling=f_sampling, Fcutoff=f_lp_cutoff), int(f_sampling/f_subsample))
+    data_ecog_lp_ss[i,:] = signal.decimate(
+        filters.low_pass_filter(data_ecog[i, :], Fsampling=f_sampling, Fcutoff=f_lp_cutoff), int(f_sampling / f_subsample))
     data_ecog_lp_ss.flush()
     print(i)
 pl.save(os.path.join(memap_folder, 'data_ecog_lp_ss.npy'), data_ecog_lp_ss)

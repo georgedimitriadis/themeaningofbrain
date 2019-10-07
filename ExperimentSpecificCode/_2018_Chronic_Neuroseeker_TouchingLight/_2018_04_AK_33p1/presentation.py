@@ -6,14 +6,13 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from BrainDataAnalysis.LFP import emd
 import common_data_transforms as cdts
-from mne.time_frequency import multitaper as mt
 
 import one_shot_viewer as osv
 import sequence_viewer as sv
 import transform as tr
 import slider as sl
 
-from BrainDataAnalysis import binning
+from BrainDataAnalysis.Statistics import binning
 from BehaviorAnalysis import dlc_post_processing as dlc_pp
 from BrainDataAnalysis import neuroseeker_specific_functions as ns_funcs
 

@@ -87,3 +87,14 @@ def rolling_window_with_step(data, function, window_size, step):
             result = np.transpose(result)
 
     return result
+
+
+def scale(X, x_min, x_max):
+    nom = (X-X.min(axis=0))*(x_max-x_min)
+    denom = X.max(axis=0) - X.min(axis=0)
+    if len(denom.shape) == 0:
+        if denom == 0:
+            denom = 1
+    else:
+        denom[denom==0] = 1
+    return x_min + nom/denom

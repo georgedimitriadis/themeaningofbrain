@@ -11,4 +11,4 @@ import matplotlib.pyplot as plt
 from .load import *
 #sample_data(25000)
 
-generate_full_train_test_dataset(num_of_mini_batches=3, mini_batch_size=6000)
+generate_full_train_test_dataset(num_of_chunks=3, example_size_train=6000)

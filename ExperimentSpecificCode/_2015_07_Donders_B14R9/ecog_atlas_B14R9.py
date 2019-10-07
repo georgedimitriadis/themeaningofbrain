@@ -9,7 +9,7 @@ import pylab as pl
 import numpy as np
 import pandas as pd
 import os
-import BrainDataAnalysis.ploting_functions as pf
+import BrainDataAnalysis.Graphics.ploting_functions as pf
 import BrainDataAnalysis.timelocked_analysis_functions as tf
 import BrainDataAnalysis.filters as filters
 import scipy.signal as signal
@@ -59,7 +59,7 @@ data_probe = data[64:,:]
 
 data_probe_hp = pl.memmap(os.path.join(memap_folder,'data_probe_hp.dat'), dtype='int16', mode='w+', shape=pl.shape(data_probe))
 for i in pl.arange(0, pl.shape(data_probe)[0]):
-    data_probe_hp[i,:] = filters.high_pass_filter(data_probe[i,:], Fsampling=f_sampling, Fcutoff=f_hp_cutoff)
+    data_probe_hp[i,:] = filters.high_pass_filter(data_probe[i, :], Fsampling=f_sampling, Fcutoff=f_hp_cutoff)
     data_probe_hp.flush()
     print(i)
 pl.save(os.path.join(memap_folder, 'data_probe_hp.npy'), data_probe_hp)
@@ -68,7 +68,8 @@ pl.save(os.path.join(memap_folder, 'data_probe_hp.npy'), data_probe_hp)
 shape_data_ss = (pl.shape(data_ecog)[0], pl.shape(data_ecog)[1]/int(f_sampling/f_subsample))
 data_ecog_lp_ss = pl.memmap(os.path.join(memap_folder, 'data_ecog_lp_ss.dat'), dtype='int16', mode='w+', shape=shape_data_ss)
 for i in pl.arange(0, pl.shape(data_ecog)[0]):
-    data_ecog_lp_ss[i,:] = signal.decimate(filters.low_pass_filter(data_ecog[i,:], Fsampling=f_sampling, Fcutoff=f_lp_cutoff), int(f_sampling/f_subsample))
+    data_ecog_lp_ss[i,:] = signal.decimate(
+        filters.low_pass_filter(data_ecog[i, :], Fsampling=f_sampling, Fcutoff=f_lp_cutoff), int(f_sampling / f_subsample))
     data_ecog_lp_ss.flush()
     print(i)
 pl.save(os.path.join(memap_folder, 'data_ecog_lp_ss.npy'), data_ecog_lp_ss)
@@ -137,7 +138,8 @@ for i in np.arange(0, np.size(spike_times_shaftC_ecog)):
     cut_data = data_ecog_clean[:, spike_times_shaftC_ecog[i]-time_points_around_spike:spike_times_shaftC_ecog[i]+time_points_around_spike]
     if np.shape(cut_data)[1] == 2*time_points_around_spike:
         print('Spike '+str(i))
-        lp_ss_cut_data = signal.decimate(filters.low_pass_filter(cut_data, Fsampling=f_sampling, Fcutoff=f_mua_lp_cuttof), int(f_sampling/f_mua_subsample), axis=1)
+        lp_ss_cut_data = signal.decimate(
+            filters.low_pass_filter(cut_data, Fsampling=f_sampling, Fcutoff=f_mua_lp_cuttof), int(f_sampling / f_mua_subsample), axis=1)
         print('Low passed and subsampled')
         hp_lp_ss_cut_data = filters.high_pass_filter(lp_ss_cut_data, Fsampling=f_sampling, Fcutoff=f_hp_cutoff)
         print('Hih passed')

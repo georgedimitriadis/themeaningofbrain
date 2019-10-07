@@ -7,15 +7,9 @@ import BrainDataAnalysis.timelocked_analysis_functions as tf
 import IO.ephys as ephys
 import mne.filter as filters
 from sklearn.manifold import TSNE as tsne
-from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
-import BrainDataAnalysis.ploting_functions as pf
 import random
 from matplotlib import colors
-import Layouts.Probes.probes_imec as pr_imec
-import h5py as h5
-import IO.klustakwik as klusta
-
 
 base_folder = r'D:\Data\George\Projects\SpikeSorting\Joana_Paired_128ch'
 

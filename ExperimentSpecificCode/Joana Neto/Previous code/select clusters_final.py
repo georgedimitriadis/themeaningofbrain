@@ -1,85 +1,18 @@
-
-import os
-import BrainDataAnalysis.timelocked_analysis_functions as tf
 import IO.ephys as ephys
-import scipy.signal as signal
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
-import random
-from matplotlib import colors
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-import itertools
-import warnings
-import numpy as np
-import Layouts.Probes.klustakwik_prb_generator as prb_gen
-import itertools
-import numpy as np
-import matplotlib.colors as colors
-import matplotlib.cm as cmx
-import scipy.signal as signal
-
-import random
-from matplotlib import colors
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-import itertools
-import warnings
-import numpy as np
-import Layouts.Probes.klustakwik_prb_generator as prb_gen
-import itertools
-import numpy as np
-import matplotlib.colors as colors
-import matplotlib.cm as cmx
-import scipy.signal as signal
-
-
-import os
-import IO.ephys as ephys
-import mne.filter as filters
-import matplotlib.pyplot as plt
-import random
-from matplotlib import colors
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-import itertools
-import warnings
-import numpy as np
-import Layouts.Probes.klustakwik_prb_generator as prb_gen
-import pandas as pd
-import itertools
-import numpy as np
-import matplotlib as mpl
-from scipy import stats
 import matplotlib.colors as colors
 import matplotlib.cm as cmx
 import os
 import scipy.signal as signal
-import matplotlib.colors as mcolors
-import math
 import scipy.stats as stats
 
 import numpy as np
 import scipy.interpolate as interpolate
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import sca
-from matplotlib.ticker import MultipleLocator
 import pandas as pd
 import itertools
 import warnings
-import matplotlib.gridspec as gridspec
 # import Utilities as ut
 import matplotlib.animation as animation
-from matplotlib.widgets import Button
-import mne.filter as filters
-
-from BrainDataAnalysis.Wavelets import DOG
-from ShuttlingAnalysis.paper.preprocess import sessionlabel
-
 
 base_folder = r'Z:\j\Neuroseeker256ch_probe6'
 

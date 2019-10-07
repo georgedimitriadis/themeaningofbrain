@@ -2,23 +2,17 @@
 
 from os.path import join
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 
 
 import one_shot_viewer as osv
 import sequence_viewer as sv
 import transform as tr
-import slider as sl
 
-from BrainDataAnalysis import binning
 from BehaviorAnalysis import dlc_post_processing as dlc_pp
-from BehaviorAnalysis import dlc_plotting
 
 from plotting_overlays import overlay_dots
 
-
-import ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions.events_sync_funcs as sync_funcs
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2019_06_AK_47p2 import constants as const
 
 #  -------------------------------------------------
@@ -163,8 +157,8 @@ head_traj_y = 0
 def update_body_trajectory(f):
     global body_traj_x
     global body_traj_y
-    body_traj_x = body_positions[4070:f, 0]
-    body_traj_y = body_positions[4070:f, 1]
+    body_traj_x = body_positions[:f, 0]
+    body_traj_y = body_positions[:f, 1]
     return body_positions[:f, :]
 
 

@@ -48,3 +48,5 @@ points_per_pulse = np.mean(np.diff(camera_pulses))
 
 camera_frames_in_video = csv_funcs.get_true_frame_array(data_folder)
 time_point_of_first_video_frame = camera_pulses[camera_frames_in_video][0]
+
+# ----------------------------------

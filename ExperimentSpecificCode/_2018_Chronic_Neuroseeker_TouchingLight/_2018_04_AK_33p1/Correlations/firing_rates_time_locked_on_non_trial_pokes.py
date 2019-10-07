@@ -8,12 +8,15 @@ from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions \
     import events_sync_funcs as sync_funcs, firing_rates_sync_around_events_funcs as fr_funcs
 from BrainDataAnalysis.Spike_Sorting import positions_on_probe as spp
+from BrainDataAnalysis.Statistics import binning
 
+from sklearn import preprocessing as preproc
 import pandas as pd
 import matplotlib.pyplot as plt
 
-import common_data_transforms as cdt
+import sequence_viewer as sv
 import slider as sl
+
 
 
 # -------------------------------------------------
@@ -114,3 +117,56 @@ spp.view_grouped_templates_positions(kilosort_folder, const.BRAIN_REGIONS, const
                                      const.POSITION_MULT, template_info=template_info_decreasing_fr_neurons)
 
 pd.to_pickle(template_info_decreasing_fr_neurons, join(poke_folder, 'ti_decreasing_neurons_on_non_trial_pokes.df'))
+
+
+
+# -------------------------------------------------
+# <editor-fold desc="LOOK AT ALL THE NEURONS AROUND THE POKE EVENT">
+
+smooth_time = 0.5
+smooth_frames = smooth_time * 120
+
+t = binning.rolling_window_with_step(avg_firing_rate_around_suc_trials, np.mean, smooth_frames, int(smooth_frames / 3))
+tn = preproc.normalize(t, norm='l1', axis=0)
+
+tn = np.asarray(t)
+for i in np.arange(len(t)):
+    tn[i, :] = binning.scale(t[i], 0, 1)
+
+y_positions = template_info['position Y'].values
+position_sorted_indices = np.argsort(y_positions)
+
+regions_pos = list(const.BRAIN_REGIONS.values())
+region_lines = []
+for rp in regions_pos:
+    region_lines.append(sync_funcs.find_nearest(y_positions[position_sorted_indices] * const.POSITION_MULT, rp)[0])
+region_lines = np.array(region_lines)
+
+tns = tn[position_sorted_indices]
+
+plt.imshow(np.flipud(tns), aspect='auto')
+plt.hlines(y=len(t) - region_lines, xmin=0, xmax=len(tns[0])-1, linewidth=3, color='w')
+plt.vlines(x=int(len(tns[0]) / 2), ymin=0, ymax=len(tns) - 1)
+
+
+i = 0
+sv.graph_pane(globals(), 'i', 'tn')
+
+
+time_around_beam_break = 8
+index = 0
+fig1 = plt.figure(1)
+fig2 = plt.figure(2)
+output = None
+all_indices = np.arange(len(avg_firing_rate_around_suc_trials))
+frames_around_beam_break = 120 *time_around_beam_break
+args = [all_indices, avg_firing_rate_around_suc_trials, template_info, spike_info,
+        start_pokes_after_delay, frames_around_beam_break, fig1, fig2]
+
+show_rasters_decrease = fr_funcs.show_rasters_for_live_update
+
+sl.connect_repl_var(globals(), 'index', 'output', 'show_rasters_decrease', 'args',
+                    slider_limits=[0, len(avg_firing_rate_around_suc_trials) - 1])
+# </editor-fold>
+
+

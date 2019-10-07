@@ -2,9 +2,8 @@
 from os.path import join
 import numpy as np
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2019_06_AK_47p1 import constants as const
-from BrainDataAnalysis import binning
+from BrainDataAnalysis.Statistics import binning
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib import cm
 
 from spikesorting_tsne import tsne, io_with_cpp as tsne_io
@@ -57,7 +56,7 @@ time_to_bin = 0.1
 frames_to_bin = time_to_bin * 120
 
 spike_rates_count_0p1 = binning.rolling_window_with_step(spike_rates_per_video_frame, np.sum, frames_to_bin,
-                                                       frames_to_bin)
+                                                         frames_to_bin)
 
 spike_rates_count_0p1 = spike_rates_count_0p1.transpose() * 0.00833
 
@@ -108,7 +107,7 @@ tsne_spike_rates_binary_pcs_0p1 = tsne_io.load_tsne_result(tsne_folder)
 
 
 spike_rates_count_0p1 = binning.rolling_window_with_step(spike_rates_per_video_frame, np.sum, frames_to_bin,
-                                                       frames_to_bin)
+                                                         frames_to_bin)
 spike_rates_count_0p1 = spike_rates_count_0p1.transpose()
 pca_sr_count_0p1 = PCA()
 pcs_ar_count_0p1 = pca_sr_count_0p1.fit_transform(spike_rates_count_0p1).astype(np.int16)

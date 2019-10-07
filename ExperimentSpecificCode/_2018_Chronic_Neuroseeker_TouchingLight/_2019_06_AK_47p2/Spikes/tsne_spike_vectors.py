@@ -5,7 +5,7 @@ from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2019_06_AK_
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions \
     import events_sync_funcs as sync_funcs
 import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
-from BrainDataAnalysis import binning
+from BrainDataAnalysis.Statistics import binning
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
@@ -172,12 +172,12 @@ tsne_result = tsne_io.load_tsne_result(tsne_folder)
 
 # -------------------------------------------------
 # <editor-fold desc="CREATE MATRIX OF COUNTS PER 100ms, PCA THIS AND RUN T-SNE">
-tsne_folder = join(tsne_folder_base, 'All_spikes_50msbin_count_top40PCs_6Kiter')
-time_to_bin = 0.05
+tsne_folder = join(tsne_folder_base, 'All_spikes_100msbin_count_top500PCs_4Kiter')
+time_to_bin = 0.1
 frames_to_bin = time_to_bin * 120
 
 spike_rates_count_0p1 = binning.rolling_window_with_step(spike_rates_per_video_frame, np.sum, frames_to_bin,
-                                                       frames_to_bin)
+                                                         frames_to_bin)
 
 spike_rates_count_0p1 = spike_rates_count_0p1.transpose() * 0.00833
 
@@ -185,13 +185,13 @@ pca_sr_count_0p1 = PCA()
 pcs_ar_count_0p1 = pca_sr_count_0p1.fit_transform(spike_rates_count_0p1).astype(np.int16)
 
 
-number_of_top_pcs = 40
+number_of_top_pcs = 500
 num_dims = 2
 perplexity = 100
 theta = 0.2
 eta = 200
 exageration = 12
-iterations = 6000
+iterations = 4000
 random_seed = 1
 verbose = 3
 tsne_spike_rates_count_pcs_0p1 = tsne.t_sne(pcs_ar_count_0p1[:, :number_of_top_pcs], tsne_folder, barnes_hut_exe_dir,
@@ -384,7 +384,7 @@ tsne_spike_rates_binary_pcs_0p1 = tsne_io.load_tsne_result(tsne_folder)
 
 
 spike_rates_count_0p1 = binning.rolling_window_with_step(spike_rates_per_video_frame, np.sum, frames_to_bin,
-                                                       frames_to_bin)
+                                                         frames_to_bin)
 spike_rates_count_0p1 = spike_rates_count_0p1.transpose()
 pca_sr_count_0p1 = PCA()
 pcs_ar_count_0p1 = pca_sr_count_0p1.fit_transform(spike_rates_count_0p1).astype(np.int16)

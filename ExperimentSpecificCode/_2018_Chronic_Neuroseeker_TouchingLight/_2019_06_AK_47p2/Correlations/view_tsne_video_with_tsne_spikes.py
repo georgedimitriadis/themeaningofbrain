@@ -8,21 +8,13 @@ from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2019_06_AK_
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions \
     import events_sync_funcs as sync_funcs
 import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
-import BrainDataAnalysis.tsne_analysis_functions as tsne_funcs
-from BrainDataAnalysis import ploting_functions as pf
-from BrainDataAnalysis import binning
+from BrainDataAnalysis.Graphics import ploting_functions as pf
 import matplotlib.pyplot as plt
-from matplotlib import cm
 
 import pandas as pd
-from spikesorting_tsne import tsne, io_with_cpp as tsne_io
+from spikesorting_tsne import io_with_cpp as tsne_io
 
-import sequence_viewer as sv
-import transform as tr
 import slider as sl
-
-from sklearn.decomposition import PCA
-from sklearn import preprocessing
 
 import cv2
 

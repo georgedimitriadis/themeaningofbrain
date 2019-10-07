@@ -4,7 +4,7 @@ from os.path import join
 import ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda.t_sne_spikes as tsne_spikes
 import ExperimentSpecificCode._2016_TSne_Paper.t_sne_bhcuda.bhtsne_cuda as TSNE
 import BrainDataAnalysis.Utilities as ut
-import BrainDataAnalysis.ploting_functions as pf
+import BrainDataAnalysis.Graphics.ploting_functions as pf
 import matplotlib.pyplot as plt
 import matplotlib.animation as manimation
 import scipy.io as sio

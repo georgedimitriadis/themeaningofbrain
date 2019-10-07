@@ -7,7 +7,7 @@ import pandas as pd
 import scipy.signal as signal
 import seaborn as sns
 
-from BrainDataAnalysis import Constants as ct
+from BrainDataAnalysis._Old_Structures import Constants as ct
 # import Utilities as ut
 import numpy as np
 import matplotlib.pyplot as plt

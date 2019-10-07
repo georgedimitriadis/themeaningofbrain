@@ -1,21 +1,17 @@
 
 from os.path import join
 import numpy as np
-import pickle
 
 import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2019_06_AK_47p2 import constants as const
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions \
     import events_sync_funcs as sync_funcs
 from BrainDataAnalysis.Spike_Sorting import positions_on_probe as spp
-from BrainDataAnalysis import binning
 
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib_venn import venn3
 
-import sequence_viewer as sv
-import drop_down as dd
 import slider as sl
 
 
@@ -164,6 +160,7 @@ for i_x in np.arange(len(bins) - 1):
                                                                        body_positions[:, 1] < y[1])))))
 
 occupancy = np.array(occupancy)/len(body_positions)
+occupancy_matrix = np.flipud(occupancy.reshape(number_of_bins, number_of_bins).T)
 
 spike_probabilities_at_position = []
 for neuron in np.arange(len(spike_rates)):
@@ -211,6 +208,12 @@ plt.figure(0).add_subplot(111).imshow(poke_position.reshape((number_of_bins, num
 
 spike_probabilities_at_position = np.load(join(mutual_information_folder, 'spike_probabilities_at_position.npy'))
 
+spike_probabilities_at_position_matrix = \
+    np.zeros((spike_probabilities_at_position.shape[0], number_of_bins, number_of_bins))
+for p in np.arange(spike_probabilities_at_position.shape[0]):
+    prob = np.flipud(spike_probabilities_at_position[p].reshape(number_of_bins, number_of_bins).T)
+    spike_probabilities_at_position_matrix[p, :, :] = prob
+
 max_firing_rates_at_place = np.argwhere(spike_probabilities_at_position[hipp_correlated_neurons_indices['dtp']] > 3)
 place_cells_index = hipp_correlated_neurons_indices['dtp'][np.unique(max_firing_rates_at_place[:, 0])]
 
@@ -219,7 +222,7 @@ place_cells_index = hipp_correlated_neurons_indices['dtp'][np.unique(max_firing_
 def show_probs_only_dtp(neuron, f):
     f.clear()
     a = f.add_subplot(111)
-    im = a.imshow(spike_probabilities_at_position[hipp_correlated_neurons_indices['dtp'][neuron]].reshape(number_of_bins, number_of_bins ),
+    im = a.imshow(spike_probabilities_at_position_matrix[hipp_correlated_neurons_indices['dtp'][neuron]],
              interpolation='quadric', cmap='jet')
     plt.title('Neuron index {}'.format(hipp_correlated_neurons_indices['dtp'][neuron]))
     cax = f.add_axes([0.83, 0.1, 0.05, 0.78])
@@ -230,7 +233,7 @@ def show_probs_only_dtp(neuron, f):
 def show_probs(neuron, f):
     f.clear()
     a = f.add_subplot(111)
-    im = a.imshow(spike_probabilities_at_position[neuron].reshape(number_of_bins, number_of_bins ),
+    im = a.imshow(spike_probabilities_at_position_matrix[neuron],
                   interpolation='quadric', cmap='jet')
     neuron_in_dtp = False
     if neuron in correlated_neuron_indices['dtp']:

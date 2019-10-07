@@ -7,16 +7,11 @@ from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_funct
     import events_sync_funcs as sync_funcs
 import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
 import BrainDataAnalysis.tsne_analysis_functions as tsne_funcs
-from BrainDataAnalysis import binning
+from BrainDataAnalysis.Statistics import binning
 import matplotlib.pyplot as plt
-from matplotlib import cm
 
 import pandas as pd
 from spikesorting_tsne import tsne, io_with_cpp as tsne_io
-
-import sequence_viewer as sv
-import transform as tr
-import slider as sl
 
 from sklearn.decomposition import PCA
 
@@ -62,6 +57,11 @@ capture = cv2.VideoCapture(video_file)
 num_of_frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
 
+tsne_folder = join(tsne_folder_base, 'CroppedVideo_100ms_Top100PCs')
+tsne_pcs_image_file = join(tsne_folder, 'Tsne_of_100_top_PCs_of_cropped_video.png')
+tsne_pcs_image = plt.imread(tsne_pcs_image_file)
+tsne_pcs_image_extent = [-77, 76, -80, 80]
+
 # </editor-fold>
 # -------------------------------------------------
 
@@ -98,11 +98,6 @@ for pane in grayscale_resized_video_array:
 # -------------------------------------------------
 # <editor-fold desc="PCA THE 3D ARRAY (VIDEO) AND RUN T-SNE">
 
-tsne_folder = join(tsne_folder_base, 'CroppedVideo_100ms_100To200PCs')
-tsne_pcs_image_file = join(tsne_folder, 'Tsne_of_100_top_PCs_of_cropped_video.png')
-tsne_pcs_image = plt.imread(tsne_pcs_image_file)
-tsne_pcs_image_extent = [-77, 76, -80, 80]
-
 grayscale_resized_video_array = np.load(join(subsumpled_video_folder, 'grayscale_resized_cropped_video_array.npy'))
 
 #   Flatten
@@ -110,8 +105,9 @@ grayscale_resized_video_array = \
     grayscale_resized_video_array.reshape((num_of_frames, video_resolution[0] * video_resolution[1]))
 
 #   Smooth over time to 100ms per frame
-grayscale_resized_video_array_frame_smoothed = np.transpose(binning.rolling_window_with_step(grayscale_resized_video_array.transpose(),
-                                                                                np.mean, 12, 12))
+grayscale_resized_video_array_frame_smoothed = np.transpose(
+    binning.rolling_window_with_step(grayscale_resized_video_array.transpose(),
+                                     np.mean, 12, 12))
 np.save(join(subsumpled_video_folder, 'grayscale_resized_cropped_video_array_frame_smoothed.npy'),
         grayscale_resized_video_array_frame_smoothed)
 
@@ -122,6 +118,7 @@ pcs_flat_video = pca_flat_video.fit_transform(grayscale_resized_video_array_fram
 pickle.dump(pca_flat_video, open(join(subsumpled_video_folder, 'full_pca_of_greyscale_subsampled_video.pcl'), 'wb'))
 np.save(join(subsumpled_video_folder, 'all_pcs_of_greyscale_subsampled_video.npy'), pcs_flat_video)
 
+pca_flat_video = pickle.load(open(join(subsumpled_video_folder, 'full_pca_of_greyscale_subsampled_video.pcl'), 'rb'))
 #   Reverse PCA and have a look at the resolting images
 rev_pcs_video = pca_flat_video.inverse_transform(pcs_flat_video)
 rev_pcs_video = rev_pcs_video.reshape((rev_pcs_video.shape[0], video_resolution[1], video_resolution[0]))

@@ -6,18 +6,9 @@ from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_funct
     import events_sync_funcs as sync_funcs
 import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
 from BrainDataAnalysis import tsne_analysis_functions as tsne_funcs
-from BrainDataAnalysis import binning
-import matplotlib.pyplot as plt
-from matplotlib import cm
 
 import pandas as pd
-from spikesorting_tsne import tsne, io_with_cpp as tsne_io
-
-import sequence_viewer as sv
-import transform as tr
-import slider as sl
-
-from sklearn import cluster
+from spikesorting_tsne import io_with_cpp as tsne_io
 
 # -------------------------------------------------
 # <editor-fold desc="LOAD FOLDERS">

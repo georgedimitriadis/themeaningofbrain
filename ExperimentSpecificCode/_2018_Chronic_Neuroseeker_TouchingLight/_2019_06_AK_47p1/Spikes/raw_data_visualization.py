@@ -66,7 +66,7 @@ end = 173200
 
 
 start = 793200
-end = start + 2000
+end = start + 1000
 plt.imshow(np.flipud(raw_data[:, start:end]), aspect='auto', cmap ='RdBu', vmin=-100, vmax=100)
 
 plt.plot(np.flipud(cdt.space_data(raw_data[:, start:end], 100).T))

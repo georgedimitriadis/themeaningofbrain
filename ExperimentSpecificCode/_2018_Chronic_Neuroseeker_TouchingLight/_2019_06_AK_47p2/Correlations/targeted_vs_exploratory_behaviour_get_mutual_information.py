@@ -6,7 +6,7 @@ from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2019_06_AK_
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions \
     import events_sync_funcs as sync_funcs
 from BrainDataAnalysis.Spike_Sorting import positions_on_probe as spp
-from BrainDataAnalysis import binning
+from BrainDataAnalysis.Statistics import binning
 
 from npeet.lnc import MI
 
@@ -247,7 +247,7 @@ for k in np.arange(1, number_of_patterned_events):
                                                           windows_of_patterned_behaviour[k]))
 
 speeds_patterned_behaviour_0p25 = binning.rolling_window_with_step(speeds[windows_of_patterned_behaviour_list],
-                                                                    np.mean, 30, 30)
+                                                                   np.mean, 30, 30)
 
 distances_rat_to_poke_all_frames = np.sqrt(
     np.power(body_positions_normalised[:, 0] - poke_position[0], 2) +
@@ -269,10 +269,10 @@ for k in np.arange(1, number_of_patterned_events):
                                                               windows_of_non_patterned_behaviour[k]))
 
 speeds_non_patterned_behaviour_0p25 = binning.rolling_window_with_step(speeds[windows_of_non_patterned_behaviour_list],
-                                                                        np.mean, 30, 30)
+                                                                       np.mean, 30, 30)
 distance_to_poke_non_patterned_behaviour_0p25 = \
     binning.rolling_window_with_step(distances_rat_to_poke_all_frames[windows_of_non_patterned_behaviour_list],
-                                                                    np.mean, 30, 30)
+                                     np.mean, 30, 30)
 
 spike_rates_non_patterned_behaviour_all_frames = spike_rates[:, windows_of_non_patterned_behaviour_list]
 

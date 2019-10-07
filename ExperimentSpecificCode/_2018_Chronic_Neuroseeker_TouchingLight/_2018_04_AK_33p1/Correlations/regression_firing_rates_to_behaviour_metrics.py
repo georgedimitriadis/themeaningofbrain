@@ -11,17 +11,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn import linear_model
 from sklearn import pipeline
-from sklearn import preprocessing
 
-from BrainDataAnalysis import binning
+from BrainDataAnalysis.Statistics import binning
 
 import pandas as pd
 import matplotlib.pyplot as plt
-
-import sequence_viewer as sv
-import drop_down as dd
-import slider as sl
-
 
 # -------------------------------------------------
 # <editor-fold desc="LOAD FOLDERS AND DATA">

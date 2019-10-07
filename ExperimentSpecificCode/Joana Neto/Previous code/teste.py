@@ -7,11 +7,6 @@ import itertools
 import scipy.signal as signal
 import matplotlib.pyplot as plt
 import seaborn as sns
-import BrainDataAnalysis.filters as filters
-import time
-from BrainDataAnalysis import Constants as ct
-
-
 
 #Neuroseeker 256 channels
 

@@ -28,8 +28,8 @@ for channel in np.arange(1440):
 all_channels_height = np.array(all_channels_height_on_probe)
 
 
-def load_binary_amplifier_data(file, number_of_channels=1440):
-    raw_extracellular_data = np.memmap(file, mode='r', dtype=np.int16)
+def load_binary_amplifier_data(file, number_of_channels=1440, dtype=np.int16):
+    raw_extracellular_data = np.memmap(file, mode='r', dtype=dtype)
     raw_extracellular_data = np.reshape(raw_extracellular_data,
                                         (number_of_channels,
                                          int(raw_extracellular_data.shape[0] / number_of_channels)),
