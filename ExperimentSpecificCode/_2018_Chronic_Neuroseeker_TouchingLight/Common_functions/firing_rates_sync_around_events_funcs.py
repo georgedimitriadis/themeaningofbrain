@@ -8,7 +8,8 @@ VIDEO_FRAME_RATE = 120
 SAMPLING_FREQUENCY = 20000
 
 
-def get_avg_firing_rates_around_events(spike_rates, event_time_points, ev_video_df, time_around_event=5):
+def get_avg_firing_rates_around_events(spike_rates, event_time_points, ev_video_df, time_around_event=5,
+                                       keep_trials=False):
 
     frames_of_events = sync_funcs.time_point_to_frame_from_video_df(ev_video_df, event_time_points)
     frames_around_event = time_around_event * VIDEO_FRAME_RATE
@@ -20,7 +21,10 @@ def get_avg_firing_rates_around_events(spike_rates, event_time_points, ev_video_
         firing_rate_around_events[f, :, :] = spike_rates[:, frame - frames_around_event:
                                                             frame + frames_around_event]
 
-    avg_firing_rate_around_events= firing_rate_around_events.mean(axis=0)
+    avg_firing_rate_around_events = firing_rate_around_events.mean(axis=0)
+
+    if keep_trials:
+        return firing_rate_around_events, avg_firing_rate_around_events
 
     return avg_firing_rate_around_events
 

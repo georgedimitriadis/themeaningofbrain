@@ -8,12 +8,14 @@ from matplotlib import cm
 
 from spikesorting_tsne import tsne, io_with_cpp as tsne_io
 
-import sequence_viewer as sv
-import transform as tr
-
 from sklearn.decomposition import PCA
+from sklearn import preprocessing
 
 import cv2
+
+import sequence_viewer as sv
+import transform as tr
+import slider as sl
 
 
 # -------------------------------------------------
@@ -228,5 +230,44 @@ tsne_behaviour_video.release()
 cv2.destroyAllWindows()
 
 
+# </editor-fold>
+# -------------------------------------------------
+
+
+# -------------------------------------------------
+# <editor-fold desc="SHOW TSNE CORRELATED WITH VIDEO TSNE">
+
+tsne_result = tsne_io.load_tsne_result(tsne_folder)
+
+video_tsne_labels_file = join(analysis_folder, 'Tsnes', 'Video', 'CroppedVideo_100ms_Top100PCs', 'dbscan_labels.npy')
+video_tsne_labels = np.load(video_tsne_labels_file)
+
+jet = cm.jet
+colors = jet(np.squeeze(preprocessing.normalize([video_tsne_labels], 'max')))
+plt.scatter(tsne_result[:, 0], tsne_result[:, 1], c=colors, s=3)
+
+
+def show_video_label_on_spikes_tsne(label, ax2):
+    ax2.clear()
+    ax2.set_xlim(ax1.get_xlim())
+    ax2.set_ylim(ax1.get_ylim())
+    indices = np.squeeze(np.argwhere(video_tsne_labels == label))
+    ax2.scatter(tsne_result[indices, 0], tsne_result[indices, 1], c='r')
+    return None
+
+
+label = 0
+out = None
+fig_scat = plt.figure(0)
+ax1 = fig_scat.add_subplot(111)
+ax1.imshow(tsne_pcs_count_image, extent=tsne_pcs_count_image_extent, aspect='auto')
+ax2 = ax1.twinx()
+args = [ax2]
+sl.connect_repl_var(globals(), 'label', 'out', 'show_video_label_on_spikes_tsne', 'args',
+                    slider_limits=[0, video_tsne_labels.max()-1])
+
+
+11, 12, 16, 25, 36, 37, 39, 42, 43, 44, 45, 46, 61, 71, 74, 75, 78, 81, 93, 97, 99, 100, 101, 102, 103, 104, 105,
+116, 132, 140, 141, 167, 168, 174, 251, 259, 275
 # </editor-fold>
 # -------------------------------------------------

@@ -230,10 +230,10 @@ def sample_data(batch_size,):
     Y = []
 
     frames_per_packet = 600
-    pictures_frame_gap = 1200
+    pictures_frame_gap = 600
 
     total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    bar = progressbar.ProgressBar(max_value=batch_size)
+    bar = progressbar.bar.ProgressBar(max_value=batch_size)
     for i in range(batch_size):
         X_current_buffer = []
         Y_current_buffer = []
@@ -264,7 +264,7 @@ def sample_data(batch_size,):
     Y = np.array(Y, dtype= np.float32, copy = False)
 
 
-    np.savez(join(save_data_folder, "data_random_5secs_data_10secs_images_half_size_res.npz"), r = r,  X=X_0, Y=Y)
+    np.savez(join(save_data_folder, "data_random_5secs_half_size_res.npz"), r = r,  X=X_0, Y=Y)
 
 
 sample_data(25000)

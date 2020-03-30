@@ -52,6 +52,11 @@ BRAIN_REGIONS = {'Cortex MPA': 7900, 'CA1': 6200, 'CA3': 5030,
                  'Thalamus LPMR': 4410, 'Thalamus Po': 3420, 'Thalamus VPM': 2200,
                  'Zona Incerta': 1210, 'Subthalamic Nucleus': 750, 'Internal Capsule': 300}
 
+'''
+BRAIN_REGIONS = {'Cortex MPA': 8200, 'CA1': 6200, 'CA3': 5030,
+                 'Thalamus LPMR': 4410, 'Thalamus Po': 3420, 'Thalamus VPM': 2200,
+                 'Zona Incerta': 1210, 'Subthalamic Nucleus': 750, 'Internal Capsule': 300}
+'''
 # Corrections of the number of data points to use because there seems to be a problem with the last frames of the video
 BRAIN_DATA_UP_TO_QUARTER_SECOND = 13506
 BRAIN_DATA_UP_TO_FRAME = 405180

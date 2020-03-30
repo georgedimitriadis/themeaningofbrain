@@ -7,7 +7,7 @@ Created on Fri Nov 22 15:07:35 2013
 import numpy as np
 import scipy.signal as signal
 import warnings
-import BrainDataAnalysis.filters as filt
+import BrainDataAnalysis.Frequency_Analysis.filters as filt
 import math
 
 
@@ -139,7 +139,7 @@ def create_solenoid_events(events, pickOutOrIn):
 def time_lock_raw_data(data, events, times_to_cut, sampling_freq, baseline_time=None, sub_sample_freq=None,
                        high_pass_cutoff=None, rectify=False, low_pass_cutoff=None, avg_reref=False, keep_trials=False):
     """
-    Time locks, baselines, high or low passes, and sub samples the data (in that order)
+    Time locks, average rereferences, baselines, high or low passes, and sub samples the data (in that order)
     """
     if np.ndim(events) == 2:
         events = events[0, :]
@@ -162,16 +162,15 @@ def time_lock_raw_data(data, events, times_to_cut, sampling_freq, baseline_time=
             else:
                 tl_singletrial_data = np.zeros(
                     [math.ceil(number_of_samples * (sub_sample_freq / sampling_freq)), number_of_trials])
-        tl_avgtrials_data = np.empty(
-            [number_of_channels, math.ceil(number_of_samples * (sub_sample_freq / sampling_freq))])
     else:
         if keep_trials:
             if np.size(np.shape(data)) > 1:
                 tl_singletrial_data = np.zeros([number_of_channels, number_of_samples, number_of_trials])
             else:
                 tl_singletrial_data = np.zeros([number_of_samples, number_of_trials])
-        tl_avgtrials_data = np.zeros([number_of_channels, number_of_samples])
 
+    mean = 0
+    M2 = 0
     for index in range(number_of_trials):
         temp_samples_to_cut = samples_to_cut + events[index]
         breakpoint = False
@@ -216,27 +215,30 @@ def time_lock_raw_data(data, events, times_to_cut, sampling_freq, baseline_time=
             else:
                 temp_data = baseline_correct(temp_data, sampling_freq, time_axis, baseline_time[0], baseline_time[1])
 
+        #  Calc online variance and mean
+        delta = temp_data - mean
+        mean = mean + delta / (index + 1)
+        M2 = M2 + delta * (temp_data - mean)
+
+
         if keep_trials:
             if np.size(np.shape(data)) > 1:
                 tl_singletrial_data[:, :, index] = temp_data
             else:
                 tl_singletrial_data[:, index] = temp_data
 
-        if index == 0:
-            tl_avgtrials_data = temp_data
-        elif index > 0:
-            tl_avgtrials_data += temp_data
-
         if index % 10 == 0:
             print(index)
 
-    tl_avgtrials_data /= number_of_trials
+    variance = M2 / (index + 1)
+    tl_avgtrials_data = mean
+    tl_stdtrials_data = np.sqrt(variance)
     if sub_sample_freq:
         time_axis = sub_time_axis
 
-    returned_tuple = [tl_avgtrials_data, time_axis]
+    returned_tuple = [tl_avgtrials_data, tl_stdtrials_data, time_axis]
     if keep_trials:
-        returned_tuple = [tl_singletrial_data, tl_avgtrials_data, time_axis]
+        returned_tuple = [tl_singletrial_data, tl_avgtrials_data, tl_stdtrials_data, time_axis]
 
     return returned_tuple
 
