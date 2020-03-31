@@ -9,6 +9,8 @@ from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_funct
     import events_sync_funcs as sync_funcs, firing_rates_sync_around_events_funcs as fr_funcs
 from BrainDataAnalysis.Spike_Sorting import positions_on_probe as spp
 from BrainDataAnalysis.Statistics import binning
+from BrainDataAnalysis.Statistics import binning, cluster_based_permutation_tests as cl_per
+from BrainDataAnalysis.Graphics import ploting_functions as plf
 
 from sklearn import preprocessing as preproc
 import pandas as pd
@@ -173,3 +175,166 @@ show_rasters_decrease = fr_funcs.show_rasters_for_live_update
 sl.connect_repl_var(globals(), 'index', 'output', 'show_rasters_decrease', 'args',
                     slider_limits=[0, len(avg_firing_rate_around_not_suc_trials) - 1])
 # </editor-fold>
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# <editor-fold desc="COMPARE THE FRs AROUND THE POKE EVENTS WITH THE ONES AROUND THE RANDOM ONES">
+
+time_around_beam_break = 8
+non_succ_trials = np.random.choice(start_pokes_after_delay, 100, replace=False)
+#non_succ_trials = start_pokes_after_delay
+firing_rate_around_suc_trials, _ = fr_funcs.get_avg_firing_rates_around_events(spike_rates=spike_rates,
+                                                                               event_time_points=non_succ_trials,
+                                                                               ev_video_df=event_dataframes['ev_video'],
+                                                                               time_around_event=time_around_beam_break,
+                                                                               keep_trials=True)
+
+events_random = np.random.choice(np.arange(non_succ_trials.min(), non_succ_trials.max(), 100),
+                                 len(non_succ_trials), replace=False)
+firing_rate_around_random_times, _ = fr_funcs.get_avg_firing_rates_around_events(spike_rates=spike_rates,
+                                                                                 event_time_points=events_random,
+                                                                                 ev_video_df=event_dataframes['ev_video'],
+                                                                                 time_around_event=time_around_beam_break,
+                                                                                 keep_trials=True)
+
+y_positions = template_info['position Y'].values
+position_sorted_indices = np.argsort(y_positions)
+
+regions_pos = list(const.BRAIN_REGIONS.values())
+region_lines = []
+for rp in regions_pos:
+    region_lines.append(sync_funcs.find_nearest(y_positions[position_sorted_indices] * const.POSITION_MULT, rp)[0])
+region_lines = np.array(region_lines)
+
+smooth_time = 0.5
+smooth_frames = smooth_time * 120
+
+t = binning.rolling_window_with_step(firing_rate_around_suc_trials[0, :, :], np.mean, smooth_frames,
+                                         int(smooth_frames / 3))
+
+
+trials = firing_rate_around_suc_trials.shape[0]
+neurons = firing_rate_around_suc_trials.shape[1]
+timebins = t.shape[1]
+timebined = np.empty((trials, neurons, timebins))
+timebined_sorted_frs_around_suc_trials = np.empty((trials, neurons, timebins))
+timebined_sorted_frs_around_random = np.empty((trials, neurons, timebins))
+timebined_sorted_normalised_frs_around_suc_trials = np.empty((trials, neurons, timebins))
+timebined_sorted_normalised_frs_around_random = np.empty((trials, neurons, timebins))
+
+for trial in np.arange(trials):
+    timebined[trial, :, :] = binning.rolling_window_with_step(firing_rate_around_suc_trials[trial, :, :], np.mean,
+                                                              smooth_frames, int(smooth_frames / 3))
+
+    timebined_sorted = timebined[trial, position_sorted_indices, :]
+
+    timebined_sorted_frs_around_suc_trials[trial, :, :] = timebined_sorted
+
+    for neuron in np.arange(neurons):
+        timebined_sorted_normalised_frs_around_suc_trials[trial, neuron, :] = \
+            binning.scale(timebined_sorted_frs_around_suc_trials[trial, neuron, :], 0, 1)
+
+    timebined[trial, :, :] = binning.rolling_window_with_step(firing_rate_around_random_times[trial, :, :], np.mean,
+                                                              smooth_frames, int(smooth_frames / 3))
+
+    timebined_sorted = timebined[trial, position_sorted_indices, :]
+
+    timebined_sorted_frs_around_random[trial, :, :] = timebined_sorted
+
+    for neuron in np.arange(neurons):
+        timebined_sorted_normalised_frs_around_random[trial, neuron, :] = \
+            binning.scale(timebined_sorted_frs_around_random[trial, neuron, :], 0, 1)
+
+avg_timebined_sorted_frs_around_suc_trials = np.mean(timebined_sorted_frs_around_suc_trials, axis=0)
+avg_timebined_sorted_frs_around_random = np.mean(timebined_sorted_frs_around_random, axis=0)
+
+baseline_time = 1
+baseline_points = int(timebins * baseline_time /(2 * time_around_beam_break))
+avg_timebined_sorted_normalised_frs_around_suc_trials = np.empty((neurons, timebins))
+avg_timebined_sorted_baselined_frs_around_suc_trials = np.empty((neurons, timebins))
+for neuron in np.arange(neurons):
+    avg_timebined_sorted_normalised_frs_around_suc_trials[neuron, :] = \
+        binning.scale(avg_timebined_sorted_frs_around_suc_trials[neuron, :], 0, 1)
+    div = np.mean(avg_timebined_sorted_frs_around_suc_trials[neuron, :baseline_points])
+    avg_timebined_sorted_baselined_frs_around_suc_trials[neuron, :] = \
+        avg_timebined_sorted_frs_around_suc_trials[neuron, :] / div
+    if div == 0.0:
+        avg_timebined_sorted_baselined_frs_around_suc_trials[neuron, :] = \
+            avg_timebined_sorted_frs_around_suc_trials[neuron, :]
+        print(neuron)
+
+avg_timebined_sorted_baselined_frs_around_suc_trials /= avg_timebined_sorted_baselined_frs_around_suc_trials.max()
+avg_timebined_sorted_normalised_frs_around_random = np.empty((neurons, timebins))
+avg_timebined_sorted_baselined_frs_around_random = np.empty((neurons, timebins))
+for neuron in np.arange(neurons):
+    avg_timebined_sorted_normalised_frs_around_random[neuron, :] = \
+        binning.scale(avg_timebined_sorted_frs_around_random[neuron, :], 0, 1)
+    div = np.mean(avg_timebined_sorted_frs_around_random[neuron, :baseline_points])
+    avg_timebined_sorted_baselined_frs_around_random[neuron, :] = \
+        avg_timebined_sorted_frs_around_random[neuron, :] / div
+    if div == 0.0:
+        avg_timebined_sorted_baselined_frs_around_random[neuron, :] = \
+            avg_timebined_sorted_frs_around_random[neuron, :]
+        print(neuron)
+
+
+plt.figure(0)
+plt.imshow(np.flipud(avg_timebined_sorted_normalised_frs_around_suc_trials), aspect='auto')
+plt.hlines(y=neurons - region_lines, xmin=0, xmax=timebins-1, linewidth=3, color='w')
+plt.vlines(x=int(timebins / 2), ymin=0, ymax=neurons - 1)
+
+
+# Normalising the average is not the same as averaging the normalised trials!
+# The following scales individual trials so when they get averaged the result is going to be normalised
+timebined_sorted_special_normalised_frs_around_suc_trials = np.empty((trials, neurons, timebins))
+timebined_sorted_special_normalised_frs_around_random = np.empty((trials, neurons, timebins))
+
+for neuron in np.arange(neurons):
+
+    X_max_suc = np.mean(timebined_sorted_frs_around_suc_trials, axis=0)[neuron].max()
+    X_min_suc = np.mean(timebined_sorted_frs_around_suc_trials, axis=0)[neuron].min()
+
+    X_max_rand = np.mean(timebined_sorted_frs_around_random, axis=0)[neuron].max()
+    X_min_rand = np.mean(timebined_sorted_frs_around_random, axis=0)[neuron].min()
+
+    for trial in np.arange(trials):
+
+        timebined_sorted_special_normalised_frs_around_suc_trials[trial, neuron] = \
+            binning.scale(timebined_sorted_frs_around_suc_trials[trial, neuron, :], 0, 1, X_min_suc, X_max_suc)
+
+        timebined_sorted_special_normalised_frs_around_random[trial, neuron] = \
+            binning.scale(timebined_sorted_frs_around_random[trial, neuron, :], 0, 1, X_min_rand, X_max_rand)
+
+timebined_sorted_special_normalised_trancated_frs_around_suc_trials = \
+    np.copy(timebined_sorted_special_normalised_frs_around_suc_trials)
+timebined_sorted_special_normalised_trancated_frs_around_suc_trials[timebined_sorted_special_normalised_trancated_frs_around_suc_trials>20] = 20
+
+timebined_sorted_special_normalised_trancated_frs_around_random = \
+    np.copy(timebined_sorted_special_normalised_frs_around_random)
+timebined_sorted_special_normalised_trancated_frs_around_random[timebined_sorted_special_normalised_trancated_frs_around_random>20] = 20
+
+
+plt.figure(1)
+plt.imshow(np.flipud(np.mean(timebined_sorted_special_normalised_frs_around_suc_trials, axis=0)), aspect='auto')
+plt.hlines(y=neurons - region_lines, xmin=0, xmax=timebins-1, linewidth=3, color='w')
+plt.vlines(x=int(timebins / 2), ymin=0, ymax=neurons - 1)
+plt.colorbar()
+
+timebined_sorted_frs_around_suc_trials_tr = np.transpose(timebined_sorted_normalised_frs_around_suc_trials, [1, 2, 0])
+timebined_sorted_frs_around_random_tr = np.transpose(timebined_sorted_normalised_frs_around_random, [1, 2, 0])
+p_values_pokes_vs_random, cluster_labels_poke_vs_random = \
+    cl_per.monte_carlo_significance_probability(timebined_sorted_frs_around_suc_trials_tr, timebined_sorted_frs_around_random_tr,
+                                                num_permutations=1000, min_area=5, cluster_alpha=0.02,
+                                                monte_carlo_alpha=0.05, sample_statistic='independent',
+                                                cluster_statistic='maxarea')
+
+data = avg_timebined_sorted_normalised_frs_around_suc_trials
+cluster_labels = cluster_labels_poke_vs_random
+plf.show_significant_clusters_on_data(data, cluster_labels, region_lines, np.arange(neurons), window_time=8,
+                                      colormap='binary', markers='o', alpha=0.6, marker_color='b')
+plt.vlines(x=0, ymin=0, ymax=neurons - 1)
+plt.title(const.rat_folder)
+
+# </editor-fold>
+# ----------------------------------------------------------------------------------------------------------------------
+

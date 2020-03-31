@@ -33,7 +33,7 @@ import dask
 
 
 # FOLDERS NAMES --------------------------------------------------
-date = 8
+date = 5
 kilosort_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date],
                        'Analysis', 'Kilosort')
 data_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date], 'Data')
@@ -609,7 +609,7 @@ from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_
 
 
 # FOLDERS NAMES --------------------------------------------------
-date = 8
+date = 5
 binary_data_filename = join(const.base_save_folder, const.rat_folder, const.date_folders[date],
                             'Data', 'Amplifier_APs.bin')
 denoised_folder = join(const.base_save_folder, const.rat_folder, const.date_folders[date],

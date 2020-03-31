@@ -117,3 +117,30 @@ events_touch_ball_successful_trial = np.array(events_touch_ball_successful_trial
 # -------------------------------------------------
 
 
+# -------------------------------------------------
+# <editor-fold desc="TEST THAT THE EVENTS ARE CORRECT">
+
+import sequence_viewer as sv
+import drop_down as dd
+
+
+def tp_to_frame(tp):
+    return sync_funcs.time_point_to_frame_from_video_df(event_dataframes['ev_video'], tp)[0]
+
+frame = 10
+dd.connect_repl_var(globals(), input_var_name='first_pokes_after_delay',
+                    output_var_name='frame', function_name='tp_to_frame')
+
+video_file = join(data_folder, 'Video.avi')
+sv.image_sequence(globals(), 'frame', 'video_file')
+
+
+first_pokes_wrong = [4, 8, 49, 50]
+first_pokes_after_delay = np.delete(first_pokes_after_delay, first_pokes_wrong)
+
+np.save(join(events_definitions_folder, 'events_first_pokes_after_{}_delay_non_reward.npy'.format(str(minimum_delay)))
+        , first_pokes_after_delay)
+
+np.argwhere(first_pokes_after_delay==43105374)
+# </editor-fold>
+# -------------------------------------------------

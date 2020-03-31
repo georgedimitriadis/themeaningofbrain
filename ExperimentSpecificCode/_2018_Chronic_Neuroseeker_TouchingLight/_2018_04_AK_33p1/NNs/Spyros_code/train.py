@@ -101,7 +101,7 @@ def build_network_split(spike_shape, image_shape):
 
 
 
-def build_network(spike_shape, image_shape, with_spikes=True ):
+def build_network_original(spike_shape, image_shape, with_spikes=True ):
     from keras.layers import Input, Dense, Convolution2D, concatenate, Reshape, Flatten, BatchNormalization, Dropout, MaxPooling2D, CuDNNLSTM, LSTM, dot
     from keras.models import Model
     from keras.optimizers import Adam
@@ -142,14 +142,58 @@ def build_network(spike_shape, image_shape, with_spikes=True ):
     return model
 
 
+# type = Both OR Spikes OR Image
+def build_network(spike_shape, image_shape, type='Both'):
+    from keras.layers import Input, Dense, Convolution2D, concatenate, Reshape, Flatten, BatchNormalization, Dropout, MaxPooling2D, CuDNNLSTM, LSTM, dot
+    from keras.models import Model
+    from keras.optimizers import Adam
+
+    # This returns a tensor
+    input_0 = Input(shape=(spike_shape[1],spike_shape[2],spike_shape[3]))
+    input_1 = Input(shape=(1,image_shape[1], image_shape[2]))
+
+
+    ## let's start with 2D convolutions 3 X 3
+    reshaped_input = Reshape(target_shape=(spike_shape[1], spike_shape[2]))(input_0)
+    x_spikes = CuDNNLSTM(64)(reshaped_input)
+    x_image = Convolution2D(filters=4, kernel_size=(3, 3), activation="elu", data_format='channels_first')(input_1)
+    x_image = Flatten()(x_image)
+
+    # a layer instance is callable on a tensor, and returns a tensor
+    x_image = Dense(1024, activation='elu')(x_image)
+    x_image = Dropout(0.5)(x_image)
+    x_image = Dense(1024, activation='elu')(x_image)
+    x_image = Dropout(0.5)(x_image)
+
+    if type == 'Both':
+        x = concatenate([x_image, x_spikes])
+    elif type == 'Spikes':
+        x = x_spikes
+    elif type == 'Image':
+        x = x_image
+    predictions = Dense(image_shape[1]*image_shape[2], activation='sigmoid')(x)
+
+    predictions = Reshape((image_shape[1], image_shape[2]))(predictions)
+
+    # This creates a model that includes
+    # the Input layer and three Dense layers
+    model = Model(inputs=[input_0, input_1], outputs=predictions)
+    model.compile(optimizer=Adam(lr=0.0005),
+                  loss='mse')
+
+    #print(model.summary())
+
+    return model
+
+
 #
 base_data_folder = r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NNs'
 data_folder = join(base_data_folder, 'Data')
-with np.load(join(data_folder, "data_random_5secs_data_10secs_images_half_size_res.npz")) as data:
+with np.load(join(data_folder, "data_random_5secs_half_size_res.npz")) as data:
     X = data['X']
     X = X.reshape(X.shape[0], X.shape[1], X.shape[2], 1)
     Y = data["Y"]/255.0
-    starting_images = Y[:,0:1,:,:]
+    starting_images = Y[:, 0:1, :, :]
     ending_images = Y[:, 1, :, :]
     r = data["r"]
 sort_idx = r.argsort()
@@ -170,39 +214,49 @@ print(X.shape)
 print(X.max())
 
 X_train, X_test, starting_images_train, starting_images_test, ending_images_train, ending_images_test \
-    = train_test_split(X,starting_images, ending_images, shuffle=False, test_size=0.10 )
+    = train_test_split(X, starting_images, ending_images, shuffle=False, test_size=0.10 )
 
-
+run_with = ['Spikes']  # ['Both', 'Spikes', 'Image']
+data_folder_suffix = 'half_size_spyros'
 
 print(X_train.shape)
 
-model_spiky = build_network(X.shape, ending_images.shape, True)
-print(model_spiky.summary())
+if 'Both' in run_with:
+    model_full = build_network(X.shape, ending_images.shape, type='Both')
+    print(model_full.summary())
+
+    full_checkpoint_file = (join(data_folder, 'both_latest_model_{}.h5'.format(data_folder_suffix)))
+    full_checkpoint = ModelCheckpoint(full_checkpoint_file, monitor='val_loss', verbose=1, save_best_only=True,
+                                       mode='min')
+    full_callbacks_list = [full_checkpoint]
+    model_full.fit([X_train, starting_images_train], ending_images_train,
+                    validation_data=([X_test, starting_images_test], ending_images_test),
+                    epochs=300, callbacks=full_callbacks_list)
+    model_full.save(join(data_folder, 'both_model_{}.h5'.format(data_folder_suffix)))
+
+if 'Spikes' in run_with:
+    model_spikes = build_network(X.shape, ending_images.shape, type='Spikes')
+    print(model_spikes.summary())
 
 
-spiky_checkpoint_file = (join(data_folder, 'spiky_latest_model_half_size_spyros.h5'))
-spiky_checkpoint = ModelCheckpoint(spiky_checkpoint_file, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
-spiky_callbacks_list = [spiky_checkpoint]
-model_spiky.fit([X_train, starting_images_train], ending_images_train,
-          validation_data=([X_test, starting_images_test], ending_images_test),
-          epochs=300, callbacks=spiky_callbacks_list)
-model_spiky.save(join(data_folder, 'spiky_model_half_size_spyros.h5'))
-
-#model.fit([X_train,starting_images_train],[ending_images_train,ending_images_train],
-#          validation_data=([X_test, starting_images_test], [ending_images_test, ending_images_test]),epochs = 10000  )
+    spikes_checkpoint_file = (join(data_folder, 'spikes_latest_model_{}.h5'.format(data_folder_suffix)))
+    spikes_checkpoint = ModelCheckpoint(spikes_checkpoint_file, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
+    spikes_callbacks_list = [spikes_checkpoint]
+    model_spikes.fit([X_train, starting_images_train], ending_images_train,
+              validation_data=([X_test, starting_images_test], ending_images_test),
+              epochs=300, callbacks=spikes_callbacks_list)
+    model_spikes.save(join(data_folder, 'spikes_model_{}.h5'.format(data_folder_suffix)))
 
 
-# print(X.shape)
-# print(Y.shape)
+if 'Image' in run_with:
+    model_pictures = build_network(X.shape, ending_images.shape, type='Image')
+    print(model_pictures.summary())
 
-model_pictures = build_network(X.shape, ending_images.shape, False)
-print(model_pictures.summary())
-
-pictures_checkpoint_file = (join(data_folder, 'pictures_latest_model_half_size_spyros.h5'))
-pictures_checkpoint = ModelCheckpoint(pictures_checkpoint_file, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
-pictures_callbacks_list = [pictures_checkpoint]
-model_pictures.fit([X_train, starting_images_train], ending_images_train,
-          validation_data=([X_test, starting_images_test], ending_images_test),
-          epochs=300, callbacks = pictures_callbacks_list)
-model_pictures.save(join(data_folder, 'pictures_model_half_size_spyros.h5'))
+    pictures_checkpoint_file = (join(data_folder, 'pictures_latest_model_{}.h5'.format(data_folder_suffix)))
+    pictures_checkpoint = ModelCheckpoint(pictures_checkpoint_file, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
+    pictures_callbacks_list = [pictures_checkpoint]
+    model_pictures.fit([X_train, starting_images_train], ending_images_train,
+              validation_data=([X_test, starting_images_test], ending_images_test),
+              epochs=300, callbacks = pictures_callbacks_list)
+    model_pictures.save(join(data_folder, 'pictures_model_{}.h5'.format(data_folder_suffix)))
 

@@ -6,8 +6,9 @@ from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight._2018_04_AK_
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions \
     import events_sync_funcs as sync_funcs
 import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
-from BrainDataAnalysis.Statistics import binning
+from BrainDataAnalysis.Statistics import binning, cluster_based_permutation_tests as cl_per
 from BrainDataAnalysis import timelocked_analysis_functions as tla_funcs
+from BrainDataAnalysis.Graphics import ploting_functions as plf
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -29,6 +30,7 @@ analysis_folder = join(const.base_save_folder, const.rat_folder, const.date_fold
 kilosort_folder = join(analysis_folder, 'Denoised', 'Kilosort')
 results_folder = join(analysis_folder, 'Results')
 events_definitions_folder = join(results_folder, 'EventsDefinitions')
+lfp_average_data_folder = join(results_folder, 'Lfp', 'Averages')
 
 mutual_information_folder = join(analysis_folder, 'Results', 'MutualInformation')
 patterned_vs_non_patterned_folder = join(analysis_folder, 'Behaviour', 'PatternedVsNonPatterned')
@@ -78,6 +80,7 @@ possible_events = {'tp': trial_pokes_timepoints,
 lfp_probe_positions = np.empty(const.NUMBER_OF_LFP_CHANNELS_IN_BINARY_FILE)
 lfp_probe_positions[np.arange(0, 72, 2)] = (((np.arange(9, 1440, 40) + 1) / 4).astype(np.int) + 1) * 22.5
 lfp_probe_positions[np.arange(1, 72, 2)] = (((np.arange(29, 1440, 40) + 1) / 4).astype(np.int)) * 22.5
+
 # </editor-fold>
 # -------------------------------------------------
 
@@ -202,56 +205,76 @@ plt.title(title)
 
 
 # -------------------------------------------------
-# <editor-fold desc="LFPS AROUND SPIKES">
+# <editor-fold desc="COMPARE LFPS AROUND THE SUCCESSFUL AND THE NON_SUCCESSFUL EVENTS">
 
-event_type = 'tp'
-mod_type = 'i'
+# <editor-fold desc="Create the data sets (RUN ONCE AND SAVE)">
+event_choise = 'tp'
+tps = possible_events[event_choise]
+num_of_tp = len(tps)
 
-events = possible_events[event_type]
-neurons = neuron_indices[event_type][mod_type]
-
-# Use the all spikes of a neuron
-lfps_around_all_spikes = {}
-for n in neurons:
-    spike_times = template_info.iloc[n]['spikes in template']
-    num_of_events = len(spike_times)
-    temp = np.empty((const.NUMBER_OF_LFP_CHANNELS_IN_BINARY_FILE, num_of_events, 2 * window_timepoints))
-    for i in np.arange(num_of_events):
-        temp[:, i, :] = lfps[:, spike_times[i] - window_timepoints:
-                                spike_times[i] + window_timepoints]
-    lfps_around_all_spikes[n] = np.mean(temp, axis=1)
-    print(n)
+lfps_around_tp, avg_lfps_around_tp, std_lfps_around_tp, time_axis = \
+    tla_funcs.time_lock_raw_data(lfps, tps, times_to_cut=[-window_time, window_time],
+                                 sampling_freq=const.SAMPLING_FREQUENCY,
+                                 baseline_time=[-window_time, -0.5 * window_time], sub_sample_freq=None,
+                                 high_pass_cutoff=None, rectify=None, low_pass_cutoff=100,
+                                 avg_reref=True, keep_trials=True)
 
 
-_ = plt.plot(space(lfps_around_all_spikes[neurons[8]]).T)
+event_choise = 'ntp'
+ntps = possible_events[event_choise]
+num_of_ntp = len(ntps)
+
+lfps_around_ntp, avg_lfps_around_ntp, std_lfps_around_tp, time_axis = \
+    tla_funcs.time_lock_raw_data(lfps, ntps, times_to_cut=[-window_time, window_time],
+                                 sampling_freq=const.SAMPLING_FREQUENCY,
+                                 baseline_time=[-window_time, -0.5 * window_time], sub_sample_freq=None,
+                                 high_pass_cutoff=None, rectify=None, low_pass_cutoff=100,
+                                 avg_reref=True, keep_trials=True)
+
+smooth_factor = 1000
+lfps_around_tp_smooth = np.empty((lfps_around_tp.shape[0], int(lfps_around_tp.shape[1] / smooth_factor),
+                                  lfps_around_tp.shape[2]))
+lfps_around_ntp_smooth = np.empty((lfps_around_ntp.shape[0], int(lfps_around_ntp.shape[1] / smooth_factor),
+                                  lfps_around_ntp.shape[2]))
+for i in np.arange(lfps_around_tp.shape[2]):
+    lfps_around_tp_smooth[:, :, i] = binning.rolling_window_with_step(lfps_around_tp[:, :, i], np.mean, smooth_factor, smooth_factor)
+    lfps_around_ntp_smooth[:, :, i] = binning.rolling_window_with_step(lfps_around_ntp[:, :, i], np.mean, smooth_factor, smooth_factor)
+
+np.save(join(lfp_average_data_folder, 'lfps_around_tp_smooth.npy'), lfps_around_tp_smooth)
+np.save(join(lfp_average_data_folder, 'lfps_around_ntp_smooth.npy'), lfps_around_ntp_smooth)
+# </editor-fold>
+
+lfps_around_tp_smooth = np.load(join(lfp_average_data_folder, 'lfps_around_tp_smooth.npy'))
+lfps_around_ntp_smooth = np.load(join(lfp_average_data_folder, 'lfps_around_ntp_smooth.npy'))
+
+lfps_around_tp_smooth_left = lfps_around_tp_smooth[np.arange(0, 72, 2)]
+lfps_around_tp_smooth_right = lfps_around_tp_smooth[np.arange(1, 72, 2)]
+lfps_around_ntp_smooth_left = lfps_around_ntp_smooth[np.arange(0, 72, 2)]
+lfps_around_ntp_smooth_right = lfps_around_ntp_smooth[np.arange(1, 72, 2)]
 
 
-# Use the spike closest to the event
-lfps_around_event_spikes = {}
-for n in neurons:
-    spike_times = template_info.iloc[n]['spikes in template']
-    event_spike_times = []
-    for ev in events:
-        event_spike_times.append(spike_times[np.argmin(np.abs(spike_times-ev))])
-    num_of_events = len(event_spike_times)
-    temp = np.empty((const.NUMBER_OF_LFP_CHANNELS_IN_BINARY_FILE, num_of_events, 2 * window_timepoints))
-    for i in np.arange(num_of_events):
-        temp[:, i, :] = lfps[:, event_spike_times[i] - window_timepoints:
-                                          event_spike_times[i] + window_timepoints]
-    lfps_around_event_spikes[n] = np.mean(temp, axis=1)
-    print(n)
+p_values_right, cluster_labels_under_alpha_right = \
+    cl_per.monte_carlo_significance_probability(lfps_around_tp_smooth_right, lfps_around_ntp_smooth_right,
+                                                num_permutations=1000, min_area=10, cluster_alpha=0.05,
+                                                monte_carlo_alpha=0.01, sample_statistic='independent',
+                                                cluster_statistic='maxsum')
 
-def show(index, ax):
-    ax.clear()
-    ax.plot(space(lfps_around_event_spikes[neurons[index]]).T)
-    return None
+p_values_left, cluster_labels_under_alpha_left = \
+    cl_per.monte_carlo_significance_probability(lfps_around_tp_smooth_left, lfps_around_ntp_smooth_left,
+                                                num_permutations=1000, min_area=10, cluster_alpha=0.05,
+                                                monte_carlo_alpha=0.01, sample_statistic='independent',
+                                                cluster_statistic='maxsum')
 
-index = 0
-fig = plt.figure(0)
-ax = fig.add_subplot(111)
-out = None
-args = [ax]
-sl.connect_repl_var(globals(), 'index', 'out', 'show', 'args', slider_limits=[0, len(neurons)-1])
+
+pos = list(const.BRAIN_REGIONS.values())
+data = lfps_around_tp_smooth_left.mean(-1)
+cluster_labels = cluster_labels_under_alpha_left
+plf.show_significant_clusters_on_data(data, cluster_labels, pos, lfp_probe_positions, window_time=8)
+
+data = lfps_around_tp_smooth_right.mean(-1)
+cluster_labels = cluster_labels_under_alpha_right
+plf.show_significant_clusters_on_data(data, cluster_labels, pos, lfp_probe_positions, window_time=8)
 
 # </editor-fold>
 # -------------------------------------------------
+

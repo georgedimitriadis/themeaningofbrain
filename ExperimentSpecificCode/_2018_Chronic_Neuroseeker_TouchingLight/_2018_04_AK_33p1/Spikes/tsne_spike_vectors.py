@@ -7,6 +7,7 @@ import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
 from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_functions \
     import events_sync_funcs as sync_funcs
 
+from sklearn import preprocessing
 from spikesorting_tsne import tsne, io_with_cpp as tsne_io
 
 from sklearn.decomposition import PCA
@@ -48,9 +49,9 @@ dlc_folder = join(analysis_folder, 'Deeplabcut')
 dlc_project_folder = join(dlc_folder, 'projects', 'V1--2019-06-30')
 video_file = join(dlc_folder, 'BonsaiCroping', 'Full_video.avi')
 
-tsne_pcs_count_image_file = join(analysis_folder, 'Images', 'Tsne_of_10_top_PCs_of_0p1_count_spike_vectors.png')
+tsne_pcs_count_image_file = join(analysis_folder, 'Images', 'Tsne_of_40_top_PCs_of_0p1_count_spike_vectors.png')
 tsne_pcs_count_image = plt.imread(tsne_pcs_count_image_file)
-tsne_pcs_count_image_extent = [-37, 28, -26, 31]
+tsne_pcs_count_image_extent = [-16, 22, -18, 13]
 
 
 # </editor-fold>
@@ -123,7 +124,7 @@ tsne_spike_rates_binary_pcs_0p1 = tsne_io.load_tsne_result(tsne_folder)
 
 # -------------------------------------------------
 # <editor-fold desc="CREATE MATRIX OF COUNTS PER 100ms, PCA THIS AND RUN T-SNE">
-tsne_folder = join(tsne_folder_base, 'All_spikes_100msbin_count_top20PCs')
+tsne_folder = join(tsne_folder_base, 'All_spikes_100msbin_count_top40PCs_6Kiters')
 time_to_bin = 0.1
 frames_to_bin = time_to_bin * 120
 
@@ -137,13 +138,13 @@ pca_sr_count_0p1 = PCA()
 pcs_ar_count_0p1 = pca_sr_count_0p1.fit_transform(spike_rates_count_0p1).astype(np.int16)
 
 
-number_of_top_pcs = 20
+number_of_top_pcs = 40
 num_dims = 2
 perplexity = 100
 theta = 0.2
 eta = 200
 exageration = 12
-iterations = 8000
+iterations = 6000
 random_seed = 1
 verbose = 2
 tsne_spike_rates_count_pcs_0p1 = tsne.t_sne(pcs_ar_count_0p1[:, :number_of_top_pcs], tsne_folder, barnes_hut_exe_dir,
@@ -415,5 +416,42 @@ traj = 0
 out = None
 sl.connect_repl_var(globals(), 'traj', 'out', 'show_traj', slider_limits=[0, 11])
 
+# </editor-fold>
+# -------------------------------------------------
+
+# -------------------------------------------------
+# <editor-fold desc="SHOW TSNE CORRELATED WITH VIDEO TSNE">
+
+tsne_folder = join(tsne_folder_base, 'All_spikes_100msbin_count_top40PCs_6Kiters')
+tsne_result = tsne_io.load_tsne_result(tsne_folder)
+
+video_tsne_labels_file = join(analysis_folder, 'Tsnes', 'Video', 'CroppedVideo_100ms_Top100PCs', 'dbscan_labels.npy')
+video_tsne_labels = np.load(video_tsne_labels_file)
+
+jet = cm.jet
+colors = jet(np.squeeze(preprocessing.normalize([video_tsne_labels], 'max')))
+plt.scatter(tsne_result[:, 0], tsne_result[:, 1], c=colors, s=3)
+
+
+def show_video_label_on_spikes_tsne(label, ax2):
+    ax2.clear()
+    ax2.set_xlim(ax1.get_xlim())
+    ax2.set_ylim(ax1.get_ylim())
+    indices = np.squeeze(np.argwhere(video_tsne_labels == label))
+    ax2.scatter(tsne_result[indices, 0], tsne_result[indices, 1], c='r')
+    return None
+
+
+label = 0
+out = None
+fig_scat = plt.figure(0)
+ax1 = fig_scat.add_subplot(111)
+ax1.imshow(tsne_pcs_count_image, extent=tsne_pcs_count_image_extent, aspect='auto')
+ax2 = ax1.twinx()
+args = [ax2]
+sl.connect_repl_var(globals(), 'label', 'out', 'show_video_label_on_spikes_tsne', 'args',
+                    slider_limits=[0, video_tsne_labels.max()-1])
+
+#48, 56?, 60, 83, 101?
 # </editor-fold>
 # -------------------------------------------------

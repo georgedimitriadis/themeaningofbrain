@@ -66,11 +66,23 @@ reward_sounds = sounds[sounds_dur < 4000]
 succesful_trials = reward_sounds[:, 0]
 
 # Get the average firing rates of all neurons a few seconds around the successful pokes
-time_around_beam_break = 6
+time_around_beam_break = 8
 avg_firing_rate_around_suc_trials = fr_funcs.get_avg_firing_rates_around_events(spike_rates=spike_rates,
                                                                                 event_time_points=succesful_trials,
                                                                                 ev_video_df=event_dataframes['ev_video'],
                                                                                 time_around_event=time_around_beam_break)
+
+
+# Get the average firing rates of all neurons a few seconds around random times
+time_around_beam_break = 8
+random_points = np.random.choice(np.arange(10000, raw_data.shape[1]-10000, 1000), 50,
+                                 replace=False)
+avg_firing_rate_around_random = fr_funcs.get_avg_firing_rates_around_events(spike_rates=spike_rates,
+                                                                                event_time_points=random_points,
+                                                                                ev_video_df=event_dataframes['ev_video'],
+                                                                                time_around_event=time_around_beam_break)
+
+
 # </editor-fold>
 
 
@@ -228,7 +240,10 @@ _ = plt.imshow(np.flipud(avg_voltage_around_trials), aspect='auto')
 smooth_time = 0.5
 smooth_frames = smooth_time * 120
 
-t = binning.rolling_window_with_step(avg_firing_rate_around_suc_trials, np.mean, smooth_frames, int(smooth_frames / 3))
+#data = avg_firing_rate_around_random
+data = avg_firing_rate_around_suc_trials
+
+t = binning.rolling_window_with_step(data, np.mean, smooth_frames, int(smooth_frames / 3))
 tn = preproc.normalize(t, norm='l1', axis=0)
 
 tn = np.asarray(t)
@@ -246,10 +261,26 @@ region_lines = np.array(region_lines)
 
 tns = tn[position_sorted_indices]
 
+# hack to remove dead neurons
+bad_start = 1160
+bad_end = 1212
+good_neurons = np.concatenate((np.arange(bad_start), np.arange(bad_end, len(template_info))))
+#good_neurons = np.arange(len(template_info))
+tns = tns[good_neurons]
+
+for r in region_lines:
+    if r > len(tn) - bad_start:
+        r = r - (len(tn) - bad_start - (len(tn) - bad_end))
+    elif r < len(tn) - bad_start and r > len(tn) - bad_end:
+        r = len(tn) - bad_end
+
 plt.imshow(np.flipud(tns), aspect='auto')
 plt.hlines(y=len(t) - region_lines, xmin=0, xmax=len(tns[0])-1, linewidth=3, color='w')
 plt.vlines(x=int(len(tns[0]) / 2), ymin=0, ymax=len(tns) - 1)
 
+plt.imshow(np.flipud(tns), aspect='auto', extent=[-8, 8, len(tns), 0])
+plt.hlines(y=len(t) - region_lines, xmin=-8, xmax=8, linewidth=2, color='w')
+plt.vlines(x=0, ymin=0, ymax=len(tns) - 1)
 
 i = 0
 sv.graph_pane(globals(), 'i', 'tn')

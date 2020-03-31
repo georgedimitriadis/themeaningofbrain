@@ -878,7 +878,26 @@ len(te)
 
 
 
+import matplotlib
+matplotlib.rc('xtick', labelsize=30)
+matplotlib.rc('ytick', labelsize=30)
 
+labels = ['Animal 1 \n/ Day 3', 'Animal 1 \n/ Day 7', 'Animal 1 \n/ Day 10', 'Animal 2 \n/ Day 3', 'Animal 2 \n/ Day 10', 'Animal 3 \n/ Day 7']
+SS = [846, 750, 550, 643, 711, 513]
+MUA = [267, 81, 285, 529, 436, 876]
+width = 0.6
+x_pos = [i for i, _ in enumerate(labels)]
+
+plt.bar(labels, SS, width, label='Single Units', color=[64/255, 91/255, 168/255, 1])
+plt.bar(labels, MUA, width, bottom=SS, label='MUA', color=[0.7, 0.7, 0.7, 1])
+plt.xticks(x_pos, labels, fontname='Arial')
+plt.hlines(np.arange(200, 1600, 200), xmin=-0.5, xmax=5.5, linestyles='dashed', linewidths=1, zorder=-1, colors=[0,0,0,0.3])
+plt.vlines([2.5, 4.5], ymin=0, ymax=1440, linestyle='dashed', linewidths=4)
+plt.ylabel('Number of Neurons', size=40, fontname='Arial')
+plt.gca().spines['right'].set_color(None)
+plt.gca().spines['top'].set_color(None)
+plt.gca().spines['left'].set_linewidth(3)
+plt.gca().spines['bottom'].set_linewidth(3)
 
 
 

@@ -15,6 +15,7 @@ import pandas as pd
 import warnings
 import BrainDataAnalysis.Utilities as ut
 from matplotlib.widgets import Button
+
 try:
     from mpldatacursor import datacursor
 except:
@@ -581,7 +582,7 @@ def plot_tsne(tsne, labels_dict=None, cm=None, cm_remapping=None, subtitle=None,
 
 
 def show_clustered_tsne(dbscan_result, X, juxta_cluster_indices_grouped=None, threshold_legend=None,
-                        func_to_exec_on_pick=None, args_of_func_on_pick=None):
+                        func_to_exec_on_pick=None, args_of_func_on_pick=None, labels_on=False):
     core_samples_mask = np.zeros_like(dbscan_result.labels_, dtype=bool)
     core_samples_mask[dbscan_result.core_sample_indices_] = True
     labels = dbscan_result.labels_
@@ -620,6 +621,16 @@ def show_clustered_tsne(dbscan_result, X, juxta_cluster_indices_grouped=None, th
         ax.plot(xy[:, 0], xy[:, 1], marker, markerfacecolor=col,
                 markeredgecolor='k', markersize=ms)
 
+        if labels_on:
+            props = dict(boxstyle='round', facecolor='wheat', alpha=0.8)
+            if type(labels_on) == list:
+                if k in labels_on:
+                    random_point = X[np.random.choice(np.array(np.where(class_member_mask))[0], 1)][0]
+                    ax.text(random_point[0], random_point[1], '{}'.format(k), fontsize=10, bbox=props)
+            elif type(labels_on) == bool:
+                random_point = X[np.random.choice(np.array(np.where(class_member_mask))[0], 1)][0]
+                ax.text(random_point[0], random_point[1], '{}'.format(k), fontsize=10, bbox=props)
+
     if juxta_cluster_indices_grouped is not None:
         c = ['r', 'g', 'c', 'm', 'y', 'k', 'w', 'b']
         juxta_scatters = []
@@ -630,7 +641,7 @@ def show_clustered_tsne(dbscan_result, X, juxta_cluster_indices_grouped=None, th
         if threshold_legend is not None:
             ax.legend(juxta_scatters, threshold_legend)
 
-    plt.tight_layout(rect=[0,0,1,1])
+    #plt.tight_layout(rect=[0,0,1,1])
 
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
     plt.title('DBSCAN clustering of T-sne with {} estimated number of clusters'.format(n_clusters_))
@@ -694,3 +705,34 @@ class Arrow3D(FancyArrowPatch):
         xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
         self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
         FancyArrowPatch.draw(self, renderer)
+
+
+def show_significant_clusters_on_data(data, cluster_labels, brain_regions, lfp_probe_positions, window_time=8,
+                                      colormap=None, markers=None, alpha=None, marker_color=None):
+    if colormap is None:
+        colormap = 'viridis'
+    if markers is None:
+        markers = '+'
+    if alpha is None:
+        alpha = 1
+    interpolation = 'bilinear'
+    f = plt.figure(1)
+    ax = f.add_subplot(111)
+    ax.imshow(np.flipud(data), aspect='auto',
+               extent=[-window_time, window_time,
+                       lfp_probe_positions[0], lfp_probe_positions[-1]],
+               interpolation=interpolation,
+              cmap=colormap, alpha=alpha)
+    ax.hlines(y=brain_regions, xmin=-window_time, xmax=window_time)
+    t = np.flipud(cluster_labels)
+    clusters = np.delete(np.unique(t), np.argwhere(np.unique(t) == -1))
+    for c in clusters:
+        points = np.argwhere(t == c).astype(np.float)
+        points[:, 1] = (points[:, 1]) / (data.shape[1]) * 16 - 8
+        points[:, 0] = np.abs(points[:, 0] - data.shape[0] + 0.5)
+        points[:, 0] = points[:, 0] / data.shape[0] * \
+                       (lfp_probe_positions[-1] - lfp_probe_positions[0]) + lfp_probe_positions[0]
+        if marker_color is not None:
+            ax.scatter(points[:, 1], points[:, 0], marker=markers, color=marker_color)
+        else:
+            ax.scatter(points[:, 1], points[:, 0], marker=markers)

@@ -21,6 +21,8 @@ from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_funct
     import events_sync_funcs as sync_funcs
 import BrainDataAnalysis.neuroseeker_specific_functions as ns_funcs
 
+from sklearn import linear_model, metrics, model_selection, preprocessing
+import pygam as pg
 
 #  -------------------------------------------------
 #  GET FOLDERS
@@ -568,3 +570,83 @@ plt.plot(non_trial_mutual_infos_spikes_vs_speed)
 plt.plot(mutual_infos_spikes_vs_speed[speed_corr_neurons_index])
 
 plt.scatter(trial_mutual_infos_spikes_vs_speed, mutual_infos_spikes_vs_speed[speed_corr_neurons_index])
+
+
+# <editor-fold desc="REGRESS THE SPEED FROM THE FIRING RATES OF THE MOST MI NEURONS">
+
+mutual_infos_spikes_vs_speed_corrected = np.load(join(mutual_information_folder, 'mutual_infos_spikes_vs_speed_corrected_for_large_acc.npy'))
+
+shuffled = np.load(join(mutual_information_folder, 'shuffled_mut_info_spike_rate_1140_vs_speed.npy'))
+mean_sh = np.mean(shuffled)
+confidence_level = 0.99
+confi_intervals = shuffled[int((1. - confidence_level) / 2 * 1000)], shuffled[int((1. + confidence_level) / 2 * 1000)]
+
+#speed_corr_neurons_index = np.squeeze(np.argwhere(mutual_infos_spikes_vs_speed > mean_sh+confi_intervals[1]))
+speed_corr_neurons_index = np.squeeze(np.argwhere(mutual_infos_spikes_vs_speed_corrected >0.0215))  # The best 5 = 0.0265
+print(len(speed_corr_neurons_index))
+speed_corr_neurons = template_info.loc[speed_corr_neurons_index]
+
+
+#   Standartize X, Y
+Y = preprocessing.StandardScaler().\
+    fit_transform(np.reshape(speeds_0p25[:-1], (-1, 1))).reshape(-1)
+
+X = preprocessing.StandardScaler().\
+    fit_transform(spike_rates_0p25[speed_corr_neurons_index].transpose())
+
+#   Or not
+Y = np.array(speeds_0p25[:-1])
+X = spike_rates_0p25[speed_corr_neurons_index].transpose()
+
+
+#   Set up the regressors
+model_linear = linear_model.LinearRegression(fit_intercept=True)
+model_lassoCV = linear_model.LassoCV(cv=5, fit_intercept=True)
+model_lasso = linear_model.Lasso(alpha=0.02, fit_intercept=True, max_iter=10000, normalize=False)
+model_gam = pg.LinearGAM()
+
+Y = np.exp(Y) / (np.exp(Y) + 1)
+model_gam = pg.GammaGAM()
+
+
+#   Split the data to train and test sets
+X_train, X_test, Y_train, Y_test = model_selection.train_test_split(X, Y, test_size=0.2, random_state=0)
+
+# Fit
+model = model_gam
+#model.fit(X_train, Y_train)
+model.gridsearch(X_train, Y_train)
+
+
+# Show results
+plt.figure(1)
+plt.plot(Y_test)
+plt.plot(model.predict(X_test))
+
+plt.figure(2)
+plt.plot(Y)
+plt.plot(model.predict(X))
+
+plt.plot(Y_train)
+plt.plot(model.predict(X_train))
+
+model.summary()
+
+# Show partial dependence of each neuron
+signif_thres = 1e-2
+neurons_p_values = np.array(model.statistics_['p_values'])
+sig_neurons_index = np.squeeze(np.argwhere(neurons_p_values < signif_thres))
+num_sig_neurons = len(sig_neurons_index)
+
+max_cols = 4
+rows = np.ceil(num_sig_neurons/max_cols)
+cols = num_sig_neurons if num_sig_neurons < max_cols + 1 else max_cols
+fig = plt.figure(0)
+for i in np.arange(len(sig_neurons_index)):
+    ax = fig.add_subplot(rows, cols, i + 1)
+    t = int(sig_neurons_index[i])
+    x_axis = model.generate_X_grid(term=t)
+    ax.plot(x_axis[:, t], model.partial_dependence(t, x_axis))
+    ax.plot(x_axis[:, t], model.partial_dependence(t, x_axis, width=0.99)[1], c='r', ls='--')
+
+# </editor-fold>
