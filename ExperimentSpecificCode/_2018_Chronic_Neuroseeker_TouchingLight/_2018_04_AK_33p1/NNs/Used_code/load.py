@@ -9,15 +9,23 @@ import matplotlib.pyplot as plt
 
 # -------------------------------------------------
 # <editor-fold desc="1) Basic folder loading"
+
+# F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NNs
+# or
+# F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Sparce\NNs
+# or
+# F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Long\NNs
+
 base_data_folder = r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NNs'
 data_folder = join(base_data_folder, 'FiringRateDataPrep')
-save_data_folder = join(base_data_folder, 'Data')
+save_data_folder = join(base_data_folder, 'Data', 'randomly_selected_frames_brain_only')
 
 video_events_file = join(data_folder, 'Video.pkl')
 sampling_freq = 20000
 time_points_per_frame = 166
 
-spike_info = np.load(join(data_folder, 'spike_info_after_cortex_sorting.df'), allow_pickle=True)
+#spike_info = np.load(join(data_folder, 'spike_info_after_cleaning.df'), allow_pickle=True)
+spike_info = np.load(join(data_folder, 'spike_info_after_cortex_sorting.df'), allow_pickle=True) #spike_info_after_cortex_sorting.df for the Full NeuroSeeker probe
 templates = np.unique(spike_info['template_after_sorting'])
 video_events = np.load(join(data_folder, 'Video.pkl'), allow_pickle=True)
 video_times = video_events.values
@@ -28,6 +36,8 @@ num_of_frames = len(video_times)
 del spike_info
 del templates
 del video_events
+
+video_folder = join(r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NNs', 'SubsampledVideo')
 
 # </editor-fold>
 
@@ -92,25 +102,32 @@ print(m.max())
 plt.imshow(m)
 # </editor-fold>
 
+# Create the full_matrix
+file = join(data_folder, r'full_firing_matrix.npy')
+full_matrix = np.memmap(file, dtype=np.int16, mode='w+', shape=(num_of_neurons, num_of_frames))
+
+for f in np.arange(0, num_of_frames):
+    full_matrix[:, f] = get_spike_count_of_all_neurons_in_frame(f)
+    if f%1000==0:
+        print(f)
 '''
 
 # -------------------------------------------------
 # <editor-fold desc="Create dataset">
-cap = cv2.VideoCapture(join(base_data_folder, 'SubsampledVideo', 'Video_undistrorted_150x112_120fps.mp4'))
+cap = cv2.VideoCapture(join(video_folder, 'Video_undistrorted_150x112_120fps.mp4'))
 
 full_matrix = np.memmap(join(data_folder, "full_firing_matrix.npy"),
                         dtype=np.int16, mode='r', shape=(num_of_neurons, num_of_frames)).T
 
 
-def sample_data(batch_size, start_frame_for_period=None, batch_step=1):
+def sample_data(filename_to_save, frames_per_packet, batch_size, start_frame_for_period=None, batch_step=1):
     import progressbar
 
     X_0 = []
     r = []
     Y = []
 
-    frames_per_packet = 600
-    pictures_frame_gap = 600
+    pictures_frame_gap = frames_per_packet
 
     total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     bar = progressbar.bar.ProgressBar(max_value=batch_size)
@@ -128,7 +145,7 @@ def sample_data(batch_size, start_frame_for_period=None, batch_step=1):
 
             x = full_matrix[r_int + j]
             X_current_buffer.append(np.array(x, dtype=np.float32, copy=False))
-            if frames_per_packet-1 == j or j == 0:
+            if j == frames_per_packet-1 or j == 0:
                 if j == 0:
                     dt = - (pictures_frame_gap - frames_per_packet)
                 else:
@@ -146,11 +163,12 @@ def sample_data(batch_size, start_frame_for_period=None, batch_step=1):
     r = np.array(r, dtype=np.float32, copy=False)
     Y = np.array(Y, dtype=np.float32, copy=False)
 
-    np.savez(join(save_data_folder, "data_first34minutes_5secs_half_size_res.npz"), r=r,  X=X_0, Y=Y)
+    np.savez(join(save_data_folder, filename_to_save), r=r,  X=X_0, Y=Y)
     print('/nStart frame = {}, End frame = {}'.format(r[0], r[-1]))
 
 
-sample_data(25000, start_frame_for_period=0, batch_step=10)
+sample_data("data_25000randompoints_7secslong_halfsizeres.npz", 7*120, 25000,
+            start_frame_for_period=None, batch_step=1)
 
 # </editor-fold>
 

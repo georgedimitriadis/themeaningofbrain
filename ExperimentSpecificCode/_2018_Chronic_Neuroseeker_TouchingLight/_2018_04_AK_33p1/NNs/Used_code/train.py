@@ -9,9 +9,9 @@ from keras.layers import Input, Dense, Convolution2D, concatenate, Reshape, Flat
 from keras.models import Model
 from keras.optimizers import Adam
 
-data_folder_suffix = 'first34minutes_half_size'
+data_folder_suffix = 'fullvideo_25Krandom_5secs'
 
-input_data_name = "data_first34minutes_5secs_half_size_res.npz"
+input_data_name = "data_25000randompoints_5secslong_halfsizeres.npz"
 
 run_with = ['Spikes']  # ['Both', 'Spikes', 'Image']
 
@@ -23,9 +23,10 @@ def build_network(spike_shape, image_shape, spikes_images_type='Both'): # type =
 
     reshaped_input = Reshape(target_shape=(spike_shape[1], spike_shape[2]))(input_0)
     x_spikes = CuDNNLSTM(32)(reshaped_input)
+    #x_spikes = CuDNNLSTM(8)(x_spikes)
+
     x_image = Convolution2D(filters=4, kernel_size=(3, 3), activation="elu", data_format='channels_first')(input_1)
     x_image = Flatten()(x_image)
-
     x_image = Dense(1024, activation='elu')(x_image)
     x_image = Dropout(0.5)(x_image)
     x_image = Dense(1024, activation='elu')(x_image)
@@ -47,8 +48,11 @@ def build_network(spike_shape, image_shape, spikes_images_type='Both'): # type =
     return model
 
 
-base_data_folder = r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NNs'
-data_folder = join(base_data_folder, 'Data')
+#base_data_folder = r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NNs'
+#base_data_folder = r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Long\NNs'
+base_data_folder = r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Sparce\NNs'
+data_folder = join(base_data_folder, 'Data', 'randomly_selected_frames_brain_only')
+
 with np.load(join(data_folder, input_data_name)) as data:
     X = data['X']
     X = X.reshape(X.shape[0], X.shape[1], X.shape[2], 1)
