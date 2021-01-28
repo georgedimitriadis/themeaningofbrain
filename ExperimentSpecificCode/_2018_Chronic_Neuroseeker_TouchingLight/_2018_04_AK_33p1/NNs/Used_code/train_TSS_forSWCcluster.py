@@ -171,7 +171,7 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
 
     for train_index, test_index in tscv.split(X):
         train_indices.append(train_index)
-        test_indices.append(test_indices)
+        test_indices.append(test_index)
 
     for i in np.arange(starting_iter, ending_iter):
 
