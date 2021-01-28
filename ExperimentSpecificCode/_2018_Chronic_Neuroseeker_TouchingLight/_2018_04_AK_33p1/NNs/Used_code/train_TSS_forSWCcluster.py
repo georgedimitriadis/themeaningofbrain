@@ -3,6 +3,7 @@ from os.path import join
 import numpy as np
 from sklearn.model_selection import train_test_split, TimeSeriesSplit
 import argparse
+import timeit
 
 from keras.callbacks import ModelCheckpoint
 from keras.layers import Input, Dense, Convolution2D, concatenate, Reshape, Flatten, BatchNormalization, Dropout, \
@@ -174,25 +175,29 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
 
     for i in np.arange(starting_iter, ending_iter):
 
-        train_index = train_indices[i]
-        test_index = test_indices[i]
+        train_index = np.array(train_indices[i])
+        test_index = np.array(test_indices[i])
 
         print(len(train_index))
         print('TRAIN from {} to {}, TEST from {} to {}'.format(train_index[0], train_index[-1], test_index[0], test_index[-1]))
-
+        start = timeit.timeit()
         X_train = X[train_index]
         X_test = X[test_index]
         starting_images_train, starting_images_test = starting_images[train_index], starting_images[test_index]
         ending_images_train, ending_images_test = ending_images[train_index], ending_images[test_index]
 
+        print('Finished loading data in {}\n'.format(timeit.timeit() - start))
+
+        '''
         batch_size = 500
-        #gen = generator_random(X, starting_images_train, ending_images_train, train_index, batch_size=batch_size)
+        gen = generator_random(X, starting_images_train, ending_images_train, train_index, batch_size=batch_size)
         num_of_samples = train_index.shape[0]
         one_extra = 0
         if num_of_samples % batch_size:
             one_extra = 1
         steps_per_epoch = num_of_samples // batch_size + one_extra
         print('STEPS PER EPOCH = '.format(steps_per_epoch))
+        '''
 
         if 'Both' in run_with:
             model_full = build_network(X.shape, ending_images.shape, spikes_images_type='Both')
