@@ -2,6 +2,7 @@
 from os.path import join
 import numpy as np
 from sklearn.model_selection import train_test_split, TimeSeriesSplit
+import argparse
 
 from keras.callbacks import ModelCheckpoint
 from keras.layers import Input, Dense, Convolution2D, concatenate, Reshape, Flatten, BatchNormalization, Dropout, \
@@ -64,6 +65,60 @@ def generator_random(X, starting_images, ending_images, train_index, batch_size=
     while True:
         indices = np.random.choice(train_index, batch_size, replace=False)
         yield [X[indices], starting_images[indices]], ending_images[indices]
+
+def get_args():
+    """ Function : get_args
+    parameters used in .add_argument
+    1. metavar - Provide a hint to the user about the data type.
+    - By default, all arguments are strings.
+
+    2. type - The actual Python data type
+    - (note the lack of quotes around str)
+
+    3. help - A brief description of the parameter for the usage
+    """
+
+    parser = argparse.ArgumentParser(
+    description='Arguments of main',
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument('run_with',
+    metavar='run_with',
+    default='Spikes',
+    type=str,
+    help='"Both" or "Spikes" or "Image"')
+
+    parser.add_argument('base_data_folder_key',
+    metavar='base_data_folder_key',
+    default='NS',
+    type=str,
+    help='"NS" or "Long" or "Sparse"')
+
+    parser.add_argument('data_folder_name',
+    metavar='data_folder_name',
+    default='data_100KsamplesEvery2Frames_5secslong_halfsizeres',
+    type=str,
+    help='Name of folder the input data and the results are stored')
+
+    parser.add_argument('n_splits',
+    metavar='n_splits',
+    default=10,
+    type=int,
+    help='"number of splits for the TimeSeriesSplit')
+
+    parser.add_argument('starting_iter',
+    metavar='starting_iter',
+    default=0,
+    type=int,
+    help='which split to start from')
+
+    parser.add_argument('ending_iter',
+    metavar='ending_iter',
+    default=10,
+    type=int,
+    help='which split to end in')
+
+    return parser.parse_args()
 
 
 def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_100KsamplesEvery2Frames_5secslong_halfsizeres',
@@ -188,4 +243,5 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
 
 
 if __name__ == "__main__":
-    main()
+    args = get_args()
+    main(args.run_with, args.base_data_folder_key, args.data_folder_name, args.n_splits, args.starting_iter, args.ending_iter)
