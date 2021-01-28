@@ -1,11 +1,8 @@
 
 from os.path import join
 import numpy as np
-import pandas as pd
-import time
 
 import cv2
-import matplotlib.pyplot as plt
 
 # -------------------------------------------------
 # <editor-fold desc="1) Basic folder loading"
@@ -121,6 +118,7 @@ full_matrix = np.memmap(join(data_folder, "full_firing_matrix.npy"),
 
 
 def sample_data(frames_per_packet, batch_size, start_frame_for_period=None, batch_step=1):
+
     import progressbar
 
     #X_0 = []
@@ -189,7 +187,53 @@ batch_step = 2
 batch_size = num_of_frames // batch_step - 2 * frames_per_packet
 
 # Data set that will allow TimeSeriesSplit (with n=10) with a 2 frame jump and 108K samples (so that a 1/10 chunk has 10K samples in it)
-sample_data(frames_per_packet, batch_size,
+sample_data(frames_per_packet=frames_per_packet, batch_size=batch_size,
             start_frame_for_period=frames_per_packet, batch_step=batch_step)
 
 # </editor-fold>
+
+
+
+if False:
+    # -------------------------------------------------
+    # <editor-fold desc="Visualise dataset">
+
+    import slider as sl
+
+    headers = np.load(join(save_data_folder, 'binary_headers.npz'), allow_pickle=True)
+    X = np.memmap(join(save_data_folder, "X_buffer.npy"), dtype=headers['dtype'][0], shape=tuple(headers['shape_X']))
+    Y = np.memmap(join(save_data_folder, "Y_buffer.npy"), dtype=headers['dtype'][0], shape=tuple(headers['shape_Y']))
+
+    def show_X(f):
+        a1.cla()
+        a2.cla()
+        a3.cla()
+
+        d = X[f]
+        d_bin = np.argwhere(d>0)
+        a1.scatter(d_bin[:,0], d_bin[:,1],s=3)
+        a1.set_title('Brain')
+
+        im_before = Y[f, 0, :, :]
+        a2.imshow(im_before)
+        a2.set_title('Image Before')
+
+        im_after = Y[f, 1, :, :]
+        a3.imshow(im_after)
+        a3.set_title('Image After')
+
+
+    fig1 = plt.figure(0)
+    a1 = fig1.add_subplot(111)
+
+    fig2 = plt.figure(1)
+    a2 = fig2.add_subplot(111)
+
+    fig3 = plt.figure(2)
+    a3 = fig3.add_subplot(111)
+
+    out = None
+    f=0
+
+    sl.connect_repl_var(globals(),'f', 'out', 'show_X', slider_limits=[0, X.shape[0]-1])
+    # </editor-fold>

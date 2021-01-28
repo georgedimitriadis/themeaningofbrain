@@ -59,14 +59,22 @@ def generator(X, starting_images, ending_images, train_index, batch_size=500):
             i = i+1
         yield [X[indices], starting_images[indices]], ending_images[indices]
 
+
+def generator_random(X, starting_images, ending_images, train_index, batch_size=500):
+    while True:
+        indices = np.random.choice(train_index, batch_size, replace=False)
+        yield [X[indices], starting_images[indices]], ending_images[indices]
+
+
 base_data_folders = {'NS': r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NNs',
                      'Long': r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Long\NNs',
                      'Sparse': r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Sparce\NNs'}
 
 # -------- USER INPUT ----------
-run_with = ['Image']  # ['Both', 'Spikes', 'Image']
-base_data_folder = base_data_folders['NS'] # 'NS', or 'Long' or 'Sparse'
+run_with = ['Spikes']  # ['Both', 'Spikes', 'Image']
+base_data_folder = base_data_folders['NS']  # 'NS', or 'Long' or 'Sparse'
 data_folder_name = 'data_100KsamplesEvery2Frames_5secslong_halfsizeres'
+n_splits=10
 # ------------------------------
 
 data_folder = join(base_data_folder, 'Data', 'TimeSeriesSplit', data_folder_name)
@@ -87,13 +95,20 @@ print(ending_images.shape)
 
 frames_used = headers['shape_X'][1]
 
-tscv = TimeSeriesSplit(gap=frames_used, max_train_size=None, n_splits=10, test_size=None)
+tscv = TimeSeriesSplit(gap=frames_used, max_train_size=None, n_splits=n_splits, test_size=None)
 
 i = 0
+starting_iter = 1
 histories_of_losses = []
 histories_of_val_losses = []
 
+
 for train_index, test_index in tscv.split(X):
+    print(len(train_index))
+
+    if i < starting_iter:
+        i = i+1
+        continue
 
     print('TRAIN from {} to {}, TEST from {} to {}'.format(train_index[0], train_index[-1], test_index[0], test_index[-1]))
 
@@ -102,13 +117,13 @@ for train_index, test_index in tscv.split(X):
     ending_images_train, ending_images_test = ending_images[train_index], ending_images[test_index]
 
     batch_size = 500
-    gen = generator(X, starting_images_train, ending_images_train, train_index, batch_size=batch_size)
+    gen = generator_random(X, starting_images_train, ending_images_train, train_index, batch_size=batch_size)
     num_of_samples = train_index.shape[0]
     one_extra = 0
     if num_of_samples % batch_size:
         one_extra = 1
     steps_per_epoch = num_of_samples // batch_size + one_extra
-    print('STEPS PER EPOCH = '.fomrat(steps_per_epoch))
+    print('STEPS PER EPOCH = '.format(steps_per_epoch))
 
     if 'Both' in run_with:
         model_full = build_network(X.shape, ending_images.shape, spikes_images_type='Both')
@@ -154,7 +169,9 @@ for train_index, test_index in tscv.split(X):
 
     i = i+1
 
-np.save(join(data_folder, 'loss_histories_of_{}.npy'.format(run_with[0])), np.array(histories_of_losses))
-np.save(join(data_folder, 'val_loss_histories_of_{}.npy'.format(run_with[0])), np.array(histories_of_val_losses))
+    np.save(join(data_folder, 'loss_histories_of_{}.npy'.format(run_with[0])), np.array(histories_of_losses))
+    np.save(join(data_folder, 'val_loss_histories_of_{}.npy'.format(run_with[0])), np.array(histories_of_val_losses))
+
+
 
 
