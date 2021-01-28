@@ -1,15 +1,21 @@
 
 from os.path import join
 import numpy as np
-from sklearn.model_selection import train_test_split, TimeSeriesSplit
 import argparse
 import timeit
+
+import tensorflow as tf
+physical_devices = tf.config.experimental.list_physical_devices('GPU')
+tf.config.experimental.set_memory_growth(physical_devices[0], enable=True)
+tf.config.experimental.set_memory_growth(physical_devices[0], enable=True)
 
 from keras.callbacks import ModelCheckpoint
 from keras.layers import Input, Dense, Convolution2D, concatenate, Reshape, Flatten, BatchNormalization, Dropout, \
     MaxPooling2D, AveragePooling2D, CuDNNLSTM, LSTM, dot
 from keras.models import Model
 from keras.optimizers import Adam
+
+from sklearn.model_selection import train_test_split, TimeSeriesSplit
 
 
 def build_network(spike_shape, image_shape, spikes_images_type='Both'): # type = Both OR Spikes OR Image
