@@ -180,12 +180,13 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
         print(len(train_index))
         print('TRAIN from {} to {}, TEST from {} to {}'.format(train_index[0], train_index[-1], test_index[0], test_index[-1]))
 
+        X_train = X[train_index]
         X_test = X[test_index]
         starting_images_train, starting_images_test = starting_images[train_index], starting_images[test_index]
         ending_images_train, ending_images_test = ending_images[train_index], ending_images[test_index]
 
         batch_size = 500
-        gen = generator_random(X, starting_images_train, ending_images_train, train_index, batch_size=batch_size)
+        #gen = generator_random(X, starting_images_train, ending_images_train, train_index, batch_size=batch_size)
         num_of_samples = train_index.shape[0]
         one_extra = 0
         if num_of_samples % batch_size:
@@ -201,8 +202,12 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
             full_checkpoint = ModelCheckpoint(full_checkpoint_file, monitor='val_loss', verbose=1, save_best_only=True,
                                                mode='min')
             full_callbacks_list = [full_checkpoint]
-            model_history = model_full.fit_generator(gen, steps_per_epoch=steps_per_epoch,
-                                                     validation_data=([X_test, starting_images_test], ending_images_test),
+            #model_history = model_full.fit_generator(gen, steps_per_epoch=steps_per_epoch,
+            #                                         validation_data=([X_test, starting_images_test], ending_images_test),
+            #                                         epochs=300, callbacks=full_callbacks_list)
+            model_history = model_full.fit([X_train, starting_images_train], ending_images_train,
+                                                     validation_data=(
+                                                     [X_test, starting_images_test], ending_images_test),
                                                      epochs=300, callbacks=full_callbacks_list)
             model_full.save(join(data_folder, 'both_final_model_SSTiter_{}.h5'.format(i)))
 
@@ -213,8 +218,12 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
             spikes_checkpoint_file = (join(data_folder, 'spikes_latest_model_SSTiter_{}.h5'.format(i)))
             spikes_checkpoint = ModelCheckpoint(spikes_checkpoint_file, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
             spikes_callbacks_list = [spikes_checkpoint]
-            model_history = model_spikes.fit_generator(gen, steps_per_epoch=steps_per_epoch,
-                                                       validation_data=([X_test, starting_images_test], ending_images_test),
+            #model_history = model_spikes.fit_generator(gen, steps_per_epoch=steps_per_epoch,
+            #                                           validation_data=([X_test, starting_images_test], ending_images_test),
+            #                                           epochs=300, callbacks=spikes_callbacks_list)
+            model_history = model_spikes.fit([X_train, starting_images_train], ending_images_train,
+                                                       validation_data=(
+                                                       [X_test, starting_images_test], ending_images_test),
                                                        epochs=300, callbacks=spikes_callbacks_list)
             model_spikes.save(join(data_folder, 'spikes_final_model_SSTiter_{}.h5'.format(i)))
 
@@ -226,10 +235,13 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
             pictures_checkpoint = ModelCheckpoint(pictures_checkpoint_file, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
             pictures_callbacks_list = [pictures_checkpoint]
 
-            model_history = model_pictures.fit_generator(gen, steps_per_epoch=steps_per_epoch,
-                                                         validation_data=([X_test, starting_images_test], ending_images_test),
+            #model_history = model_pictures.fit_generator(gen, steps_per_epoch=steps_per_epoch,
+            #                                             validation_data=([X_test, starting_images_test], ending_images_test),
+            #                                             epochs=300, callbacks=pictures_callbacks_list)
+            model_history = model_pictures.fit([X_train, starting_images_train], ending_images_train,
+                                                         validation_data=(
+                                                         [X_test, starting_images_test], ending_images_test),
                                                          epochs=300, callbacks=pictures_callbacks_list)
-
             model_pictures.save(join(data_folder, 'pictures_final_model_SSTiter_{}.h5'.format(i)))
 
         histories_of_losses.append(model_history.history['loss'])
