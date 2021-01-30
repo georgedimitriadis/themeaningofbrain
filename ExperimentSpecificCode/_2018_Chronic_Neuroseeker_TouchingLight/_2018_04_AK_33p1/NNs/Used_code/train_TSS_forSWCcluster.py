@@ -3,11 +3,9 @@ from os.path import join
 import numpy as np
 import argparse
 import timeit
+import os
 
-import tensorflow as tf
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
-tf.config.experimental.set_memory_growth(physical_devices[0], enable=True)
-tf.config.experimental.set_memory_growth(physical_devices[0], enable=True)
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
 from keras.callbacks import ModelCheckpoint
 from keras.layers import Input, Dense, Convolution2D, concatenate, Reshape, Flatten, BatchNormalization, Dropout, \
@@ -140,7 +138,8 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
     :param ending_iter: which split to end in
     :return: Nothing
     """
-
+    epochs = 150
+    
     base_data_folders = {'NS': r'/ceph/scratch/gdimitriadis/Neuroseeker/AK_33.1/2018_04_30-11_38/Analysis/NNs',
                          'Long': r'/ceph/scratch/gdimitriadis/Neuroseeker/AK_33.1/2018_04_30-11_38/Analysis/NeuropixelSimulations/Long/NNs',
                          'Sparse': r'/ceph/scratch/gdimitriadis/Neuroseeker/AK_33.1/2018_04_30-11_38/Analysis/NeuropixelSimulations/Sparce/NNs'}
@@ -186,6 +185,13 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
 
         print(len(train_index))
         print('TRAIN from {} to {}, TEST from {} to {}'.format(train_index[0], train_index[-1], test_index[0], test_index[-1]))
+        
+        randomized_indices = np.arange(train_indices[0][-1])
+        np.random.shuffle(randomized_indices)
+        print(randomized_indices)
+        train_index = train_index[randomized_indices]
+        test_index = test_index[randomized_indices]
+        
         start = timeit.timeit()
         X_train = X[train_index]
         X_test = X[test_index]
@@ -215,11 +221,11 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
             full_callbacks_list = [full_checkpoint]
             #model_history = model_full.fit_generator(gen, steps_per_epoch=steps_per_epoch,
             #                                         validation_data=([X_test, starting_images_test], ending_images_test),
-            #                                         epochs=300, callbacks=full_callbacks_list)
+            #                                         epochs=epochs, callbacks=full_callbacks_list)
             model_history = model_full.fit([X_train, starting_images_train], ending_images_train,
                                                      validation_data=(
                                                      [X_test, starting_images_test], ending_images_test),
-                                                     epochs=300, callbacks=full_callbacks_list)
+                                                     epochs=epochs, callbacks=full_callbacks_list)
             model_full.save(join(data_folder, 'both_final_model_SSTiter_{}.h5'.format(i)))
 
         if 'Spikes' in run_with:
@@ -231,11 +237,11 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
             spikes_callbacks_list = [spikes_checkpoint]
             #model_history = model_spikes.fit_generator(gen, steps_per_epoch=steps_per_epoch,
             #                                           validation_data=([X_test, starting_images_test], ending_images_test),
-            #                                           epochs=300, callbacks=spikes_callbacks_list)
+            #                                           epochs=epochs, callbacks=spikes_callbacks_list)
             model_history = model_spikes.fit([X_train, starting_images_train], ending_images_train,
                                                        validation_data=(
                                                        [X_test, starting_images_test], ending_images_test),
-                                                       epochs=300, callbacks=spikes_callbacks_list)
+                                                       epochs=epochs, callbacks=spikes_callbacks_list)
             model_spikes.save(join(data_folder, 'spikes_final_model_SSTiter_{}.h5'.format(i)))
 
         if 'Image' in run_with:
@@ -248,11 +254,11 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
 
             #model_history = model_pictures.fit_generator(gen, steps_per_epoch=steps_per_epoch,
             #                                             validation_data=([X_test, starting_images_test], ending_images_test),
-            #                                             epochs=300, callbacks=pictures_callbacks_list)
+            #                                             epochs=epochs, callbacks=pictures_callbacks_list)
             model_history = model_pictures.fit([X_train, starting_images_train], ending_images_train,
                                                          validation_data=(
                                                          [X_test, starting_images_test], ending_images_test),
-                                                         epochs=300, callbacks=pictures_callbacks_list)
+                                                         epochs=epochs, callbacks=pictures_callbacks_list)
             model_pictures.save(join(data_folder, 'pictures_final_model_SSTiter_{}.h5'.format(i)))
 
         histories_of_losses.append(model_history.history['loss'])
