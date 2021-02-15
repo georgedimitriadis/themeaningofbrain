@@ -47,30 +47,6 @@ def build_network(spike_shape, image_shape, spikes_images_type='Both'): # type =
     return model
 
 
-def generator(X, starting_images, ending_images, train_index, batch_size=500):
-    i = 0
-    num_of_samples = train_index.shape[0]
-    one_extra = 0
-    if num_of_samples % batch_size:
-        one_extra = 1
-    steps_per_epoch = num_of_samples // batch_size + one_extra
-
-    while True:
-        indices = train_index[batch_size*i : batch_size*(i+1)]
-        if batch_size * (i+1) > train_index.shape[0]:
-            indices = train_index[batch_size*i : train_index.shape[0]]
-        if steps_per_epoch == i + 1:
-            i = 0
-        else:
-            i = i+1
-        yield [X[indices], starting_images[indices]], ending_images[indices]
-
-
-def generator_random(X, starting_images, ending_images, train_index, batch_size=500):
-    while True:
-        indices = np.random.choice(train_index, batch_size, replace=False)
-        yield [X[indices], starting_images[indices]], ending_images[indices]
-
 def get_args():
     """ Function : get_args
     parameters used in .add_argument
@@ -156,8 +132,8 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
     X = X.reshape(X.shape[0], X.shape[1], X.shape[2], 1)
 
     Y = np.memmap(join(data_folder, input_data_name_Y), dtype=headers['dtype'][0], shape=tuple(headers['shape_Y']))
-    starting_images = Y[:, 0:1, :, :]
-    ending_images = Y[:, 1, :, :]
+    starting_images = Y[:, 0:1, :, :]/255.0
+    ending_images = Y[:, 1, :, :]/255.0
 
     print(X.shape)
     print(starting_images.shape)
