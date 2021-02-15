@@ -117,19 +117,19 @@ full_matrix = np.memmap(join(data_folder, "full_firing_matrix.npy"),
                         dtype=np.int16, mode='r', shape=(num_of_neurons, num_of_frames)).T
 
 
-def sample_data(filename_to_save, frames_per_packet, batch_size, start_frame_for_period=None, batch_step=1):
+def sample_data(frames_per_packet, batch_size, start_frame_for_period=None, batch_step=1):
 
     import progressbar
 
-    X_0 = []
     r = []
-    Y = []
+    X_buffer = np.memmap(join(save_data_folder, 'X_buffer.npy'), dtype=np.float32, mode='w+',
+                         shape=(batch_size, frames_per_packet, full_matrix.shape[1]))
+    Y_buffer = np.memmap(join(save_data_folder, 'Y_buffer.npy'), dtype=np.float32, mode='w+',
+                         shape=(batch_size, 2, 112 // 2, 150 // 2))
 
     total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     bar = progressbar.bar.ProgressBar(max_value=batch_size)
     for i in range(batch_size):
-        X_current_buffer = []
-        Y_current_buffer = []
 
         if start_frame_for_period == None:
             r_int = np.random.randint(total - frames_per_packet )
@@ -140,7 +140,7 @@ def sample_data(filename_to_save, frames_per_packet, batch_size, start_frame_for
         for j in range(frames_per_packet):
 
             x = full_matrix[r_int + j]
-            X_current_buffer.append(np.array(x, dtype=np.float32, copy=False))
+            X_buffer[i, j, :] = np.array(x, dtype=np.float32, copy=False)
             if j == frames_per_packet-1 or j == 0:
                 if j == 0:
                     dt = 0
@@ -152,23 +152,70 @@ def sample_data(filename_to_save, frames_per_packet, batch_size, start_frame_for
                 ret, frame = cap.read()
                 y = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 y = cv2.resize(y, (150 // 2, 112 // 2), interpolation=cv2.INTER_AREA)
-                Y_current_buffer.append(np.array(y, dtype=np.float32, copy=False))
-        X_0.append(X_current_buffer)
-        Y.append(Y_current_buffer)
+                Y_buffer[i, p, :, :] = np.array(y, dtype=np.float32, copy=False)
+
         bar.update(i)
 
-    X_0 = np.array(X_0, dtype=np.float32, copy=False)
     r = np.array(r, dtype=np.float32, copy=False)
-    Y = np.array(Y, dtype=np.float32, copy=False)
 
-    np.savez(join(save_data_folder, filename_to_save), r=r,  X=X_0, Y=Y)
+    np.savez(join(save_data_folder, 'binary_headers.npz'), dtype=[np.float32],
+             shape_X=[batch_size, frames_per_packet, full_matrix.shape[1]],
+             shape_Y=[batch_size, 2, 112 // 2, 150 // 2],
+             r=r)
+
+    print('/nStart frame = {}, End frame = {}'.format(r[0], r[-1]))
 
 
-# For random sampling
-sample_data("data_25000randompoints_5secslong_halfsizeres.npz", 5*120, 25000,
-            start_frame_for_period=None, batch_step=1)
+frames_per_packet = 5 * 120
+batch_step = 2
+batch_size = num_of_frames // batch_step - 2 * frames_per_packet
 
+# Data set that will allow TimeSeriesSplit (with n=10) with a 2 frame jump and 108K samples (so that a 1/10 chunk has 10K samples in it)
+sample_data(frames_per_packet=frames_per_packet, batch_size=batch_size,
+            start_frame_for_period=frames_per_packet, batch_step=batch_step)
 
 # </editor-fold>
 
 
+# -------------------------------------------------
+# <editor-fold desc="Visualise dataset">
+if False:
+    import slider as sl
+
+    headers = np.load(join(save_data_folder, 'binary_headers.npz'), allow_pickle=True)
+    X = np.memmap(join(save_data_folder, "X_buffer.npy"), dtype=headers['dtype'][0], shape=tuple(headers['shape_X']))
+    Y = np.memmap(join(save_data_folder, "Y_buffer.npy"), dtype=headers['dtype'][0], shape=tuple(headers['shape_Y']))
+
+    def show_X(f):
+        a1.cla()
+        a2.cla()
+        a3.cla()
+
+        d = X[f]
+        d_bin = np.argwhere(d>0)
+        a1.scatter(d_bin[:,0], d_bin[:,1],s=3)
+        a1.set_title('Brain')
+
+        im_before = Y[f, 0, :, :]
+        a2.imshow(im_before)
+        a2.set_title('Image Before')
+
+        im_after = Y[f, 1, :, :]
+        a3.imshow(im_after)
+        a3.set_title('Image After')
+
+
+    fig1 = plt.figure(0)
+    a1 = fig1.add_subplot(111)
+
+    fig2 = plt.figure(1)
+    a2 = fig2.add_subplot(111)
+
+    fig3 = plt.figure(2)
+    a3 = fig3.add_subplot(111)
+
+    out = None
+    f=0
+
+    sl.connect_repl_var(globals(),'f', 'out', 'show_X', slider_limits=[0, X.shape[0]-1])
+# </editor-fold>
