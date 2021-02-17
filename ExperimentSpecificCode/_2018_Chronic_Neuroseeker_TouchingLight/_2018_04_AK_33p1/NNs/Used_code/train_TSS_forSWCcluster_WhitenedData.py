@@ -157,7 +157,7 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
     train_indices = []
     test_indices = []
 
-    for train_index, test_index in tscv.split(X):
+    for train_index, test_index in tscv.split(X_brain):
         train_indices.append(train_index)
         test_indices.append(test_index)
 
@@ -182,7 +182,9 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
         ending_images_train, ending_images_test = ending_images[train_index], ending_images[test_index]
 
         print('Finished loading data in {}\n'.format(timeit.timeit() - start))
-
+        print(len(X_train))
+        print(len(X_test))
+        
         if 'Both' in run_with:
             model_full = build_network(X_brain.shape, starting_images.shape, ending_images.shape, spikes_images_type='Both')
             print(model_full.summary())
