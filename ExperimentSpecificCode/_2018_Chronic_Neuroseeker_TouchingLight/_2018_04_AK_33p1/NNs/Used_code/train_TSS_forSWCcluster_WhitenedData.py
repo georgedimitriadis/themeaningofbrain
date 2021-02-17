@@ -19,13 +19,13 @@ from sklearn.model_selection import TimeSeriesSplit
 def build_network(spike_shape, starting_image_shape, ending_image_shape, spikes_images_type='Both'): # type = Both OR Spikes OR Image
 
     input_0 = Input(shape=(spike_shape[1], spike_shape[2], spike_shape[3]))
-    input_1 = Input(shape=(1, starting_image_shape[1], starting_image_shape[2], starting_image_shape[3]))
+    input_1 = Input(shape=(starting_image_shape[1], starting_image_shape[2], starting_image_shape[3]))
 
     reshaped_input = Reshape(target_shape=(spike_shape[1], spike_shape[2]))(input_0)
     x_spikes = CuDNNLSTM(32)(reshaped_input)
     x_spikes = BatchNormalization(axis=1)(x_spikes)
 
-    x_image = Convolution2D(filters=4, kernel_size=(3, 3), activation="tanh", data_format='channels_first')(input_1)
+    x_image = Convolution2D(filters=4, kernel_size=3, activation="tanh")(input_1)
     x_image = BatchNormalization(axis=1)(x_image)
     x_image = Flatten()(x_image)
     x_image = Dense(1024, activation='tanh')(x_image)
@@ -184,7 +184,7 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
         print('Finished loading data in {}\n'.format(timeit.timeit() - start))
         print(len(X_train))
         print(len(X_test))
-        
+
         if 'Both' in run_with:
             model_full = build_network(X_brain.shape, starting_images.shape, ending_images.shape, spikes_images_type='Both')
             print(model_full.summary())
