@@ -189,3 +189,6 @@ data_p = data_p.decode().replace("learning_rate","lr").encode()
 model_5_h5.attrs['training_config'] = data_p
 model_5_h5.close()
 '''
+
+t = np.array([[1,2,3,4,5],
+              [11,12,13,14,15]])

@@ -5,34 +5,35 @@ import argparse
 import timeit
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 from keras.callbacks import ModelCheckpoint
 from keras.layers import Input, Dense, Convolution2D, concatenate, Reshape, Flatten, BatchNormalization, Dropout, \
-    MaxPooling2D, AveragePooling2D, CuDNNLSTM, LSTM, dot
+    MaxPooling2D, AveragePooling2D, CuDNNLSTM, dot, BatchNormalization
 from keras.models import Model
-from keras.optimizers import Adam
+from keras.optimizers import SGD
 
-from sklearn.model_selection import train_test_split, TimeSeriesSplit
-import sys
-sys.path.append(r"..")
-from tensorflow_zca import ZCA
+from sklearn.model_selection import TimeSeriesSplit
 
 
-def build_network(spike_shape, image_shape, spikes_images_type='Both'): # type = Both OR Spikes OR Image
+def build_network(spike_shape, starting_image_shape, ending_image_shape, spikes_images_type='Both'): # type = Both OR Spikes OR Image
 
     input_0 = Input(shape=(spike_shape[1], spike_shape[2], spike_shape[3]))
-    input_1 = Input(shape=(1, image_shape[1], image_shape[2]))
+    input_1 = Input(shape=(1, starting_image_shape[1], starting_image_shape[2], starting_image_shape[3]))
 
     reshaped_input = Reshape(target_shape=(spike_shape[1], spike_shape[2]))(input_0)
     x_spikes = CuDNNLSTM(32)(reshaped_input)
+    x_spikes = BatchNormalization(axis=1)(x_spikes)
 
-    x_image = Convolution2D(filters=4, kernel_size=(3, 3), activation="elu", data_format='channels_first')(input_1)
+    x_image = Convolution2D(filters=4, kernel_size=(3, 3), activation="tanh", data_format='channels_first')(input_1)
+    x_image = BatchNormalization(axis=1)(x_image)
     x_image = Flatten()(x_image)
-    x_image = Dense(1024, activation='elu')(x_image)
-    x_image = Dropout(0.5)(x_image)
-    x_image = Dense(1024, activation='elu')(x_image)
-    x_image = Dropout(0.5)(x_image)
+    x_image = Dense(1024, activation='tanh')(x_image)
+    x_image = Dropout(0.1)(x_image)
+    x_image = BatchNormalization()(x_image)
+    x_image = Dense(1024, activation='tanh')(x_image)
+    x_image = Dropout(0.1)(x_image)
+    x_image = BatchNormalization()(x_image)
 
     if spikes_images_type == 'Both':
         x = concatenate([x_image, x_spikes])
@@ -41,11 +42,12 @@ def build_network(spike_shape, image_shape, spikes_images_type='Both'): # type =
     elif spikes_images_type == 'Image':
         x = x_image
 
-    predictions = Dense(image_shape[1]*image_shape[2], activation='sigmoid')(x)
-    predictions = Reshape((image_shape[1], image_shape[2]))(predictions)
+    predictions = Dense(ending_image_shape[1]*ending_image_shape[2], activation='sigmoid',
+                        kernel_regularizer='l2')(x)
+    predictions = Reshape((ending_image_shape[1], ending_image_shape[2]))(predictions)
 
     model = Model(inputs=[input_0, input_1], outputs=predictions)
-    model.compile(optimizer=Adam(lr=0.0005),
+    model.compile(optimizer=SGD(learning_rate=0.01, momentum=0.1, nesterov=True),
                   loss='mse')
     return model
 
@@ -80,7 +82,7 @@ def get_args():
 
     parser.add_argument('data_folder_name',
     metavar='data_folder_name',
-    default='data_100KsamplesEvery2Frames_5secslong_halfsizeres',
+    default='data_100KsamplesEvery2Frames_5secslong_Whitened_halfsizeres',
     type=str,
     help='Name of folder the input data and the results are stored')
 
@@ -105,7 +107,7 @@ def get_args():
     return parser.parse_args()
 
 
-def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_100KsamplesEvery2Frames_5secslong_halfsizeres',
+def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_100KsamplesEvery2Frames_5secslong_Whitened_halfsizeres',
          n_splits=10, starting_iter=0, ending_iter=10):
     """
 
@@ -127,28 +129,30 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
     run_with = [run_with]
 
     data_folder = join(base_data_folder, 'Data', 'TimeSeriesSplit', data_folder_name)
-    input_data_name_X = "X_buffer.npy"
+    input_data_name_X_brain = "X_brain_buffer_whitened.npy"
+    input_data_name_X_images = 'X_images_buffer.npy'
     input_data_name_Y = "Y_buffer.npy"
 
     headers = np.load(join(data_folder, 'binary_headers.npz'), allow_pickle=True)
-    X = np.memmap(join(data_folder, input_data_name_X), dtype=headers['dtype'][0], shape=tuple(headers['shape_X']))
-    X = X.reshape(X.shape[0], X.shape[1], X.shape[2], 1)
+    X_brain = np.memmap(join(data_folder, input_data_name_X_brain), dtype=headers['dtype'][0], shape=tuple(headers['shape_X_brain']))
+    X_brain = X_brain.reshape(X_brain.shape[0], X_brain.shape[1], X_brain.shape[2], 1)
 
-    Y = np.memmap(join(data_folder, input_data_name_Y), dtype=headers['dtype'][0], shape=tuple(headers['shape_Y']))
-    starting_images = Y[:, 0:1, :, :]/255.0
-    ending_images = Y[:, 1, :, :]/255.0
+    starting_images = np.memmap(join(data_folder, input_data_name_X_images), dtype=headers['dtype'][0], shape=tuple(headers['shape_X_images']))
 
-    print(X.shape)
+    ending_images = np.memmap(join(data_folder, input_data_name_Y), dtype=headers['dtype'][0], shape=tuple(headers['shape_Y']))
+
+    print(X_brain.shape)
     print(starting_images.shape)
     print(ending_images.shape)
 
-    frames_used = headers['shape_X'][1]
+    frames_used = headers['shape_X_brain'][1]
 
     tscv = TimeSeriesSplit(gap=frames_used, max_train_size=None, n_splits=n_splits, test_size=None)
 
     i = 0
     histories_of_losses = []
     histories_of_val_losses = []
+    histories = []
 
     train_indices = []
     test_indices = []
@@ -172,35 +176,21 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
         test_index = test_index[randomized_indices]
         
         start = timeit.timeit()
-        X_train = X[train_index]
-        X_test = X[test_index]
+        X_train = X_brain[train_index]
+        X_test = X_brain[test_index]
         starting_images_train, starting_images_test = starting_images[train_index], starting_images[test_index]
         ending_images_train, ending_images_test = ending_images[train_index], ending_images[test_index]
 
         print('Finished loading data in {}\n'.format(timeit.timeit() - start))
 
-        '''
-        batch_size = 500
-        gen = generator_random(X, starting_images_train, ending_images_train, train_index, batch_size=batch_size)
-        num_of_samples = train_index.shape[0]
-        one_extra = 0
-        if num_of_samples % batch_size:
-            one_extra = 1
-        steps_per_epoch = num_of_samples // batch_size + one_extra
-        print('STEPS PER EPOCH = '.format(steps_per_epoch))
-        '''
-
         if 'Both' in run_with:
-            model_full = build_network(X.shape, ending_images.shape, spikes_images_type='Both')
+            model_full = build_network(X_brain.shape, starting_images.shape, ending_images.shape, spikes_images_type='Both')
             print(model_full.summary())
 
             full_checkpoint_file = (join(data_folder, 'both_latest_model_SSTiter_{}.h5'.format(i)))
             full_checkpoint = ModelCheckpoint(full_checkpoint_file, monitor='val_loss', verbose=1, save_best_only=True,
                                                mode='min')
             full_callbacks_list = [full_checkpoint]
-            #model_history = model_full.fit_generator(gen, steps_per_epoch=steps_per_epoch,
-            #                                         validation_data=([X_test, starting_images_test], ending_images_test),
-            #                                         epochs=epochs, callbacks=full_callbacks_list)
             model_history = model_full.fit([X_train, starting_images_train], ending_images_train,
                                                      validation_data=(
                                                      [X_test, starting_images_test], ending_images_test),
@@ -208,15 +198,12 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
             model_full.save(join(data_folder, 'both_final_model_SSTiter_{}.h5'.format(i)))
 
         if 'Spikes' in run_with:
-            model_spikes = build_network(X.shape, ending_images.shape, spikes_images_type='Spikes')
+            model_spikes = build_network(X_brain.shape, starting_images.shape, ending_images.shape, spikes_images_type='Spikes')
             print(model_spikes.summary())
 
             spikes_checkpoint_file = (join(data_folder, 'spikes_latest_model_SSTiter_{}.h5'.format(i)))
             spikes_checkpoint = ModelCheckpoint(spikes_checkpoint_file, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
             spikes_callbacks_list = [spikes_checkpoint]
-            #model_history = model_spikes.fit_generator(gen, steps_per_epoch=steps_per_epoch,
-            #                                           validation_data=([X_test, starting_images_test], ending_images_test),
-            #                                           epochs=epochs, callbacks=spikes_callbacks_list)
             model_history = model_spikes.fit([X_train, starting_images_train], ending_images_train,
                                                        validation_data=(
                                                        [X_test, starting_images_test], ending_images_test),
@@ -224,16 +211,12 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
             model_spikes.save(join(data_folder, 'spikes_final_model_SSTiter_{}.h5'.format(i)))
 
         if 'Image' in run_with:
-            model_pictures = build_network(X.shape, ending_images.shape, spikes_images_type='Image')
+            model_pictures = build_network(X_brain.shape, starting_images.shape, ending_images.shape, spikes_images_type='Image')
             print(model_pictures.summary())
 
             pictures_checkpoint_file = (join(data_folder, 'pictures_latest_model_SSTiter_{}.h5'.format(i)))
             pictures_checkpoint = ModelCheckpoint(pictures_checkpoint_file, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
             pictures_callbacks_list = [pictures_checkpoint]
-
-            #model_history = model_pictures.fit_generator(gen, steps_per_epoch=steps_per_epoch,
-            #                                             validation_data=([X_test, starting_images_test], ending_images_test),
-            #                                             epochs=epochs, callbacks=pictures_callbacks_list)
             model_history = model_pictures.fit([X_train, starting_images_train], ending_images_train,
                                                          validation_data=(
                                                          [X_test, starting_images_test], ending_images_test),
@@ -242,12 +225,13 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
 
         histories_of_losses.append(model_history.history['loss'])
         histories_of_val_losses.append(model_history.history['val_loss'])
+        histories.append(model_history)
 
         i = i+1
 
         np.save(join(data_folder, 'loss_histories_of_{}.npy'.format(run_with[0])), np.array(histories_of_losses))
         np.save(join(data_folder, 'val_loss_histories_of_{}.npy'.format(run_with[0])), np.array(histories_of_val_losses))
-
+        np.save(join(data_folder, 'histories_of_{}.npy'.format(run_with[0])), np.array(histories))
 
 
 if __name__ == "__main__":
