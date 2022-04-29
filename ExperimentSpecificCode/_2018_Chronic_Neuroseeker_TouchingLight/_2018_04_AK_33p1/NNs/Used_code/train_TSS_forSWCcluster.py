@@ -7,7 +7,6 @@ import timeit
 import tensorflow as tf
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(physical_devices[0], enable=True)
-tf.config.experimental.set_memory_growth(physical_devices[0], enable=True)
 
 from keras.callbacks import ModelCheckpoint
 from keras.layers import Input, Dense, Convolution2D, concatenate, Reshape, Flatten, BatchNormalization, Dropout, \
@@ -181,8 +180,9 @@ def main(run_with='Spikes', base_data_folder_key='NS', data_folder_name='data_10
 
     for i in np.arange(starting_iter, ending_iter):
 
-        train_index = np.array(train_indices[i])
-        test_index = np.array(test_indices[i])
+        randomized_indices = np.random.shuffle(np.arnage(0, train_indices[0][-1]))
+        train_index = np.array(train_indices[i])[randomized_indices]
+        test_index = np.array(test_indices[i])[randomized_indices]
 
         print(len(train_index))
         print('TRAIN from {} to {}, TEST from {} to {}'.format(train_index[0], train_index[-1], test_index[0], test_index[-1]))
