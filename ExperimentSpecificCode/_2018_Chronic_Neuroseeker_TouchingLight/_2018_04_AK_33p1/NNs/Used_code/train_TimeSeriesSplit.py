@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split, TimeSeriesSplit
 from keras.callbacks import ModelCheckpoint
 from keras.layers import Input, Dense, Convolution2D, concatenate, Reshape, Flatten, BatchNormalization, Dropout, \
     MaxPooling2D, AveragePooling2D, CuDNNLSTM, LSTM, dot
-from keras.models import Model
+from keras.models import Model, load_model
 from keras.optimizers import Adam
 
 
@@ -71,10 +71,11 @@ base_data_folders = {'NS': r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Ana
                      'Sparse': r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Sparce\NNs'}
 
 # -------- USER INPUT ----------
-run_with = ['Spikes']  # ['Both', 'Spikes', 'Image']
+run_with = ['Image']  # ['Both', 'Spikes', 'Image']
 base_data_folder = base_data_folders['NS']  # 'NS', or 'Long' or 'Sparse'
 data_folder_name = 'data_100KsamplesEvery2Frames_5secslong_halfsizeres'
-n_splits=10
+n_splits = 10
+starting_iter = 1
 # ------------------------------
 
 data_folder = join(base_data_folder, 'Data', 'TimeSeriesSplit', data_folder_name)
@@ -86,8 +87,8 @@ X = np.memmap(join(data_folder, input_data_name_X), dtype=headers['dtype'][0], s
 X = X.reshape(X.shape[0], X.shape[1], X.shape[2], 1)
 
 Y = np.memmap(join(data_folder, input_data_name_Y), dtype=headers['dtype'][0], shape=tuple(headers['shape_Y']))
-starting_images = Y[:, 0:1, :, :]
-ending_images = Y[:, 1, :, :]
+starting_images = Y[:, 0:1, :, :]/255.0
+ending_images = Y[:, 1, :, :]/255.0
 
 print(X.shape)
 print(starting_images.shape)
@@ -98,7 +99,6 @@ frames_used = headers['shape_X'][1]
 tscv = TimeSeriesSplit(gap=frames_used, max_train_size=None, n_splits=n_splits, test_size=None)
 
 i = 0
-starting_iter = 1
 histories_of_losses = []
 histories_of_val_losses = []
 
@@ -173,5 +173,22 @@ for train_index, test_index in tscv.split(X):
     np.save(join(data_folder, 'val_loss_histories_of_{}.npy'.format(run_with[0])), np.array(histories_of_val_losses))
 
 
+#  Visualise results
+'''
+loss = np.load(join(data_folder, 'loss_histories_of_Spikes.npy'))
+val_loss = np.load(join(data_folder, 'val_loss_histories_of_Spikes.np'))
 
+import h5py
 
+model_5_filename = join(data_folder, "spikes_final_model_SSTiter_5.h5")
+
+model_5_h5 = h5py.File(model_5_filename,'w')
+
+data_p = model_5_h5.attrs['training_config']
+data_p = data_p.decode().replace("learning_rate","lr").encode()
+model_5_h5.attrs['training_config'] = data_p
+model_5_h5.close()
+'''
+
+t = np.array([[1,2,3,4,5],
+              [11,12,13,14,15]])
