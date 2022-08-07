@@ -17,7 +17,7 @@ import slider as sl
 
 from Layouts.Probes import probes_imec_256channels as probe
 
-from ExperimentSpecificCode._2018_2019_Neuroseeker_Paper._256ch_Probe.H3.Decimated_to_Neuroseeker_Density\
+from ExperimentSpecificCode._2018_2019_Neuroseeker_Paper._256ch_Probe.H3.Decimated_to_Smaller_Densities\
     import constants as const_deci
 
 from ExperimentSpecificCode._2018_2019_Neuroseeker_Paper._256ch_Probe.H3.All_Channels\

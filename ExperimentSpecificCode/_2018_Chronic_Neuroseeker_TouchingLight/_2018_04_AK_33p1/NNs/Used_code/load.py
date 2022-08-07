@@ -165,7 +165,7 @@ def sample_data(filename_to_save, frames_per_packet, batch_size, start_frame_for
 
 
 # For random sampling
-sample_data("data_25000randompoints_5secslong_halfsizeres.npz", 5*120, 25000,
+sample_data("data_25000randompoints_2secslong_halfsizeres.npz", 2*120, 25000,
             start_frame_for_period=None, batch_step=1)
 
 

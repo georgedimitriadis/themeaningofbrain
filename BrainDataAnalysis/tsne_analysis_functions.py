@@ -179,8 +179,10 @@ def fit_dbscan(data, eps, min_samples, normalize=True,
 
     # Number of clusters in labels, ignoring noise if present.
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+    n_unclustered_points = len(np.where(labels == -1)[0])
     score = metrics.silhouette_score(X, labels, sample_size=5000)
-    print('For eps={}, min_samples={}, estimated number of clusters={}'.format(eps, min_samples, n_clusters_))
+    print('For eps={}, min_samples={}, estimated number of clusters={}, unclustered points = {}'
+          .format(eps, min_samples, n_clusters_, n_unclustered_points))
     print("Silhouette Coefficient: {}".format(score))
 
     if show:
