@@ -264,7 +264,7 @@ if False:
 
     fig1 = plt.figure(0)
     a1 = fig1.add_subplot(111)
-
+    
     fig2 = plt.figure(1)
     a2 = fig2.add_subplot(111)
 

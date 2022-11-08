@@ -7,8 +7,11 @@ from keras.callbacks import ModelCheckpoint
 from keras.layers import Input, Dense, Convolution2D, concatenate, Reshape, Flatten, BatchNormalization, Dropout, \
     MaxPooling2D, AveragePooling2D, CuDNNLSTM, LSTM, dot
 from keras.models import Model
+from keras.optimizers import Adam
 
+data_folder_suffix = 'with_poisson_25Krandom_2secs'
 
+input_data_name = "data_extra_poisson_25000randompoints_2secslong_halfsizeres.npz"
 
 run_with = ['Spikes']  # ['Both', 'Spikes', 'Image']
 
@@ -44,10 +47,10 @@ def build_network(spike_shape, image_shape, spikes_images_type='Both'): # type =
     return model
 
 
-#base_data_folder = r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NNs'
-#base_data_folder = r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Long\NNs'
-base_data_folder = r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Sparce\NNs'
-data_folder = join(base_data_folder, 'Data', 'randomly_selected_frames_brain_only')
+base_data_folder = r'D:\Neuroseeker chronic\AK_47.1\2019_07_04-11_51\Analysis\NNs'
+#base_data_folder = r'D:\Neuroseeker chronic\AK_47.1\2019_07_04-11_51\Analysis\NeuropixelSimulations\Long\NNs'
+#base_data_folder = r'D:\Neuroseeker chronic\AK_47.1\2019_07_04-11_51\Analysis\NeuropixelSimulations\Sparce\NNs'
+data_folder = join(base_data_folder, 'Data', 'RandomisedInput')
 
 with np.load(join(data_folder, input_data_name)) as data:
     X = data['X']
@@ -79,6 +82,7 @@ if 'Both' in run_with:
     full_callbacks_list = [full_checkpoint]
     model_full.fit([X_train, starting_images_train], ending_images_train,
                     validation_data=([X_test, starting_images_test], ending_images_test),
+                    epochs=300, callbacks=full_callbacks_list)
     model_full.save(join(data_folder, 'both_model_{}.h5'.format(data_folder_suffix)))
 
 if 'Spikes' in run_with:
@@ -90,6 +94,7 @@ if 'Spikes' in run_with:
     spikes_callbacks_list = [spikes_checkpoint]
     model_spikes.fit([X_train, starting_images_train], ending_images_train,
               validation_data=([X_test, starting_images_test], ending_images_test),
+              epochs=300, callbacks=spikes_callbacks_list)
     model_spikes.save(join(data_folder, 'spikes_model_{}.h5'.format(data_folder_suffix)))
 
 
@@ -102,5 +107,6 @@ if 'Image' in run_with:
     pictures_callbacks_list = [pictures_checkpoint]
     model_pictures.fit([X_train, starting_images_train], ending_images_train,
               validation_data=([X_test, starting_images_test], ending_images_test),
+              epochs=300, callbacks = pictures_callbacks_list)
     model_pictures.save(join(data_folder, 'pictures_model_{}.h5'.format(data_folder_suffix)))
 

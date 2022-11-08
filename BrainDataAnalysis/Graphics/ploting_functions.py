@@ -598,7 +598,7 @@ def show_clustered_tsne(dbscan_result, X, juxta_cluster_indices_grouped=None, th
     ax = fig.add_subplot(111)
     fig.canvas.mpl_connect('pick_event', on_pick)
 
-    ax.scatter(X[:, 0], X[:, 1], facecolor=(1, 1, 1, 0), edgecolor=(1, 1, 1, 0), s=8, picker=5)
+    ax.scatter(X[:, 0], X[:, 1], facecolor=(1, 1, 1, 0), edgecolor=(1, 1, 1, 0), s=4, picker=3)
 
     unique_labels = set(labels)
     colors = plt.cm.nipy_spectral(np.linspace(0, 1, len(unique_labels)))
@@ -615,7 +615,7 @@ def show_clustered_tsne(dbscan_result, X, juxta_cluster_indices_grouped=None, th
 
         xy = X[class_member_mask & core_samples_mask]
         ax.plot(xy[:, 0], xy[:, 1], marker, markerfacecolor=col,
-                markeredgecolor='k', markersize=8)
+                markeredgecolor='k', markersize=4)
 
         xy = X[class_member_mask & ~core_samples_mask]
         ax.plot(xy[:, 0], xy[:, 1], marker, markerfacecolor=col,

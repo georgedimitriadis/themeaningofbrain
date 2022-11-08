@@ -13,7 +13,7 @@ import one_shot_viewer as osv
 import slider as sl
 
 
-from ExperimentSpecificCode._2018_2019_Neuroseeker_Paper._256ch_Probe.St2.Decimated_to_Neuroseeker_Density\
+from ExperimentSpecificCode._2018_2019_Neuroseeker_Paper._256ch_Probe.St2.Decimated_to_Smaller_Densities\
     import constants as const_deci
 
 from ExperimentSpecificCode._2018_2019_Neuroseeker_Paper._256ch_Probe.St2.All_Channels\

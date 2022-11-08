@@ -14,7 +14,7 @@ import slider as sl
 
 from sklearn.decomposition import PCA
 
-from ExperimentSpecificCode._2018_2019_Neuroseeker_Paper._256ch_Probe.Co4.Decimated_to_Neuroseeker_Density\
+from ExperimentSpecificCode._2018_2019_Neuroseeker_Paper._256ch_Probe.Co4.Decimated_to_Smaller_Density\
     import constants as const_deci
 
 from ExperimentSpecificCode._2018_2019_Neuroseeker_Paper._256ch_Probe.Co4.All_Channels\
