@@ -16,7 +16,7 @@ binary_v = join(base_folder_v, r'Exp2and3_2017_03_28T18_48_25_Amp_S16_LP3p5KHz_m
 binary_a = join(base_folder_a, r'Exp2and3_2017_03_28T18_48_25_Amp_S16_LP3p5KHz_mV.bin')
 number_of_channels_in_binary_file = 1440
 
-prb_file = r'E:\Software\Develop\Source\Repos\Python35Projects\TheMeaningOfBrain\Layouts\Probes\Neuroseeker\prb.txt'
+prb_file = r'E:\Code\Mine\themeaningofbrain\Layouts\Probes\Neuroseeker\prb.txt'
 
 clean.cleanup_kilosorted_data(base_folder_v,
                               number_of_channels_in_binary_file=number_of_channels_in_binary_file,

@@ -6,7 +6,7 @@ import time
 
 # -------------------------------------------------
 # <editor-fold desc="1) Basic folder loading"
-data_folder = r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NNs\FiringRateDataPrep'
+data_folder = r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NNs\FiringRateDataPrep'
 
 video_events_file = join(data_folder, 'Video.pkl')
 sampling_freq = 20000

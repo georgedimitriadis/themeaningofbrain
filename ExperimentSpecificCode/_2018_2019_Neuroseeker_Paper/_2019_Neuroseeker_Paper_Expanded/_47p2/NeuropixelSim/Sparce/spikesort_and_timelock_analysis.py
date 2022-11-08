@@ -10,8 +10,8 @@ import pandas as pd
 from sklearn import preprocessing as preproc
 
 from BrainDataAnalysis.Spike_Sorting import positions_on_probe as spp
-from spikesorting_tsne_guis import clean_kilosort_templates as clean
-from spikesorting_tsne import preprocessing_kilosort_results as preproc_kilo
+from spikesorting_tsne_guis.spikesorting_tsne_guis import clean_kilosort_templates as clean
+from spikesorting_tsne.spikesorting_tsne import preprocessing_kilosort_results as preproc_kilo
 
 from ExperimentSpecificCode._2018_2019_Neuroseeker_Paper._2019_Neuroseeker_Paper_Expanded._47p2 \
     import constants_47p2 as const_rat
@@ -23,7 +23,7 @@ from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_funct
     sync_funcs, firing_rates_sync_around_events_funcs as fr_funcs
 from BrainDataAnalysis.Statistics import binning
 
-from npeet.lnc import MI
+from lnc import MI
 
 import common_data_transforms as cdt
 import sequence_viewer as sv
@@ -65,8 +65,8 @@ sampling_freq = const_com.SAMPLING_FREQUENCY
 # (you can use either the raw or the denoised data to create the average)
 # python E:\Software\Develop\Source\Repos\spikesorting_tsne_guis\spikesorting_tsne_guis\create_data_cubes.py
 #                                                                                original
-#                                                                                "F:\Neuroseeker chronic\AK_47.2\2019_06_25-12_50\Analysis\NeuropixelSimulations\Long\Kilosort"
-#                                                                                "F:\Neuroseeker chronic\AK_47.2\2019_06_25-12_50\Data\Amplifier_APs.bin"
+#                                                                                "D:\\AK_47.2\2019_06_25-12_50\Analysis\NeuropixelSimulations\Long\Kilosort"
+#                                                                                "D:\\AK_47.2\2019_06_25-12_50\Data\Amplifier_APs.bin"
 #                                                                                1368
 #                                                                                50
 # (Use single space between parameters, not Enter like here)

@@ -66,9 +66,9 @@ def generator_random(X, starting_images, ending_images, train_index, batch_size=
         yield [X[indices], starting_images[indices]], ending_images[indices]
 
 
-base_data_folders = {'NS': r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NNs',
-                     'Long': r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Long\NNs',
-                     'Sparse': r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Sparce\NNs'}
+base_data_folders = {'NS': r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NNs',
+                     'Long': r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Long\NNs',
+                     'Sparse': r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Sparce\NNs'}
 
 # -------- USER INPUT ----------
 run_with = ['Image']  # ['Both', 'Spikes', 'Image']

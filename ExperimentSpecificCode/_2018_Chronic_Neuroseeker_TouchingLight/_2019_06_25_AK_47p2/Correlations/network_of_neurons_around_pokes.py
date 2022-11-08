@@ -90,8 +90,7 @@ all_neuron_templates[start: end] = ti_decreasing_neurons_on_non_trial_pokes['tem
 all_neuron_templates = np.unique(all_neuron_templates)
 
 # sr prefix mean the spike rates of all relevant neurons
-sr = spike_rates[template_info[np.isin(template_info['template number'], all_neuron_templates)].
-                                      index.values, :]
+sr = spike_rates[template_info[np.isin(template_info['template number'], all_neuron_templates)].index.values, :]
 
 # </editor-fold>
 

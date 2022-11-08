@@ -12,7 +12,7 @@ kilosort_folder_a = r'D:\Data\George\Neuroseeker_2017_03_28_Anesthesia_Auditory_
 binary_a = join(data_folder_a, r'Amplifier_APs.bin')
 number_of_channels_in_binary_file = 1440
 
-prb_file = r'E:\Software\Develop\Source\Repos\Python35Projects\TheMeaningOfBrain\Layouts\Probes\Neuroseeker\prb.txt'
+prb_file = r'E:\Code\Mine\themeaningofbrain\Layouts\Probes\Neuroseeker\prb.txt'
 
 
 # Create once the data cube of the average template spike

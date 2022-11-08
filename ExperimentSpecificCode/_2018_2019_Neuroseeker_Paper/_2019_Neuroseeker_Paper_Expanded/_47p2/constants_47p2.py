@@ -1,7 +1,7 @@
 
 import numpy as np
 
-base_save_folder = r'F:\Neuroseeker chronic'
+base_save_folder = r'D:\\'
 rat_folder = r'AK_47.2'
 
 

@@ -3,7 +3,7 @@
 from os.path import join
 import numpy as np
 
-probe_layout_folder = r'E:\Software\Develop\Source\Repos\Python35Projects\TheMeaningOfBrain\Layouts\Probes\Neuroseeker'
+probe_layout_folder = r'E:\Code\Mine\themeaningofbrain\Layouts\Probes\Neuroseeker'
 prb_file = join(probe_layout_folder, 'ap_only_prb.txt')
 
 

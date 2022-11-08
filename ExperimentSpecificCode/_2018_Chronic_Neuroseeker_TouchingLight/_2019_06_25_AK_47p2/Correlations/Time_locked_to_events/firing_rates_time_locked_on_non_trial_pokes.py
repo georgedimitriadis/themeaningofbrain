@@ -51,7 +51,7 @@ spike_rates = np.load(video_frame_spike_rates_filename)
 start_pokes_after_delay = np.load(join(event_definition_folder, 'events_first_pokes_after_5_delay_non_reward.npy'))
 start_pokes_after_delay = start_pokes_after_delay[1:]
 
-time_around_beam_break = 6
+time_around_beam_break = 3
 avg_firing_rate_around_not_suc_trials = fr_funcs.get_avg_firing_rates_around_events(spike_rates=spike_rates,
                                                                                     event_time_points=start_pokes_after_delay,
                                                                                     ev_video_df=event_dataframes['ev_video'],

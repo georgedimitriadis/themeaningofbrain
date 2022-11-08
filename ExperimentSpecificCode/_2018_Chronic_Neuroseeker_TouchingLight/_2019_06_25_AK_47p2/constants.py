@@ -5,11 +5,11 @@ This module carries all the constants for the 47.2 rat.
 import os.path as path
 import numpy as np
 
-probe_layout_folder = r'E:\Software\Develop\Source\Repos\Python35Projects\TheMeaningOfBrain\Layouts\Probes\Neuroseeker'
+probe_layout_folder = r'E:\Code\Mine\themeaningofbrain\Layouts\Probes\Neuroseeker'
 prb_file = path.join(probe_layout_folder, 'ap_only_prb.txt')
 
 
-base_save_folder = r'F:\Neuroseeker chronic'
+base_save_folder = r'D:\\'
 #base_save_folder = r'Y:\swc\kampff\George\DataAndResults\Experiments\Awake\NeuroSeeker'
 rat_folder = r'AK_47.2'
 
@@ -24,7 +24,7 @@ date_folders = {1: r'2019_06_18-10_15',
                 8: r'2019_06_25-12_50',
                 21: r'2019_07_08-11_15'}
 
-bad_channels = np.array([np.arange(684, 727, 1), np.arange(1140, 1176, 1)])
+bad_channels = np.array([np.arange(684, 727, 1), np.arange(1140, 1176, 1)], dtype=object)
 
 
 NUMBER_OF_AP_CHANNELS_IN_BINARY_FILE = 1368

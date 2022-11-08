@@ -48,9 +48,9 @@ def build_network(spike_shape, image_shape, spikes_images_type='Both'): # type =
     return model
 
 
-#base_data_folder = r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NNs'
-#base_data_folder = r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Long\NNs'
-base_data_folder = r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Sparce\NNs'
+#base_data_folder = r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NNs'
+#base_data_folder = r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Long\NNs'
+base_data_folder = r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Sparce\NNs'
 data_folder = join(base_data_folder, 'Data', 'randomly_selected_frames_brain_only')
 
 with np.load(join(data_folder, input_data_name)) as data:

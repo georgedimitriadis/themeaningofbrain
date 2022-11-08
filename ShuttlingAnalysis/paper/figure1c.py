@@ -84,8 +84,8 @@ def genfromtxt(folders):
     lesionfolders = [folders[i] for i in lesion_order[1:]]
     controlfolders = [folders[i] for i in control_order]
                     
-    print "Processing lesions..."
+    print("Processing lesions...")
     lesions = sessions.genfromsubjects(lesionfolders,[4,10,-1],trajectories)
-    print "Processing controls..."
+    print("Processing controls...")
     controls = sessions.genfromsubjects(controlfolders,[4,10,-1],trajectories)
     return figure1c(lesions, controls)

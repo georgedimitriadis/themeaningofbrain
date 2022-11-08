@@ -3,7 +3,7 @@ import os.path as path
 import numpy as np
 
 
-# probe_layout_folder = r'E:\Software\Develop\Source\Repos\Python35Projects\TheMeaningOfBrain\Layouts\Probes\Neuroseeker'
+# probe_layout_folder = r'E:\Code\Mine\themeaningofbrain\Layouts\Probes\Neuroseeker'
 
 
 # base_save_folder = r'D:\Data\George'

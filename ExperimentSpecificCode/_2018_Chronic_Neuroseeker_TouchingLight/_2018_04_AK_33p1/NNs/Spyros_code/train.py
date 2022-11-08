@@ -187,7 +187,7 @@ def build_network(spike_shape, image_shape, type='Both'):
 
 
 #
-base_data_folder = r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NNs'
+base_data_folder = r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NNs'
 data_folder = join(base_data_folder, 'Data')
 with np.load(join(data_folder, "data_random_5secs_half_size_res.npz")) as data:
     X = data['X']

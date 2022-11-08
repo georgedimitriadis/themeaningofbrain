@@ -9,13 +9,13 @@ from zca import ZCA
 # -------------------------------------------------
 # <editor-fold desc="1) Basic folder loading"
 
-# F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NNs
+# D:\\AK_33.1\2018_04_30-11_38\Analysis\NNs
 # or
-# F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Sparce\NNs
+# D:\\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Sparce\NNs
 # or
-# F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Long\NNs
+# D:\\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Long\NNs
 
-base_data_folder = r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NNs'
+base_data_folder = r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NNs'
 data_folder = join(base_data_folder, 'FiringRateDataPrep')
 save_data_folder = join(base_data_folder, 'Data', 'TimeSeriesSplit', 'data_100KsamplesEvery2Frames_5secslong_Whitened_halfsizeres')
 
@@ -36,9 +36,9 @@ del spike_info
 del templates
 del video_events
 
-video_folder = join(r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NNs', 'SubsampledVideo')
+video_folder = join(r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NNs', 'SubsampledVideo')
 
-wall_texture_file = r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Data\textures\walls-binary.png'
+wall_texture_file = r'D:\\AK_33.1\2018_04_30-11_38\Data\textures\walls-binary.png'
 wall_texture = cv2.imread(wall_texture_file, cv2.IMREAD_UNCHANGED)
 wall_texture_croped = wall_texture[63:-55, :, :]
 wall_texture_reshaped = cv2.resize(wall_texture_croped, (150, 112), interpolation=cv2.INTER_AREA)

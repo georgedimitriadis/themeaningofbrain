@@ -62,8 +62,8 @@ sampling_freq = const_com.SAMPLING_FREQUENCY
 # (you can use either the raw or the denoised data to create the average)
 # python E:\Software\Develop\Source\Repos\spikesorting_tsne_guis\spikesorting_tsne_guis\create_data_cubes.py
 #                                                                                original
-#                                                                                "F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Sparce\Kilosort"
-#                                                                                "F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\Denoised\Data\Amplifier_APs_Denoised.bin"
+#                                                                                "D:\\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Sparce\Kilosort"
+#                                                                                "D:\\AK_33.1\2018_04_30-11_38\Analysis\Denoised\Data\Amplifier_APs_Denoised.bin"
 #                                                                                1368
 #                                                                                50
 # (Use single space between parameters, not Enter like here)

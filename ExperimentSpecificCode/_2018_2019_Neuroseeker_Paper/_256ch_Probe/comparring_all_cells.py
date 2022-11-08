@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.decomposition import PCA
 from spikesorting_tsne import tsne, io_with_cpp as tsne_io
 
-probe_layout_folder = r'E:\Software\Develop\Source\Repos\Python35Projects\TheMeaningOfBrain\Layouts\Probes'
+probe_layout_folder = r'E:\Code\Mine\themeaningofbrain\Layouts\Probes'
 
 base_save_folder = r'D:\_256channels'
 cell_folders = [r'Co2', r'Co3', r'Co4', r'H3', r'St2', r'T1']

@@ -3,11 +3,11 @@ import os.path as path
 import numpy as np
 
 
-probe_layout_folder = r'E:\Software\Develop\Source\Repos\Python35Projects\TheMeaningOfBrain\Layouts\Probes\Neuroseeker'
+probe_layout_folder = r'E:\Code\Mine\themeaningofbrain\Layouts\Probes\Neuroseeker'
 prb_file = path.join(probe_layout_folder, 'ap_only_prb.txt')
 
 
-base_save_folder = r'F:\Neuroseeker chronic'
+base_save_folder = r'D:\\'
 
 
 experiment_folders = {1: r'AK_40.3_AK_40.4\2018_11_22-10_31',

@@ -243,7 +243,7 @@ def get_amp_time_point_from_computer_time(correspondance_dataframe, datetime):
 
 def get_dataframe_of_event_csv_file(data_folder, event_type, cam_ttl_pulse_period=158):
 
-    if event_type is 'Video':
+    if event_type == 'Video':
         csv_file_name = path.join(data_folder, event_type + '.csv')
     else:
         csv_file_name = path.join(data_folder, 'events', event_type + '.csv')
@@ -252,7 +252,7 @@ def get_dataframe_of_event_csv_file(data_folder, event_type, cam_ttl_pulse_perio
         dropna(axis=1, how='all')
     df.columns = csv_columns[event_type]
 
-    if event_type is not 'Tracking':
+    if event_type != 'Tracking':
         days = df['Date'].str.split('-', n=2, expand=True)
         df.insert(0, 'Year', days[0])
         df.insert(1, 'Month', days[1])

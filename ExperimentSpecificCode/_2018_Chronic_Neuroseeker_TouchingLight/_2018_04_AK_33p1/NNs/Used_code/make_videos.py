@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 #   File names
 
-video_folder = r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NNs'
+video_folder = r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NNs'
 subsampled_read_video = join(video_folder, 'SubsampledVideo', 'Video_undistrorted_150x112_120fps.mp4')
 
 
@@ -247,16 +247,16 @@ def make_n_x_m_panels_video(video_folder, video_file, model_files, firing_matric
 
 
 
-video_folder = r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NNs\Comparative_results'
+video_folder = r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NNs\Comparative_results'
 video_file = 'results_video_FullVideo_halfsize_[2sNS_2sL_2sS]_BrainOnly_from25Krandom.avi'
 
-model_files = [r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NNs\Data\randomly_selected_frames_brain_only\spikes_latest_model_fullvideo_25Krandom_2secs.h5',
-               r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Long\NNs\Data\randomly_selected_frames_brain_only\spikes_latest_model_fullvideo_25Krandom_2secs.h5',
-               r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Sparce\NNs\Data\randomly_selected_frames_brain_only\spikes_latest_model_fullvideo_25Krandom_2secs.h5']
+model_files = [r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NNs\Data\randomly_selected_frames_brain_only\spikes_latest_model_fullvideo_25Krandom_2secs.h5',
+               r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Long\NNs\Data\randomly_selected_frames_brain_only\spikes_latest_model_fullvideo_25Krandom_2secs.h5',
+               r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Sparce\NNs\Data\randomly_selected_frames_brain_only\spikes_latest_model_fullvideo_25Krandom_2secs.h5']
 
-firing_matrices_files = [r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NNs\FiringRateDataPrep\full_firing_matrix.npy',
-               r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Long\NNs\FiringRateDataPrep\full_firing_matrix.npy',
-               r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Sparce\NNs\FiringRateDataPrep\full_firing_matrix.npy']
+firing_matrices_files = [r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NNs\FiringRateDataPrep\full_firing_matrix.npy',
+               r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Long\NNs\FiringRateDataPrep\full_firing_matrix.npy',
+               r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NeuropixelSimulations\Sparce\NNs\FiringRateDataPrep\full_firing_matrix.npy']
 
 pred_image_frame_jumps = [240, 240, 240]
 arrangement = [(0, 0), (0, 1), (1, 0), (1, 1)]

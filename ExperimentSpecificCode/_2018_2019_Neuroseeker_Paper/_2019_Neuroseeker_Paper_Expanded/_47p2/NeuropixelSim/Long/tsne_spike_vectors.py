@@ -14,7 +14,7 @@ from ExperimentSpecificCode._2018_Chronic_Neuroseeker_TouchingLight.Common_funct
     sync_funcs
 from BrainDataAnalysis.Statistics import binning
 
-from spikesorting_tsne import tsne, io_with_cpp as tsne_io
+from spikesorting_tsne.spikesorting_tsne import tsne, io_with_cpp as tsne_io
 
 import sequence_viewer as sv
 import transform as tr

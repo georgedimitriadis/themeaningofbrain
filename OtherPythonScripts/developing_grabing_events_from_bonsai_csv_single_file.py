@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 
-data_folder = r'F:\Neuroseeker chronic\AK_33.1\2018_04_27-09_44\Data'
+data_folder = r'D:\\AK_33.1\2018_04_27-09_44\Data'
 events_filder = path.join(data_folder, 'events')
 events_file_name = path.join(data_folder, 'Events.csv')
 

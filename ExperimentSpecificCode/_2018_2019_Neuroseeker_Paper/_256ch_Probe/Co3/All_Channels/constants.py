@@ -3,7 +3,7 @@
 from os.path import join
 import numpy as np
 
-probe_layout_folder = r'E:\Software\Develop\Source\Repos\Python35Projects\TheMeaningOfBrain\Layouts\Probes'
+probe_layout_folder = r'E:\Code\Mine\themeaningofbrain\Layouts\Probes'
 prb_file = join(probe_layout_folder, 'probe_imec_256channels_file.txt')
 
 data_filename = r'amplifier2017-02-08T16_03_06.bin'

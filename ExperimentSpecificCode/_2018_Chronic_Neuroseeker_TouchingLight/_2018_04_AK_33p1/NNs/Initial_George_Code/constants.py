@@ -2,7 +2,7 @@
 import numpy as np
 from os.path import join
 
-data_folder = r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NNs\Data'
+data_folder = r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NNs\Data'
 
 spike_matrix_file = join(data_folder, 'full_matrix.npy')
 

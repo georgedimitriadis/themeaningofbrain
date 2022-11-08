@@ -119,5 +119,5 @@ main()
 '''
 
 import sys
-sys.path.append(r"E:\Software\Develop\Source\Repos\Python35Projects\TheMeaningOfBrain\ExperimentSpecificCode\_2018_Chronic_Neuroseeker_TouchingLight\_2018_04_AK_33p1\NNs\Used_code")
+sys.path.append(r"E:\Code\Mine\themeaningofbrain\ExperimentSpecificCode\_2018_Chronic_Neuroseeker_TouchingLight\_2018_04_AK_33p1\NNs\Used_code")
 from tensorflow_zca import ZCA

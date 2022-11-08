@@ -6,7 +6,7 @@ base_folder = r'F:\Data\George\Projects\SpikeSorting\Neuroseeker\Neuroseeker_Chr
 data_folder = r'F:\Data\George\Projects\SpikeSorting\Neuroseeker\Neuroseeker_Chronic_Rat_22.1\2017_05_26\13_28_10\Data'
 binary_data_filename = join(data_folder, r'2017_05_26T13_28_10_Amp_S16_LP3p5KHz_uV.bin')
 
-probe_info_folder = r'E:\Software\Develop\Source\Repos\Python35Projects\TheMeaningOfBrain\Layouts\Probes\Neuroseeker'
+probe_info_folder = r'E:\Code\Mine\themeaningofbrain\Layouts\Probes\Neuroseeker'
 prb_file = join(probe_info_folder, 'prb.txt')
 
 time_points = 100

@@ -2,7 +2,7 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
-from spikesorting_tsne import constants as ct
+from spikesorting_tsne.spikesorting_tsne import constants as ct
 import pandas as pd
 
 

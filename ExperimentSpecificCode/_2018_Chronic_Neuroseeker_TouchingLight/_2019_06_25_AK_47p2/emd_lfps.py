@@ -111,6 +111,6 @@ S_number = 20
 num_siftings = 100
 
 cmd used
-cd E:\Software\Develop\Source\Repos\Python35Projects\TheMeaningOfBrain\BrainDataAnalysis\LFP
-python emd.py "F:\Neuroseeker chronic\AK_47.2\2019_06_25-12_50\Analysis\Lfp\Downsampling\Amplifier_LFPs_Downsampled_x4.npy" "F:\Neuroseeker chronic\AK_47.2\2019_06_25-12_50\Analysis\Lfp\EMD\imfs.bin" int16 13 25 0.01 20 100
+cd E:\Code\Mine\themeaningofbrain\BrainDataAnalysis\LFP
+python emd.py "D:\\AK_47.2\2019_06_25-12_50\Analysis\Lfp\Downsampling\Amplifier_LFPs_Downsampled_x4.npy" "D:\\AK_47.2\2019_06_25-12_50\Analysis\Lfp\EMD\imfs.bin" int16 13 25 0.01 20 100
 '''

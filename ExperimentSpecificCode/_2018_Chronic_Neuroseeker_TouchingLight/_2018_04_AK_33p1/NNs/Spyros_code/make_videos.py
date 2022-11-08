@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 #   File names
 #data_folder = r'./NN_data/FiringRateDataPrep'
-base_data_folder = r'F:\Neuroseeker chronic\AK_33.1\2018_04_30-11_38\Analysis\NNs'
+base_data_folder = r'D:\\AK_33.1\2018_04_30-11_38\Analysis\NNs'
 data_folder = join(base_data_folder, 'Data')
 data_prep_folder = join(base_data_folder, 'FiringRateDataPrep')
 
