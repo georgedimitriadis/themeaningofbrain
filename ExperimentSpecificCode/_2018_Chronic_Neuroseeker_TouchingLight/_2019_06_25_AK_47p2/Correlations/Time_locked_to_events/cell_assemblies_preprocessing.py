@@ -59,6 +59,8 @@ for c in np.arange(len(template_info)):
     all_cell_spikes_around_beam_break.append(cell_spikes)
 
 max_time_series_length = np.max([len(c) for c in all_cell_spikes_around_beam_break])
+# OR
+max_time_series_length = 7000
 all_cell_spikes_around_beam_break_array = np.empty((len(all_cell_spikes_around_beam_break), max_time_series_length))
 last_spikes = []
 for i, c in enumerate(all_cell_spikes_around_beam_break):
@@ -70,6 +72,8 @@ for i, c in enumerate(all_cell_spikes_around_beam_break):
     else:
         last_spikes.append(0)
 
+sub_array = all_cell_spikes_around_beam_break_array[np.random.choice(np.arange(all_cell_spikes_around_beam_break_array.shape[0]), 50, replace=False),
+                                                    :7000]
 io.savemat(r'E:\Code\Others\Cell-Assembly-Detection\Programs_and_data\non_rewarded_beam_breaks.mat',
-           {'spM': t})
+           {'spM': sub_array})
 # </editor-fold>
